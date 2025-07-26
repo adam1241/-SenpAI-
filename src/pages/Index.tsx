@@ -7,8 +7,20 @@ import { HistoryView } from "@/components/HistoryView";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { FlashcardDecksView } from "@/components/FlashcardDecksView";
 
+// Lifted the Message interface here from ChatInterface
+interface Message {
+  id: string;
+  content: string;
+  isUser: boolean;
+  timestamp: Date;
+  isMastery?: boolean;
+}
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
+  // Lifted the messages state here
+  const [messages, setMessages] = useState<Message[]>([]);
+
   const [newFlashcardsCount, setNewFlashcardsCount] = useState(3);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [flashcardData, setFlashcardData] = useState<{
@@ -29,7 +41,13 @@ const Index = () => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case "chat":
-        return <ChatInterface onCreateFlashcard={handleCreateFlashcard} />;
+        return (
+          <ChatInterface 
+            onCreateFlashcard={handleCreateFlashcard} 
+            messages={messages}
+            setMessages={setMessages}
+          />
+        );
       case "notebook":
         return <NotebookView />;
       case "quiz":
@@ -39,7 +57,13 @@ const Index = () => {
       case "flashcards":
         return <FlashcardDecksView />;
       default:
-        return <ChatInterface onCreateFlashcard={handleCreateFlashcard} />;
+        return (
+          <ChatInterface 
+            onCreateFlashcard={handleCreateFlashcard} 
+            messages={messages}
+            setMessages={setMessages}
+          />
+        );
     }
   };
 

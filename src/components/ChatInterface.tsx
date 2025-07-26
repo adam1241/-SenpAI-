@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,12 +17,12 @@ interface Message {
 
 interface ChatInterfaceProps {
   onCreateFlashcard: (concept: string, question: string, answer: string) => void;
+  messages: Message[];
+  setMessages: Dispatch<SetStateAction<Message[]>>;
 }
 
-export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -91,8 +91,6 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiMessage]);
-    } finally {
-      setIsTyping(false);
     }
   };
 
@@ -228,20 +226,6 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
             ))
           )}
           
-          {isTyping && (
-            <div className="flex justify-start">
-              <Card className="max-w-[80%] p-4 bg-muted">
-                <div className="flex items-center gap-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">AI is thinking...</span>
-                </div>
-              </Card>
-            </div>
-          )}
         </div>
       </ScrollArea>
 

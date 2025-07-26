@@ -26,4 +26,4 @@ python3 backend/main.py
 npm i
 npm run dev
 ```
-
+this should open the web app on : ```http://localhost:8080/```

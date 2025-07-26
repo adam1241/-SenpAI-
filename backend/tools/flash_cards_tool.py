@@ -5,7 +5,7 @@ class FlashCardsTool:
     def __init__(self):
         self.flash_cards = []
     
-    def add_flash_card(self, flash_card):
+    def add_flash_card(self, flash_card: FlashCard):
         self.flash_cards.append(flash_card)
     
     def remove_flash_card(self, flash_card):

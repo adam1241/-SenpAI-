@@ -1,9 +1,13 @@
 from flask import Flask, request, Response
 from flask_cors import CORS
 import os
+import re
+import json
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from prompts.socratic_tutor import get_socratic_tutor_prompt
+from tools.flash_cards_tool import FlashCardsTool
+from utils.database import Database
 
 load_dotenv()
 
@@ -25,10 +29,16 @@ def chat():
             api_key=os.environ.get("CEREBRAS_API_KEY")
         )
 
+        # Load available decks to provide context to the LLM
+        decks = Database.load_table("decks")
+        decks_json_string = json.dumps(decks, indent=2)
+
         # The first message is always the system prompt
         system_prompt = {
             "role": "system",
-            "content": get_socratic_tutor_prompt()
+            "content": get_socratic_tutor_prompt(
+                flashcard_decks=decks_json_string
+            )
         }
         
         # The history from the frontend is already formatted
@@ -45,42 +55,69 @@ def chat():
 
         buffer = ""
         in_think_block = False
+        flash_card_tool = FlashCardsTool()
+        action_regex = re.compile(
+            r"//ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: (.*?)\/\/"
+        )
+
+        def process_buffer(buf):
+            nonlocal in_think_block
+            # First, handle flashcard actions
+            match = action_regex.search(buf)
+            if match:
+                json_payload = match.group(1)
+                try:
+                    flash_card_tool.add_flash_card(json_payload)
+                except Exception as e:
+                    print(f"Error processing flashcard action: {e}")
+                # Remove the action text regardless of success
+                buf = action_regex.sub("", buf)
+
+            # Next, handle think blocks
+            processed_output = ""
+            while buf:
+                if in_think_block:
+                    end_tag = buf.find("</think>")
+                    if end_tag != -1:
+                        buf = buf[end_tag + len("</think>"):]
+                        in_think_block = False
+                    else:
+                        # Remainder is a thought, discard
+                        buf = ""
+                else:
+                    start_tag = buf.find("<think>")
+                    if start_tag != -1:
+                        processed_output += buf[:start_tag]
+                        buf = buf[start_tag + len("<think>"):]
+                        in_think_block = True
+                    else:
+                        # No more tags, the rest is content
+                        processed_output += buf
+                        buf = ""
+            return processed_output
+
         for chunk in stream:
             content = chunk.choices[0].delta.content
             if not content:
                 continue
-
             buffer += content
-
-            while True:
-                if in_think_block:
-                    end_tag_pos = buffer.find("</think>")
-                    if end_tag_pos != -1:
-                        # End of think block. Update buffer and flip state.
-                        buffer = buffer[end_tag_pos + len("</think>"):]
-                        in_think_block = False
-                    else:
-                        # Still in a think block. Discard buffer and wait for
-                        # more chunks to find the end tag.
-                        buffer = ""
-                        break
-                else:  # not in_think_block
-                    start_tag_pos = buffer.find("<think>")
-                    if start_tag_pos != -1:
-                        # Start of a think block. Yield content before it.
-                        part_to_yield = buffer[:start_tag_pos]
-                        if part_to_yield:
-                            yield part_to_yield
-
-                        # Update buffer to after the tag and flip state.
-                        buffer = buffer[start_tag_pos + len("<think>"):]
-                        in_think_block = True
-                    else:
-                        # No tags found. The whole buffer is valid content.
-                        if buffer:
-                            yield buffer
-                        buffer = ""
-                        break
+            
+            # Decide when to process the buffer.
+            # Let's do it if it contains a newline character.
+            if '\n' in buffer:
+                parts = buffer.split('\n')
+                to_process = '\n'.join(parts[:-1]) + '\n'
+                buffer = parts[-1]
+                
+                output = process_buffer(to_process)
+                if output:
+                    yield output
+        
+        # Process any remaining part of the buffer
+        if buffer:
+            output = process_buffer(buffer)
+            if output:
+                yield output
 
     return Response(generate(), mimetype='text/plain')
 

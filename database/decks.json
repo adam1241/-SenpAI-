@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "name": "JavaScript Concepts",
+    "description": "Fundamental concepts in JavaScript programming."
+  },
+  {
+    "id": 2,
+    "name": "Biology 101",
+    "description": "Introductory concepts in biology."
+  },
+  {
+    "id": 3,
+    "name": "AI Fundamentals",
+    "description": "Fundamental concepts in AI programming."
+  }
+]

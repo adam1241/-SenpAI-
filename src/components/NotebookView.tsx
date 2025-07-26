@@ -20,7 +20,9 @@ export const NotebookView = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [exercisePrompt, setExercisePrompt] = useState("");
+  const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
   const [aiGuidance, setAiGuidance] = useState([
     {
       id: "1",
@@ -83,6 +85,9 @@ export const NotebookView = () => {
 
   const handleUploadSubmit = () => {
     if (selectedFile) {
+      // Create URL for the uploaded image
+      const imageUrl = URL.createObjectURL(selectedFile);
+      setUploadedImageUrl(imageUrl);
       toast.success(`File "${selectedFile.name}" uploaded successfully! 📁`);
       setUploadModalOpen(false);
       setSelectedFile(null);
@@ -93,6 +98,10 @@ export const NotebookView = () => {
 
   const handleGenerateSubmit = () => {
     if (exercisePrompt.trim()) {
+      // Generate a simulated exercise based on the prompt
+      const generatedText = `Generated Exercise: ${exercisePrompt}\n\nHere's a tailored problem based on your request. Work through this step by step and I'll provide guidance along the way.`;
+      setGeneratedExercise(generatedText);
+      
       toast.success("Exercise generated successfully! 🎯");
       setGenerateModalOpen(false);
       setExercisePrompt("");
@@ -100,7 +109,7 @@ export const NotebookView = () => {
       // Add generated exercise to AI guidance
       const newGuidance = {
         id: Date.now().toString(),
-        content: `Generated exercise: ${exercisePrompt}. Here's a tailored problem to work through...`,
+        content: `I've generated a custom exercise for you! Check it out above the workspace tabs.`,
         timestamp: new Date(),
       };
       setAiGuidance(prev => [...prev, newGuidance]);
@@ -204,6 +213,33 @@ export const NotebookView = () => {
                 </Dialog>
               </div>
             </div>
+            
+            {/* Exercise Display Section */}
+            {(uploadedImageUrl || generatedExercise) && (
+              <Card className="p-4 mb-4 bg-muted/30">
+                <div className="space-y-3">
+                  {uploadedImageUrl && (
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Uploaded Image:</h4>
+                      <img 
+                        src={uploadedImageUrl} 
+                        alt="Uploaded exercise" 
+                        className="max-w-full h-auto rounded-md border"
+                        style={{ maxHeight: '300px' }}
+                      />
+                    </div>
+                  )}
+                  {generatedExercise && (
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Generated Exercise:</h4>
+                      <div className="text-sm text-foreground whitespace-pre-wrap bg-background p-3 rounded-md border">
+                        {generatedExercise}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
             
             <Tabs value={activeMode} onValueChange={setActiveMode} className="flex-1 flex flex-col">
               <TabsList className="grid w-full grid-cols-2 mb-4">

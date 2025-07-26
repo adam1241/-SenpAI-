@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 import os
 import re
@@ -120,6 +120,24 @@ def chat():
                 yield output
 
     return Response(generate(), mimetype='text/plain')
+
+
+@app.route('/api/decks', methods=['GET'])
+def get_decks():
+    """
+    Endpoint to retrieve all flashcard decks.
+    """
+    decks = Database.load_table("decks")
+    return jsonify(decks)
+
+
+@app.route('/api/flashcards', methods=['GET'])
+def get_flashcards():
+    """
+    Endpoint to retrieve all flashcards.
+    """
+    flashcards = Database.load_table("flash_cards")
+    return jsonify(flashcards)
 
 
 if __name__ == '__main__':

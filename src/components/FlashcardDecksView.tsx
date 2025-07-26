@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,22 +6,75 @@ import { Plus, BookOpen, Calendar, TrendingUp } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
 
-interface Deck {
-  id: string;
+// Interface for data coming from the backend
+interface DeckFromAPI {
+  id: number;
   name: string;
   description: string;
+}
+
+interface FlashcardFromAPI {
+  id: number;
+  question: string;
+  answer: string;
+  deck_id: number;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  last_reviewed: string;
+}
+
+// Enriched interface for local state
+interface Deck extends DeckFromAPI {
   cardCount: number;
-  newCards: number;
-  reviewCards: number;
-  lastStudied?: Date;
+  newCards: number; // For now, we'll make this static
+  reviewCards: number; // For now, we'll make this static
+  lastStudied?: Date; // For now, we'll make this static
 }
 
 export const FlashcardDecksView = () => {
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [allFlashcards, setAllFlashcards] = useState<FlashcardFromAPI[]>([]);
+  const [cardsForStudy, setCardsForStudy] = useState<FlashcardFromAPI[]>([]);
 
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [decksRes, flashcardsRes] = await Promise.all([
+          fetch("http://localhost:5001/api/decks"),
+          fetch("http://localhost:5001/api/flashcards"),
+        ]);
+        
+        const decksData: DeckFromAPI[] = await decksRes.json();
+        const flashcardsData: FlashcardFromAPI[] = await flashcardsRes.json();
+        setAllFlashcards(flashcardsData); // Store all cards
+
+        // Enrich decks with card counts
+        const enrichedDecks: Deck[] = decksData.map(deck => {
+          const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
+          const cardCount = cardsInDeck.length;
+          // For now, let's consider all cards as 'reviewable' to activate the button
+          const reviewCards = cardCount; 
+
+          return {
+            ...deck,
+            cardCount: cardCount,
+            newCards: 0, 
+            reviewCards: reviewCards, // Use the calculated count
+          };
+        });
+
+        setDecks(enrichedDecks);
+
+      } catch (error) {
+        console.error("Failed to fetch flashcard data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // TODO: Fetch cards for the selected deck from the backend
   const sampleCards = [];
@@ -47,8 +100,10 @@ export const FlashcardDecksView = () => {
   };
 
   const handleCreateDeck = (name: string, description: string) => {
+    // This should now be a POST request to the backend
+    // For now, we'll just optimistically update the UI
     const newDeck: Deck = {
-      id: (decks.length + 1).toString(),
+      id: (decks.length + 1), // This is not robust, backend should return the new object
       name,
       description,
       cardCount: 0,
@@ -60,6 +115,9 @@ export const FlashcardDecksView = () => {
 
   const handleStudyDeck = (deck: Deck) => {
     setSelectedDeck(deck);
+    // Filter the cards for the selected deck
+    const studyCards = allFlashcards.filter(card => card.deck_id === deck.id);
+    setCardsForStudy(studyCards);
     setStudyModalOpen(true);
   };
 
@@ -181,7 +239,12 @@ export const FlashcardDecksView = () => {
         isOpen={studyModalOpen}
         onClose={() => setStudyModalOpen(false)}
         deckName={selectedDeck?.name || ""}
-        cards={sampleCards}
+        cards={cardsForStudy.map(card => ({ 
+          id: card.id.toString(),
+          question: card.question,
+          answer: card.answer,
+          concept: selectedDeck?.name || "Concept",
+        }))}
       />
 
       <NewDeckModal

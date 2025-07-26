@@ -4,7 +4,7 @@
     "question": "What is a closure in JavaScript?",
     "answer": "A function that remembers the variables from the environment in which it was created, even after that environment has closed.",
     "deck_id": 1,
-    "difficulty": "MEDIUM",
+    "difficulty": "EASY",
     "last_reviewed": "2024-07-26T10:00:00Z"
   },
   {
@@ -22,5 +22,13 @@
     "deck_id": 3,
     "difficulty": "EASY",
     "last_reviewed": "2025-07-26T17:55:53.244641"
+  },
+  {
+    "id": 5,
+    "question": "What are plankton?",
+    "answer": "Microscopic aquatic organisms that drift or float in water, forming the base of many aquatic food chains. They include phytoplankton (plants) and zooplankton (animals).",
+    "deck_id": 2,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-07-26T18:08:47.584488"
   }
 ]

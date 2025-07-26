@@ -1,5 +1,8 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
+from cerebras.cloud.sdk import Cerebras
 from services.content_generator import (
     get_all_quizzes,
     generate_quiz,
@@ -7,6 +10,8 @@ from services.content_generator import (
     generate_flashcard_deck,
     generate_chat_response
 )
+
+load_dotenv()
 
 app = Flask(__name__)
 # In a real app, you'd want to restrict the origin.
@@ -49,33 +54,6 @@ def create_flashcards():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Endpoint to handle chat messages."""
-    data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({"error": "Message is required"}), 400
-
-    message = data['message']
-    history = data.get('history', [])
-    response = generate_chat_response(message, history)
-    return jsonify({"reply": response})
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
-from flask import Flask, request, Response
-from flask_cors import CORS
-import os
-from cerebras.cloud.sdk import Cerebras
-from dotenv import load_dotenv
-
-load_dotenv()
-
-app = Flask(__name__)
-CORS(app)
-
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    
     data = request.get_json()
     user_message = data.get('message')
 
@@ -83,35 +61,38 @@ def chat():
         return Response("No message provided", status=400)
 
     def generate():
-        client = Cerebras(
-            api_key=os.environ.get("CEREBRAS_API_KEY")
-        )
+        try:
+            client = Cerebras(
+                api_key=os.environ.get("CEREBRAS_API_KEY")
+            )
 
-        stream = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant."
-                },
-                {
-                    "role": "user",
-                    "content": user_message
-                }
-            ],
-            model="qwen-3-235b-a22b",
-            stream=True,
-            max_completion_tokens=40000,
-            temperature=0.6,
-            top_p=0.95
-        )
+            stream = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant."
+                    },
+                    {
+                        "role": "user",
+                        "content": user_message
+                    }
+                ],
+                model="qwen-3-235b-a22b",
+                stream=True,
+                max_completion_tokens=40000,
+                temperature=0.6,
+                top_p=0.95
+            )
 
-        for chunk in stream:
-            content = chunk.choices[0].delta.content
-            if content:
-                yield content
+            for chunk in stream:
+                content = chunk.choices[0].delta.content
+                if content:
+                    yield content
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            yield "Error processing your request."
 
     return Response(generate(), mimetype='text/plain')
 
-
 if __name__ == '__main__':
-    app.run(port=5001, debug=True) 
+    app.run(debug=True, port=5001)

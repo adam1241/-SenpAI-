@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, History, PenTool, Brain, Sparkles, CreditCard } from "lucide-react";
+import { BookOpen, History, PenTool, Brain, CreditCard } from "lucide-react";
+import senpaiLogo from "./logo/SenpAI2.png";
 
 interface LearningHeaderProps {
   activeSection: "chat" | "notebook" | "quiz" | "history" | "flashcards";
@@ -14,12 +15,11 @@ export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCo
         <div className="flex items-center justify-between">
           {/* Logo and Title */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-learning">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">AHA Learn Lab</h1>
-              <p className="text-xs text-muted-foreground">Your AI Learning Companion</p>
+            <div className="flex items-center">
+              <img src={senpaiLogo} alt="SenpAI" className="h-10 object-contain" />
+              <div className="ml-3">
+                <p className="text-xs text-muted-foreground">Your AI Learning Companion</p>
+              </div>
             </div>
           </div>
 

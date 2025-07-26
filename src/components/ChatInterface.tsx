@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star, BookOpen } from "lucide-react";
+import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 
 interface Message {
@@ -73,8 +73,7 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
     const lifelines = {
       hint: "Here's a hint: Think about the fundamental principles we discussed earlier.",
       simpler: "Let me ask a simpler question: What's the most basic element of this concept?",
-      clarify: "What I mean is: Let's break this down into smaller, more manageable parts.",
-      lesson: "Let me create a structured lesson plan for this topic. Here's how we'll approach it step by step..."
+      clarify: "What I mean is: Let's break this down into smaller, more manageable parts."
     };
 
     const aiMessage: Message = {
@@ -253,48 +252,6 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
           </div>
         </div>
       )}
-
-      {/* Quick Action Buttons - Above Chat Input */}
-      <div className="px-4 py-3 border-t bg-muted/30">
-        <div className="flex justify-center gap-2 max-w-4xl mx-auto flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLifelineClick("hint")}
-            className="gap-1"
-          >
-            <Lightbulb className="w-3 h-3" />
-            Give me a hint
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLifelineClick("simpler")}
-            className="gap-1"
-          >
-            <MessageSquare className="w-3 h-3" />
-            Simpler question
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLifelineClick("clarify")}
-            className="gap-1"
-          >
-            <HelpCircle className="w-3 h-3" />
-            What do you mean?
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLifelineClick("lesson")}
-            className="gap-1"
-          >
-            <BookOpen className="w-3 h-3" />
-            Make lesson plan
-          </Button>
-        </div>
-      </div>
 
       {/* Message Input */}
       <div className="p-4 border-t bg-background">

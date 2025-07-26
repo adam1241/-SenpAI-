@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": 1,
+    "question": "What is a closure in JavaScript?",
+    "answer": "A function that remembers the variables from the environment in which it was created, even after that environment has closed.",
+    "deck_id": 1,
+    "difficulty": "MEDIUM",
+    "last_reviewed": "2024-07-26T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "question": "What is the powerhouse of the cell?",
+    "answer": "The mitochondrion is known as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP).",
+    "deck_id": 2,
+    "difficulty": "EASY",
+    "last_reviewed": "2024-07-26T10:05:00Z"
+  },
+  {
+    "id": 3,
+    "question": "What is a Large Language Model (LLM)?",
+    "answer": "An AI system trained on vast text datasets to understand and generate human-like language through complex pattern recognition.",
+    "deck_id": 3,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-07-26T17:55:53.244641"
+  }
+]

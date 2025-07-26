@@ -5,7 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Image, Send, Lightbulb, Type, PenTool } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload, Image, Send, Lightbulb, Type, PenTool, FileUp, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Canvas as FabricCanvas } from "fabric";
 
@@ -14,6 +17,10 @@ export const NotebookView = () => {
   const [activeMode, setActiveMode] = useState("text");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [exercisePrompt, setExercisePrompt] = useState("");
   const [aiGuidance, setAiGuidance] = useState([
     {
       id: "1",
@@ -67,8 +74,39 @@ export const NotebookView = () => {
     toast.success("AI guidance provided! 🤖");
   };
 
-  const handleImageUpload = () => {
-    toast.info("Image upload feature coming soon! 📷");
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUploadSubmit = () => {
+    if (selectedFile) {
+      toast.success(`File "${selectedFile.name}" uploaded successfully! 📁`);
+      setUploadModalOpen(false);
+      setSelectedFile(null);
+    } else {
+      toast.error("Please select a file to upload");
+    }
+  };
+
+  const handleGenerateSubmit = () => {
+    if (exercisePrompt.trim()) {
+      toast.success("Exercise generated successfully! 🎯");
+      setGenerateModalOpen(false);
+      setExercisePrompt("");
+      
+      // Add generated exercise to AI guidance
+      const newGuidance = {
+        id: Date.now().toString(),
+        content: `Generated exercise: ${exercisePrompt}. Here's a tailored problem to work through...`,
+        timestamp: new Date(),
+      };
+      setAiGuidance(prev => [...prev, newGuidance]);
+    } else {
+      toast.error("Please enter a prompt to generate an exercise");
+    }
   };
 
   const handleClearCanvas = () => {
@@ -88,14 +126,82 @@ export const NotebookView = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground">Your Learning Workspace</h2>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleImageUpload} className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  Upload Image
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleImageUpload} className="gap-2">
-                  <Image className="w-4 h-4" />
-                  Generate Exercise
-                </Button>
+                {/* Upload Modal */}
+                <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Upload className="w-4 h-4" />
+                      Upload Image
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Upload Image</DialogTitle>
+                      <DialogDescription>
+                        Upload an image to include in your notebook or use for reference.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid w-full max-w-sm items-center gap-1.5">
+                        <Label htmlFor="image-upload">Select Image</Label>
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                      {selectedFile && (
+                        <div className="text-sm text-muted-foreground">
+                          Selected: {selectedFile.name}
+                        </div>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" onClick={handleUploadSubmit}>
+                        <FileUp className="w-4 h-4 mr-2" />
+                        Upload
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Generate Exercise Modal */}
+                <Dialog open={generateModalOpen} onOpenChange={setGenerateModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      Generate Exercise
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Generate Custom Exercise</DialogTitle>
+                      <DialogDescription>
+                        Describe what kind of exercise you'd like to work on, and AI will create a tailored problem for you.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="exercise-prompt">Exercise Description</Label>
+                        <Textarea
+                          id="exercise-prompt"
+                          placeholder="E.g., 'Create a math problem about quadratic equations' or 'Generate a physics problem about momentum'"
+                          value={exercisePrompt}
+                          onChange={(e) => setExercisePrompt(e.target.value)}
+                          className="min-h-[100px]"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" onClick={handleGenerateSubmit}>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
             

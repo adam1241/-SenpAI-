@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, BookOpen, Calendar, TrendingUp } from "lucide-react";
+import { StudyModal } from "./StudyModal";
+import { NewDeckModal } from "./NewDeckModal";
 
 interface Deck {
   id: string;
@@ -15,7 +17,7 @@ interface Deck {
 }
 
 export const FlashcardDecksView = () => {
-  const [decks] = useState<Deck[]>([
+  const [decks, setDecks] = useState<Deck[]>([
     {
       id: "1",
       name: "Mathematics Fundamentals",
@@ -45,6 +47,32 @@ export const FlashcardDecksView = () => {
     },
   ]);
 
+  const [studyModalOpen, setStudyModalOpen] = useState(false);
+  const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
+  const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
+
+  // Sample cards for demo
+  const sampleCards = [
+    {
+      id: "1",
+      concept: "Algebra",
+      question: "What is the quadratic formula?",
+      answer: "x = (-b ± √(b² - 4ac)) / 2a, where a, b, and c are coefficients of ax² + bx + c = 0"
+    },
+    {
+      id: "2", 
+      concept: "Geometry",
+      question: "What is the area of a circle?",
+      answer: "A = πr², where r is the radius of the circle"
+    },
+    {
+      id: "3",
+      concept: "Calculus", 
+      question: "What is the derivative of sin(x)?",
+      answer: "The derivative of sin(x) is cos(x)"
+    }
+  ];
+
   const formatLastStudied = (date?: Date) => {
     if (!date) return "Never";
     const now = new Date();
@@ -65,6 +93,23 @@ export const FlashcardDecksView = () => {
     return decks.reduce((total, deck) => total + deck.reviewCards, 0);
   };
 
+  const handleCreateDeck = (name: string, description: string) => {
+    const newDeck: Deck = {
+      id: (decks.length + 1).toString(),
+      name,
+      description,
+      cardCount: 0,
+      newCards: 0,
+      reviewCards: 0,
+    };
+    setDecks([...decks, newDeck]);
+  };
+
+  const handleStudyDeck = (deck: Deck) => {
+    setSelectedDeck(deck);
+    setStudyModalOpen(true);
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="mb-8">
@@ -73,7 +118,7 @@ export const FlashcardDecksView = () => {
             <h1 className="text-3xl font-bold text-foreground">Flashcard Decks</h1>
             <p className="text-muted-foreground">Organize and study your knowledge with spaced repetition</p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setNewDeckModalOpen(true)}>
             <Plus className="w-4 h-4" />
             New Deck
           </Button>
@@ -167,6 +212,7 @@ export const FlashcardDecksView = () => {
                   <Button 
                     className="w-full" 
                     disabled={deck.newCards === 0 && deck.reviewCards === 0}
+                    onClick={() => handleStudyDeck(deck)}
                   >
                     {deck.newCards > 0 || deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
                   </Button>
@@ -176,6 +222,20 @@ export const FlashcardDecksView = () => {
           </Card>
         ))}
       </div>
+
+      {/* Modals */}
+      <StudyModal
+        isOpen={studyModalOpen}
+        onClose={() => setStudyModalOpen(false)}
+        deckName={selectedDeck?.name || ""}
+        cards={sampleCards}
+      />
+
+      <NewDeckModal
+        isOpen={newDeckModalOpen}
+        onClose={() => setNewDeckModalOpen(false)}
+        onCreateDeck={handleCreateDeck}
+      />
     </div>
   );
 };

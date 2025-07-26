@@ -37,7 +37,13 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
     setMessages(prev => [...prev, userMessage]);
     const messageToSend = inputMessage;
     setInputMessage("");
-    setIsTyping(true);
+
+    // Prepare the history for the API
+    const apiHistory = [...messages, userMessage].map(({ id, timestamp, isMastery, isUser, ...rest }) => ({
+      ...rest,
+      role: isUser ? 'user' : 'assistant'
+    }));
+
 
     try {
       const response = await fetch('http://localhost:5001/api/chat', {
@@ -45,7 +51,7 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: messageToSend }),
+        body: JSON.stringify({ messages: apiHistory }),
       });
 
       if (!response.body) return;

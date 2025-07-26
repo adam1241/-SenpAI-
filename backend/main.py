@@ -3,6 +3,9 @@ from flask_cors import CORS
 import os
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
+from database import Database
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
@@ -48,6 +51,11 @@ def chat():
                 yield content
 
     return Response(generate(), mimetype='text/plain')
+
+
+@app.route('/api/flashcards', methods=['GET'])
+def get_flashcards():
+    return Response(Database.load_table("flash_cards"), status=200)
 
 
 if __name__ == '__main__':

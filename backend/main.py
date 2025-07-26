@@ -8,7 +8,6 @@ from services.content_generator import (
     generate_quiz,
     get_all_flashcard_decks,
     generate_flashcard_deck,
-    generate_chat_response
 )
 
 load_dotenv()

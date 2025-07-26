@@ -56,16 +56,6 @@ export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCo
             </Button>
 
             <Button
-              variant={activeSection === "history" ? "learning" : "ghost"}
-              size="sm"
-              onClick={() => onSectionChange("history")}
-              className="gap-2"
-            >
-              <History className="w-4 h-4" />
-              History
-            </Button>
-
-            <Button
               variant={activeSection === "flashcards" ? "learning" : "ghost"}
               size="sm"
               onClick={() => onSectionChange("flashcards")}
@@ -78,6 +68,16 @@ export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCo
                   {newFlashcardsCount}
                 </span>
               )}
+            </Button>
+
+            <Button
+              variant={activeSection === "history" ? "learning" : "ghost"}
+              size="sm"
+              onClick={() => onSectionChange("history")}
+              className="gap-2"
+            >
+              <History className="w-4 h-4" />
+              History
             </Button>
           </nav>
         </div>

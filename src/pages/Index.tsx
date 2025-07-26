@@ -5,9 +5,11 @@ import { NotebookView } from "@/components/NotebookView";
 import { QuizView } from "@/components/QuizView";
 import { HistoryView } from "@/components/HistoryView";
 import { FlashcardModal } from "@/components/FlashcardModal";
+import { FlashcardDecksView } from "@/components/FlashcardDecksView";
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history">("chat");
+  const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
+  const [newFlashcardsCount, setNewFlashcardsCount] = useState(3);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [flashcardData, setFlashcardData] = useState<{
     concept: string;
@@ -34,6 +36,8 @@ const Index = () => {
         return <QuizView />;
       case "history":
         return <HistoryView />;
+      case "flashcards":
+        return <FlashcardDecksView />;
       default:
         return <ChatInterface onCreateFlashcard={handleCreateFlashcard} />;
     }
@@ -43,7 +47,8 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-background">
       <LearningHeader 
         activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
+        onSectionChange={setActiveSection}
+        newFlashcardsCount={newFlashcardsCount}
       />
       
       <main className="h-[calc(100vh-80px)]">

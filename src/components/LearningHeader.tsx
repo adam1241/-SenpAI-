@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, History, PenTool, Brain, Sparkles } from "lucide-react";
+import { BookOpen, History, PenTool, Brain, Sparkles, CreditCard } from "lucide-react";
 
 interface LearningHeaderProps {
-  activeSection: "chat" | "notebook" | "quiz" | "history";
-  onSectionChange: (section: "chat" | "notebook" | "quiz" | "history") => void;
+  activeSection: "chat" | "notebook" | "quiz" | "history" | "flashcards";
+  onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
+  newFlashcardsCount?: number;
 }
 
-export const LearningHeader = ({ activeSection, onSectionChange }: LearningHeaderProps) => {
+export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCount = 0 }: LearningHeaderProps) => {
   return (
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
@@ -62,6 +63,21 @@ export const LearningHeader = ({ activeSection, onSectionChange }: LearningHeade
             >
               <History className="w-4 h-4" />
               History
+            </Button>
+
+            <Button
+              variant={activeSection === "flashcards" ? "learning" : "ghost"}
+              size="sm"
+              onClick={() => onSectionChange("flashcards")}
+              className="gap-2 relative"
+            >
+              <CreditCard className="w-4 h-4 text-warning" />
+              Flashcards
+              {newFlashcardsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-warning text-warning-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {newFlashcardsCount}
+                </span>
+              )}
             </Button>
           </nav>
         </div>

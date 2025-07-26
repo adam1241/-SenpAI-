@@ -1,9 +1,10 @@
 
-from dataclasses import dataclass 
+from pydantic import BaseModel 
 
-@dataclass
-class Deck:
+
+class Deck(BaseModel):
     id: int
     name: str
     description: str
+    
     

@@ -35,39 +35,59 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = inputMessage;
     setInputMessage("");
     setIsTyping(true);
 
-    // Simulate AI response with potential mastery moment
-    setTimeout(() => {
-      const responses = [
-        "That's an interesting point! Let me ask you this: Can you think of a real-world example where this concept applies?",
-        "Great question! Instead of giving you the answer directly, let me guide you: What do you think might happen if we change one variable?",
-        "I can see you're thinking deeply about this. What patterns do you notice?",
-        "Excellent insight! You've just demonstrated mastery of this concept. Would you like to save this as a flashcard?"
-      ];
+    try {
+      const response = await fetch('http://localhost:5001/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: messageToSend }),
+      });
 
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      const isMastery = randomResponse.includes("mastery");
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: randomResponse,
+        content: "",
         isUser: false,
         timestamp: new Date(),
-        isMastery,
       };
-
       setMessages(prev => [...prev, aiMessage]);
-      setIsTyping(false);
 
-      if (isMastery) {
-        toast.success("🎉 Concept Mastered!", {
-          description: "You've shown great understanding! Ready to create a flashcard?",
-          duration: 5000,
-        });
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk) {
+          setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+            if (!lastMessage.isUser) {
+              lastMessage.content += chunk;
+            }
+            return [...prev];
+          });
+        }
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Sorry, I'm having trouble connecting to the AI. Please try again later.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleLifelineClick = (type: string) => {

@@ -2,22 +2,35 @@ import json
 import os
 
 class Database:
-    def __init__(self):
-        self.tables = {
-            "flash_cards": "./database/flash_cards.json"
-        }
+    """
+    A simple database implementation using JSON files.
+    """
 
-    def load_table(self, table_name):
-        if os.path.exists(self.tables[table_name]):
-            with open(self.tables[table_name], "r") as f:
+    tables = {
+        "flash_cards": "../database/flash_cards.json",
+        "decks": "../database/decks.json",
+        "quizzes": "../database/quizzes.json"
+    }
+
+    @staticmethod
+    def load_table(table_name):
+        """
+        Loads the data from a table. If the table does not exist, returns an empty list.
+        """
+        if os.path.exists(Database.tables[table_name]):
+            with open(Database.tables[table_name], "r") as f:
                 return json.load(f)
         return []
 
-    def add_to_table(self, table_name, data):
+    @staticmethod
+    def add_to_table(table_name, data):
+        """
+        Adds data to a table.
+        """
         # Load existing data
-        existing_data = self.load_table(table_name)
+        existing_data = Database.load_table(table_name)
         # Append new data
         existing_data.append(data)
         # Write back the complete list
-        with open(self.tables[table_name], "w") as f:
+        with open(Database.tables[table_name], "w") as f:
             json.dump(existing_data, f, indent=2)

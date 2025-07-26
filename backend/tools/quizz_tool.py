@@ -1,16 +1,14 @@
 
 
-
+from models.quizz_model import Quizz
+from utils.database import Database
+from pydantic import ValidationError
 
 class QuizzTool:
-    def __init__(self):
-        self.quizzes = []
-    
+
     def add_quiz(self, quiz):
-        self.quizzes.append(quiz)
-    
-    def remove_quiz(self, quiz):
-        self.quizzes.remove(quiz)
-    
-    def get_quizzes(self):
-        return self.quizzes
+        try:
+            Quizz.model_validate_json(quiz)
+            Database.add_to_table("quizzes", quiz)
+        except ValidationError as e:
+            raise ValueError(f"Validation error: {e}")

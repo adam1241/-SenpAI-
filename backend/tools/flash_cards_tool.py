@@ -1,15 +1,15 @@
 
 
+from models import FlashCard
+from utils import Database
+from pydantic import ValidationError
 
 class FlashCardsTool:
-    def __init__(self):
-        self.flash_cards = []
+
+    def add_flash_card(self, flash_card: str):
+        try:
+            FlashCard.model_validate_json(flash_card)
+            Database.add_to_table("flash_cards", flash_card)
+        except ValidationError as e:
+            raise ValueError(f"Validation error: {e}")    
     
-    def add_flash_card(self, flash_card: FlashCard):
-        self.flash_cards.append(flash_card)
-    
-    def remove_flash_card(self, flash_card):
-        self.flash_cards.remove(flash_card)
-    
-    def get_flash_cards(self):
-        return self.flash_cards

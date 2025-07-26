@@ -6,10 +6,15 @@ class Database:
     A simple database implementation using JSON files.
     """
 
+    # Get the directory where this script is located
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Go up two levels: utils -> backend -> project root, then into database
+    _database_dir = os.path.join(os.path.dirname(os.path.dirname(_script_dir)), "database")
+    
     tables = {
-        "flash_cards": "../database/flash_cards.json",
-        "decks": "../database/decks.json",
-        "quizzes": "../database/quizzes.json"
+        "flash_cards": os.path.join(_database_dir, "flash_cards.json"),
+        "decks": os.path.join(_database_dir, "decks.json"),
+        "quizzes": os.path.join(_database_dir, "quizzes.json")
     }
 
     @staticmethod

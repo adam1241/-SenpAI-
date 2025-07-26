@@ -17,61 +17,14 @@ interface Deck {
 }
 
 export const FlashcardDecksView = () => {
-  const [decks, setDecks] = useState<Deck[]>([
-    {
-      id: "1",
-      name: "Mathematics Fundamentals",
-      description: "Basic algebra, geometry, and calculus concepts",
-      cardCount: 45,
-      newCards: 3,
-      reviewCards: 12,
-      lastStudied: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
-    },
-    {
-      id: "2", 
-      name: "Physics Concepts",
-      description: "Classical mechanics and thermodynamics",
-      cardCount: 32,
-      newCards: 0,
-      reviewCards: 8,
-      lastStudied: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    },
-    {
-      id: "3",
-      name: "Chemistry Basics",
-      description: "Periodic table, chemical bonds, and reactions",
-      cardCount: 28,
-      newCards: 0,
-      reviewCards: 5,
-      lastStudied: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-    },
-  ]);
+  const [decks, setDecks] = useState<Deck[]>([]);
 
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
 
-  // Sample cards for demo
-  const sampleCards = [
-    {
-      id: "1",
-      concept: "Algebra",
-      question: "What is the quadratic formula?",
-      answer: "x = (-b ± √(b² - 4ac)) / 2a, where a, b, and c are coefficients of ax² + bx + c = 0"
-    },
-    {
-      id: "2", 
-      concept: "Geometry",
-      question: "What is the area of a circle?",
-      answer: "A = πr², where r is the radius of the circle"
-    },
-    {
-      id: "3",
-      concept: "Calculus", 
-      question: "What is the derivative of sin(x)?",
-      answer: "The derivative of sin(x) is cos(x)"
-    }
-  ];
+  // TODO: Fetch cards for the selected deck from the backend
+  const sampleCards = [];
 
   const formatLastStudied = (date?: Date) => {
     if (!date) return "Never";

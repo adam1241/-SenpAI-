@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,94 +25,14 @@ interface Quiz {
   bestScore?: number;
 }
 
-const sampleQuizzes: Quiz[] = [
-  {
-    id: "1",
-    title: "Learning Methodologies",
-    description: "Test your knowledge of different learning approaches and techniques",
-    difficulty: "medium",
-    category: "Education",
-    estimatedTime: 10,
-    completedCount: 3,
-    bestScore: 85,
-    questions: [
-      {
-        id: "1",
-        question: "What is the primary goal of the Socratic method in learning?",
-        options: [
-          "To provide direct answers to all questions",
-          "To guide learners to discover answers through questioning",
-          "To test memorization of facts",
-          "To speed up the learning process"
-        ],
-        correctAnswer: 1,
-        explanation: "The Socratic method guides learners to discover answers through strategic questioning, promoting deeper understanding and critical thinking."
-      },
-      {
-        id: "2",
-        question: "When should a 'Moment of Mastery' be triggered in a learning system?",
-        options: [
-          "After every correct answer",
-          "When the AI determines the user understands a concept",
-          "At the end of each lesson",
-          "When the user asks for it"
-        ],
-        correctAnswer: 1,
-        explanation: "A 'Moment of Mastery' should be triggered when the AI recognizes that the user has demonstrated genuine understanding of a concept, not just memorization."
-      }
-    ]
-  },
-  {
-    id: "2",
-    title: "Critical Thinking Skills",
-    description: "Evaluate your ability to analyze and synthesize information",
-    difficulty: "hard",
-    category: "Cognitive Skills",
-    estimatedTime: 15,
-    completedCount: 1,
-    bestScore: 72,
-    questions: [
-      {
-        id: "3",
-        question: "What is the most important aspect of critical thinking?",
-        options: [
-          "Memorizing facts quickly",
-          "Questioning assumptions and evidence",
-          "Following established procedures",
-          "Accepting expert opinions"
-        ],
-        correctAnswer: 1,
-        explanation: "Critical thinking involves questioning assumptions, evaluating evidence, and forming independent judgments."
-      }
-    ]
-  },
-  {
-    id: "3",
-    title: "Study Techniques",
-    description: "Learn about effective study methods and retention strategies",
-    difficulty: "easy",
-    category: "Study Skills",
-    estimatedTime: 8,
-    completedCount: 0,
-    questions: [
-      {
-        id: "4",
-        question: "Which study technique is most effective for long-term retention?",
-        options: [
-          "Cramming before exams",
-          "Spaced repetition over time",
-          "Reading notes once",
-          "Highlighting everything"
-        ],
-        correctAnswer: 1,
-        explanation: "Spaced repetition has been scientifically proven to be the most effective method for long-term retention."
-      }
-    ]
-  }
-];
-
 export const QuizView = () => {
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+
+  // TODO: Fetch quizzes from the backend
+  useEffect(() => {
+    // setQuizzes(fetchedQuizzes);
+  }, []);
 
   const handleStartQuiz = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -122,10 +42,10 @@ export const QuizView = () => {
     setSelectedQuiz(null);
   };
 
-  const getTotalQuizzes = () => sampleQuizzes.length;
-  const getCompletedQuizzes = () => sampleQuizzes.filter(quiz => quiz.completedCount > 0).length;
+  const getTotalQuizzes = () => quizzes.length;
+  const getCompletedQuizzes = () => quizzes.filter(quiz => quiz.completedCount > 0).length;
   const getAverageScore = () => {
-    const completedQuizzes = sampleQuizzes.filter(quiz => quiz.bestScore !== undefined);
+    const completedQuizzes = quizzes.filter(quiz => quiz.bestScore !== undefined);
     if (completedQuizzes.length === 0) return 0;
     const totalScore = completedQuizzes.reduce((sum, quiz) => sum + (quiz.bestScore || 0), 0);
     return Math.round(totalScore / completedQuizzes.length);
@@ -185,7 +105,7 @@ export const QuizView = () => {
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{getCompletedQuizzes()}</div>
               <p className="text-xs text-muted-foreground">
-                {Math.round((getCompletedQuizzes() / getTotalQuizzes()) * 100)}% completion rate
+                {quizzes.length > 0 ? Math.round((getCompletedQuizzes() / getTotalQuizzes()) * 100) : 0}% completion rate
               </p>
             </CardContent>
           </Card>
@@ -208,7 +128,7 @@ export const QuizView = () => {
 
         {/* Quiz Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sampleQuizzes.map((quiz) => (
+          {quizzes.map((quiz) => (
             <Card key={quiz.id} className="hover:shadow-md transition-shadow cursor-pointer group">
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">

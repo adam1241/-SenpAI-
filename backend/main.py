@@ -1,7 +1,14 @@
-from flask import Flask, request, Response
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 import os
+from dotenv import load_dotenv
 from cerebras.cloud.sdk import Cerebras
+from services.content_generator import (
+    get_all_quizzes,
+    generate_quiz,
+    get_all_flashcard_decks,
+    generate_flashcard_deck,
+)
 from dotenv import load_dotenv
 from utils import Database
 from prompts.socratic_tutor import get_socratic_tutor_prompt
@@ -9,87 +16,85 @@ from prompts.socratic_tutor import get_socratic_tutor_prompt
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+# In a real app, you'd want to restrict the origin.
+# For development, '*' is fine.
+CORS(app) 
 
+@app.route('/api/quizzes', methods=['GET'])
+def list_quizzes():
+    """Endpoint to get all available quizzes."""
+    quizzes = get_all_quizzes()
+    return jsonify(quizzes)
+
+@app.route('/api/quizzes', methods=['POST'])
+def create_quiz():
+    """Endpoint to generate a new quiz."""
+    data = request.get_json()
+    if not data or 'topic' not in data:
+        return jsonify({"error": "Topic is required"}), 400
+    
+    topic = data['topic']
+    new_quiz = generate_quiz(topic)
+    return jsonify(new_quiz), 201
+
+@app.route('/api/flashcards', methods=['GET'])
+def list_flashcards():
+    """Endpoint to get all available flashcard decks."""
+    decks = get_all_flashcard_decks()
+    return jsonify(decks)
+
+@app.route('/api/flashcards', methods=['POST'])
+def create_flashcards():
+    """Endpoint to generate a new flashcard deck."""
+    data = request.get_json()
+    if not data or 'topic' not in data:
+        return jsonify({"error": "Topic is required"}), 400
+        
+    topic = data['topic']
+    new_deck = generate_flashcard_deck(topic)
+    return jsonify(new_deck), 201
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
     data = request.get_json()
-    # We now expect a 'messages' array from the frontend
-    conversation_history = data.get('messages')
+    user_message = data.get('message')
 
-    if not conversation_history:
-        return Response("No messages provided", status=400)
+    if not user_message:
+        return Response("No message provided", status=400)
 
     def generate():
-        client = Cerebras(
-            api_key=os.environ.get("CEREBRAS_API_KEY")
-        )
+        try:
+            client = Cerebras(
+                api_key=os.environ.get("CEREBRAS_API_KEY")
+            )
 
-        # The first message is always the system prompt
-        system_prompt = {
-            "role": "system",
-            "content": get_socratic_tutor_prompt()
-        }
-        
-        # The history from the frontend is already formatted
-        api_messages = [system_prompt] + conversation_history
+            stream = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant."
+                    },
+                    {
+                        "role": "user",
+                        "content": user_message
+                    }
+                ],
+                model="qwen-3-235b-a22b",
+                stream=True,
+                max_completion_tokens=40000,
+                temperature=0.6,
+                top_p=0.95
+            )
 
-        stream = client.chat.completions.create(
-            messages=api_messages,
-            model="qwen-3-235b-a22b",
-            stream=True,
-            max_completion_tokens=40000,
-            temperature=0.6,
-            top_p=0.95
-        )
-
-        buffer = ""
-        in_think_block = False
-        for chunk in stream:
-            content = chunk.choices[0].delta.content
-            if not content:
-                continue
-
-            buffer += content
-
-            while True:
-                if in_think_block:
-                    end_tag_pos = buffer.find("</think>")
-                    if end_tag_pos != -1:
-                        # End of think block. Update buffer and flip state.
-                        buffer = buffer[end_tag_pos + len("</think>"):]
-                        in_think_block = False
-                    else:
-                        # Still in a think block. Discard buffer and wait for
-                        # more chunks to find the end tag.
-                        buffer = ""
-                        break
-                else:  # not in_think_block
-                    start_tag_pos = buffer.find("<think>")
-                    if start_tag_pos != -1:
-                        # Start of a think block. Yield content before it.
-                        part_to_yield = buffer[:start_tag_pos]
-                        if part_to_yield:
-                            yield part_to_yield
-
-                        # Update buffer to after the tag and flip state.
-                        buffer = buffer[start_tag_pos + len("<think>"):]
-                        in_think_block = True
-                    else:
-                        # No tags found. The whole buffer is valid content.
-                        if buffer:
-                            yield buffer
-                        buffer = ""
-                        break
+            for chunk in stream:
+                content = chunk.choices[0].delta.content
+                if content:
+                    yield content
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            yield "Error processing your request."
 
     return Response(generate(), mimetype='text/plain')
 
-
-@app.route('/api/flashcards', methods=['GET'])
-def get_flashcards():
-    return Response(Database.load_table("flash_cards"), status=200)
-
-
 if __name__ == '__main__':
-    app.run(port=5001, debug=True) 
+    app.run(debug=True, port=5001)

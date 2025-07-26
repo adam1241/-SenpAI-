@@ -15,14 +15,14 @@ import { Canvas as FabricCanvas } from "fabric";
 export const NotebookView = () => {
   const [userWork, setUserWork] = useState("");
   const [activeMode, setActiveMode] = useState("text");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const canvasRef = useRef(null);
+  const fabricCanvasRef = useRef(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [exercisePrompt, setExercisePrompt] = useState("");
-  const [generatedExercise, setGeneratedExercise] = useState<string | null>(null);
+  const [generatedExercise, setGeneratedExercise] = useState(null);
   const [aiGuidance, setAiGuidance] = useState([
     {
       id: "1",
@@ -32,27 +32,75 @@ export const NotebookView = () => {
   ]);
 
   useEffect(() => {
-    if (!canvasRef.current || activeMode !== "drawing") return;
+    if (activeMode !== 'drawing' || !canvasRef.current) {
+      if (fabricCanvasRef.current) {
+        fabricCanvasRef.current.dispose();
+        fabricCanvasRef.current = null;
+      }
+      return;
+    }
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width: canvasRef.current.offsetWidth,
-      height: 600,
-      backgroundColor: "#ffffff",
-    });
+    const canvasElement = canvasRef.current;
+    const container = canvasElement.parentElement;
+    if (!container) return;
 
-    canvas.freeDrawingBrush.color = "#2563eb";
-    canvas.freeDrawingBrush.width = 3;
-    canvas.isDrawingMode = true;
+    const initializeCanvas = () => {
+      const width = container.offsetWidth;
+      const height = container.offsetHeight;
+      const isVisible = container.offsetParent !== null;
 
-    setFabricCanvas(canvas);
+      if (width === 0 || height === 0 || !isVisible) {
+        setTimeout(initializeCanvas, 100);
+        return;
+      }
+
+      const canvas = new FabricCanvas(canvasElement, {
+        width,
+        height,
+        backgroundColor: '#ffffff',
+        isDrawingMode: true,
+      });
+
+      canvas.freeDrawingBrush.color = '#2563eb';
+      canvas.freeDrawingBrush.width = 3;
+
+      canvas.on('mouse:down', (event) => {
+        console.log('Mouse down on canvas:', event);
+      });
+
+      fabricCanvasRef.current = canvas;
+
+      const observer = new ResizeObserver(entries => {
+        const { width, height } = entries[0].contentRect;
+        if (fabricCanvasRef.current && width > 0 && height > 0) {
+          fabricCanvasRef.current.setDimensions({ width, height });
+          fabricCanvasRef.current.renderAll();
+        }
+      });
+
+      observer.observe(container);
+
+      return () => {
+        observer.disconnect();
+        if (fabricCanvasRef.current) {
+          fabricCanvasRef.current.dispose();
+          fabricCanvasRef.current = null;
+        }
+      };
+    };
+
+    initializeCanvas();
 
     return () => {
-      canvas.dispose();
+      if (fabricCanvasRef.current) {
+        fabricCanvasRef.current.dispose();
+        fabricCanvasRef.current = null;
+      }
     };
   }, [activeMode]);
 
   const handleRequestGuidance = () => {
-    const hasContent = userWork.trim() || (fabricCanvas && fabricCanvas.getObjects().length > 0);
+    const hasContent = userWork.trim() || (fabricCanvasRef.current && fabricCanvasRef.current.getObjects().length > 0);
     
     if (!hasContent) {
       toast.info("Start working on your exercise, and I'll help guide you!");
@@ -76,7 +124,7 @@ export const NotebookView = () => {
     toast.success("AI guidance provided! 🤖");
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
@@ -85,7 +133,6 @@ export const NotebookView = () => {
 
   const handleUploadSubmit = () => {
     if (selectedFile) {
-      // Create URL for the uploaded image
       const imageUrl = URL.createObjectURL(selectedFile);
       setUploadedImageUrl(imageUrl);
       toast.success(`File "${selectedFile.name}" uploaded successfully! 📁`);
@@ -98,7 +145,6 @@ export const NotebookView = () => {
 
   const handleGenerateSubmit = () => {
     if (exercisePrompt.trim()) {
-      // Generate a simulated exercise based on the prompt
       const generatedText = `Generated Exercise: ${exercisePrompt}\n\nHere's a tailored problem based on your request. Work through this step by step and I'll provide guidance along the way.`;
       setGeneratedExercise(generatedText);
       
@@ -106,7 +152,6 @@ export const NotebookView = () => {
       setGenerateModalOpen(false);
       setExercisePrompt("");
       
-      // Add generated exercise to AI guidance
       const newGuidance = {
         id: Date.now().toString(),
         content: `I've generated a custom exercise for you! Check it out above the workspace tabs.`,
@@ -119,23 +164,25 @@ export const NotebookView = () => {
   };
 
   const handleClearCanvas = () => {
-    if (!fabricCanvas) return;
-    fabricCanvas.clear();
-    fabricCanvas.backgroundColor = "#ffffff";
-    fabricCanvas.renderAll();
+    if (!fabricCanvasRef.current) {
+      toast.error("Canvas is not initialized. Try switching to the drawing tab first.");
+      return;
+    }
+    const canvas = fabricCanvasRef.current;
+    canvas.clear();
+    canvas.backgroundColor = "#ffffff";
+    canvas.renderAll();
     toast.success("Canvas cleared!");
   };
 
   return (
     <div className="h-full flex gap-6 p-6 max-w-7xl mx-auto">
-      {/* Main Work Area */}
       <div className="flex-1">
         <Card className="h-full p-6">
           <div className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground">Your Learning Workspace</h2>
               <div className="flex gap-2">
-                {/* Upload Modal */}
                 <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
@@ -176,7 +223,6 @@ export const NotebookView = () => {
                   </DialogContent>
                 </Dialog>
 
-                {/* Generate Exercise Modal */}
                 <Dialog open={generateModalOpen} onOpenChange={setGenerateModalOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
@@ -214,7 +260,6 @@ export const NotebookView = () => {
               </div>
             </div>
             
-            {/* Exercise Display Section */}
             {(uploadedImageUrl || generatedExercise) && (
               <Card className="p-4 mb-4 bg-muted/30">
                 <div className="space-y-3">
@@ -269,11 +314,10 @@ export const NotebookView = () => {
                     Clear Canvas
                   </Button>
                 </div>
-                <div className="flex-1 border rounded-md bg-white overflow-hidden">
+                <div className="flex-1 border rounded-md bg-white overflow-hidden canvas-container">
                   <canvas 
                     ref={canvasRef} 
                     className="block cursor-crosshair"
-                    style={{ width: '100%', height: '100%' }}
                   />
                 </div>
               </TabsContent>
@@ -289,7 +333,6 @@ export const NotebookView = () => {
         </Card>
       </div>
 
-      {/* AI Guidance Sidebar */}
       <div className="w-80">
         <Card className="h-full p-4">
           <h3 className="text-lg font-semibold mb-4 text-foreground">AI Guidance</h3>

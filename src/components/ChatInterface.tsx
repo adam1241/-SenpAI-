@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import senpaiLogo from "./logo/SenpAI2.png";
 
 interface Message {
   id: string;
@@ -131,11 +132,10 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
           {messages.length === 0 ? (
             /* Idle State with Logo */
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-              <div className="mb-8">
-                <div className="flex items-center justify-center w-24 h-24 rounded-full bg-gradient-learning mb-6 animate-float">
-                  <Sparkles className="w-12 h-12 text-white animate-sparkle" />
+              <div className="flex flex-col items-center mb-8">
+                <div className="flex items-center justify-center w-96 h-96 rounded-full bg-gradient-learning mb-0 p-2">
+                  <img src={senpaiLogo} alt="SenpAI" className="w-full h-full object-contain" />
                 </div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">AHA Learn Lab</h2>
                 <p className="text-muted-foreground text-lg mb-4">Your AI Learning Companion</p>
                 <p className="text-muted-foreground max-w-md">
                   Ready to explore? Ask me anything you'd like to learn about. I'll guide you through discovery using the Socratic method.

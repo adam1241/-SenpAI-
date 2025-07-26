@@ -19,14 +19,7 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Hello! I'm your AI learning companion. I'm here to guide you through your learning journey using the Socratic method. What would you like to explore today?",
-      isUser: false,
-      timestamp: new Date(),
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
@@ -105,47 +98,108 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Chat Messages */}
+      {/* Chat Messages or Idle State */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4 max-w-4xl mx-auto">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
-            >
-              <Card className={`max-w-[80%] p-4 ${
-                message.isUser 
-                  ? "bg-primary text-primary-foreground" 
-                  : message.isMastery
-                  ? "bg-success-light border-success animate-celebration"
-                  : "bg-card"
-              }`}>
-                {message.isMastery && (
-                  <div className="flex items-center gap-2 mb-2 text-success">
-                    <Star className="w-4 h-4 animate-sparkle" />
-                    <span className="text-sm font-semibold">Moment of Mastery!</span>
-                    <Sparkles className="w-4 h-4 animate-sparkle" />
-                  </div>
-                )}
-                <p className="text-sm">{message.content}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs opacity-70">
-                    {message.timestamp.toLocaleTimeString()}
-                  </span>
-                  {message.isMastery && (
-                    <Button
-                      variant="mastery"
-                      size="lifeline"
-                      onClick={handleCreateFlashcard}
-                      className="ml-2"
-                    >
-                      Save as Flashcard
-                    </Button>
-                  )}
+          {messages.length === 0 ? (
+            /* Idle State with Logo */
+            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+              <div className="mb-8">
+                <div className="flex items-center justify-center w-24 h-24 rounded-full bg-gradient-learning mb-6 animate-float">
+                  <Sparkles className="w-12 h-12 text-white animate-sparkle" />
                 </div>
-              </Card>
+                <h2 className="text-2xl font-bold text-foreground mb-2">AHA Learn Lab</h2>
+                <p className="text-muted-foreground text-lg mb-4">Your AI Learning Companion</p>
+                <p className="text-muted-foreground max-w-md">
+                  Ready to explore? Ask me anything you'd like to learn about. I'll guide you through discovery using the Socratic method.
+                </p>
+              </div>
+              
+              {/* Quick Start Suggestions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                <Button 
+                  variant="outline" 
+                  className="p-4 h-auto text-left justify-start"
+                  onClick={() => setInputMessage("How does photosynthesis work?")}
+                >
+                  <div>
+                    <div className="font-medium">🌱 Science</div>
+                    <div className="text-sm text-muted-foreground">How does photosynthesis work?</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="p-4 h-auto text-left justify-start"
+                  onClick={() => setInputMessage("Explain the quadratic formula")}
+                >
+                  <div>
+                    <div className="font-medium">📐 Math</div>
+                    <div className="text-sm text-muted-foreground">Explain the quadratic formula</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="p-4 h-auto text-left justify-start"
+                  onClick={() => setInputMessage("What causes gravity?")}
+                >
+                  <div>
+                    <div className="font-medium">🔬 Physics</div>
+                    <div className="text-sm text-muted-foreground">What causes gravity?</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="p-4 h-auto text-left justify-start"
+                  onClick={() => setInputMessage("How do chemical bonds form?")}
+                >
+                  <div>
+                    <div className="font-medium">⚗️ Chemistry</div>
+                    <div className="text-sm text-muted-foreground">How do chemical bonds form?</div>
+                  </div>
+                </Button>
+              </div>
             </div>
-          ))}
+          ) : (
+            /* Chat Messages */
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+              >
+                <Card className={`max-w-[80%] p-4 ${
+                  message.isUser 
+                    ? "bg-primary text-primary-foreground" 
+                    : message.isMastery
+                    ? "bg-success-light border-success animate-celebration"
+                    : "bg-card"
+                }`}>
+                  {message.isMastery && (
+                    <div className="flex items-center gap-2 mb-2 text-success">
+                      <Star className="w-4 h-4 animate-sparkle" />
+                      <span className="text-sm font-semibold">Moment of Mastery!</span>
+                      <Sparkles className="w-4 h-4 animate-sparkle" />
+                    </div>
+                  )}
+                  <p className="text-sm">{message.content}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs opacity-70">
+                      {message.timestamp.toLocaleTimeString()}
+                    </span>
+                    {message.isMastery && (
+                      <Button
+                        variant="mastery"
+                        size="lifeline"
+                        onClick={handleCreateFlashcard}
+                        className="ml-2"
+                      >
+                        Save as Flashcard
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            ))
+          )}
           
           {isTyping && (
             <div className="flex justify-start">
@@ -164,38 +218,40 @@ export const ChatInterface = ({ onCreateFlashcard }: ChatInterfaceProps) => {
         </div>
       </ScrollArea>
 
-      {/* Lifeline Buttons */}
-      <div className="px-4 py-2 border-t bg-muted/50">
-        <div className="flex justify-center gap-2 max-w-4xl mx-auto">
-          <Button
-            variant="lifeline"
-            size="lifeline"
-            onClick={() => handleLifelineClick("hint")}
-            className="gap-1"
-          >
-            <Lightbulb className="w-3 h-3" />
-            Give me a hint
-          </Button>
-          <Button
-            variant="lifeline"
-            size="lifeline"
-            onClick={() => handleLifelineClick("simpler")}
-            className="gap-1"
-          >
-            <MessageSquare className="w-3 h-3" />
-            Simpler question
-          </Button>
-          <Button
-            variant="lifeline"
-            size="lifeline"
-            onClick={() => handleLifelineClick("clarify")}
-            className="gap-1"
-          >
-            <HelpCircle className="w-3 h-3" />
-            What do you mean?
-          </Button>
+      {/* Lifeline Buttons - Only show when there are messages */}
+      {messages.length > 0 && (
+        <div className="px-4 py-2 border-t bg-muted/50">
+          <div className="flex justify-center gap-2 max-w-4xl mx-auto">
+            <Button
+              variant="lifeline"
+              size="lifeline"
+              onClick={() => handleLifelineClick("hint")}
+              className="gap-1"
+            >
+              <Lightbulb className="w-3 h-3" />
+              Give me a hint
+            </Button>
+            <Button
+              variant="lifeline"
+              size="lifeline"
+              onClick={() => handleLifelineClick("simpler")}
+              className="gap-1"
+            >
+              <MessageSquare className="w-3 h-3" />
+              Simpler question
+            </Button>
+            <Button
+              variant="lifeline"
+              size="lifeline"
+              onClick={() => handleLifelineClick("clarify")}
+              className="gap-1"
+            >
+              <HelpCircle className="w-3 h-3" />
+              What do you mean?
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Message Input */}
       <div className="p-4 border-t bg-background">

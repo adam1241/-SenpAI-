@@ -1,3 +1,1 @@
-[
-  "\n    {\n        \"id\": 1,\n        \"title\": \"Python Basics Quiz\",\n        \"questions\": [\n            {\n                \"question_text\": \"What is Python?\",\n                \"options\": [\"A programming language\", \"A snake\", \"A web framework\", \"A database\"],\n                \"correct_answer\": \"A programming language\"\n            },\n            {\n                \"question_text\": \"Which of these is a Python web framework?\",\n                \"options\": [\"Django\", \"React\", \"Angular\", \"Vue\"],\n                \"correct_answer\": \"Django\"\n            }\n        ],\n        \"difficulty\": \"EASY\",\n        \"description\": \"A basic quiz about Python programming language\",\n        \"time\": 10,\n        \"completed_times\": 0,\n        \"best_score\": 0\n    }\n    "
-]
+[]

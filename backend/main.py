@@ -3,9 +3,7 @@ from flask_cors import CORS
 import os
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
-from database import Database
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import Database
 from prompts.socratic_tutor import get_socratic_tutor_prompt
 
 load_dotenv()

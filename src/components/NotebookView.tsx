@@ -1,362 +1,94 @@
-import { useState, useEffect, useRef } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Upload, Image, Send, Lightbulb, Type, PenTool, FileUp, Sparkles } from "lucide-react";
-import { toast } from "sonner";
-import { Canvas as FabricCanvas } from "fabric";
+import { useState, useRef } from "react";
+import { BookOpen, Brain } from "lucide-react";
+import { ImageUpload } from "@/components/ImageUpload";
+import { DrawingCanvas } from "@/components/DrawingCanvas";
+import { AIChat } from "@/components/AIChat";
+import { PersonalitySelector } from "@/components/PersonalitySelector";
 
 export const NotebookView = () => {
-  const [userWork, setUserWork] = useState("");
-  const [activeMode, setActiveMode] = useState("text");
-  const canvasRef = useRef(null);
-  const fabricCanvasRef = useRef(null);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [generateModalOpen, setGenerateModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
-  const [exercisePrompt, setExercisePrompt] = useState("");
-  const [generatedExercise, setGeneratedExercise] = useState(null);
-  const [aiGuidance, setAiGuidance] = useState([
-    {
-      id: "1",
-      content: "Welcome to your learning notebook! This is where you can work through problems step by step. I'll provide real-time guidance as you work.",
-      timestamp: new Date(),
-    }
-  ]);
+  const [selectedPersonality, setSelectedPersonality] = useState<'calm' | 'angry' | 'cool' | 'lazy'>('calm');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [canvasAnalysis, setCanvasAnalysis] = useState<string | null>(null);
+  const canvasRef = useRef<{ analyzeCanvas: () => void } | null>(null);
 
-  useEffect(() => {
-    if (activeMode !== 'drawing' || !canvasRef.current) {
-      if (fabricCanvasRef.current) {
-        fabricCanvasRef.current.dispose();
-        fabricCanvasRef.current = null;
-      }
-      return;
-    }
-
-    const canvasElement = canvasRef.current;
-    const container = canvasElement.parentElement;
-    if (!container) return;
-
-    const initializeCanvas = () => {
-      const width = container.offsetWidth;
-      const height = container.offsetHeight;
-      const isVisible = container.offsetParent !== null;
-
-      if (width === 0 || height === 0 || !isVisible) {
-        setTimeout(initializeCanvas, 100);
-        return;
-      }
-
-      const canvas = new FabricCanvas(canvasElement, {
-        width,
-        height,
-        backgroundColor: '#ffffff',
-        isDrawingMode: true,
-      });
-
-      canvas.freeDrawingBrush.color = '#2563eb';
-      canvas.freeDrawingBrush.width = 3;
-
-      canvas.on('mouse:down', (event) => {
-        console.log('Mouse down on canvas:', event);
-      });
-
-      fabricCanvasRef.current = canvas;
-
-      const observer = new ResizeObserver(entries => {
-        const { width, height } = entries[0].contentRect;
-        if (fabricCanvasRef.current && width > 0 && height > 0) {
-          fabricCanvasRef.current.setDimensions({ width, height });
-          fabricCanvasRef.current.renderAll();
-        }
-      });
-
-      observer.observe(container);
-
-      return () => {
-        observer.disconnect();
-        if (fabricCanvasRef.current) {
-          fabricCanvasRef.current.dispose();
-          fabricCanvasRef.current = null;
-        }
-      };
-    };
-
-    initializeCanvas();
-
-    return () => {
-      if (fabricCanvasRef.current) {
-        fabricCanvasRef.current.dispose();
-        fabricCanvasRef.current = null;
-      }
-    };
-  }, [activeMode]);
-
-  const handleRequestGuidance = () => {
-    const hasContent = userWork.trim() || (fabricCanvasRef.current && fabricCanvasRef.current.getObjects().length > 0);
-    
-    if (!hasContent) {
-      toast.info("Start working on your exercise, and I'll help guide you!");
-      return;
-    }
-
-    const guidanceResponses = [
-      "Great start! Can you explain your reasoning for that step?",
-      "I see you're on the right track. What would happen if we approached this differently?",
-      "Excellent observation! How does this connect to what we learned earlier?",
-      "That's a good insight. Can you think of any potential challenges with this approach?",
-    ];
-
-    const newGuidance = {
-      id: Date.now().toString(),
-      content: guidanceResponses[Math.floor(Math.random() * guidanceResponses.length)],
-      timestamp: new Date(),
-    };
-
-    setAiGuidance(prev => [...prev, newGuidance]);
-    toast.success("AI guidance provided! 🤖");
+  const handleCanvasAnalysis = (analysis: string) => {
+    setCanvasAnalysis(analysis);
+    console.log("Canvas analysis received:", analysis);
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+  const triggerCanvasAnalysis = () => {
+    // Trigger analysis from the DrawingCanvas component
+    if (canvasRef.current) {
+      canvasRef.current.analyzeCanvas();
     }
-  };
-
-  const handleUploadSubmit = () => {
-    if (selectedFile) {
-      const imageUrl = URL.createObjectURL(selectedFile);
-      setUploadedImageUrl(imageUrl);
-      toast.success(`File "${selectedFile.name}" uploaded successfully! 📁`);
-      setUploadModalOpen(false);
-      setSelectedFile(null);
-    } else {
-      toast.error("Please select a file to upload");
-    }
-  };
-
-  const handleGenerateSubmit = () => {
-    if (exercisePrompt.trim()) {
-      const generatedText = `Generated Exercise: ${exercisePrompt}\n\nHere's a tailored problem based on your request. Work through this step by step and I'll provide guidance along the way.`;
-      setGeneratedExercise(generatedText);
-      
-      toast.success("Exercise generated successfully! 🎯");
-      setGenerateModalOpen(false);
-      setExercisePrompt("");
-      
-      const newGuidance = {
-        id: Date.now().toString(),
-        content: `I've generated a custom exercise for you! Check it out above the workspace tabs.`,
-        timestamp: new Date(),
-      };
-      setAiGuidance(prev => [...prev, newGuidance]);
-    } else {
-      toast.error("Please enter a prompt to generate an exercise");
-    }
-  };
-
-  const handleClearCanvas = () => {
-    if (!fabricCanvasRef.current) {
-      toast.error("Canvas is not initialized. Try switching to the drawing tab first.");
-      return;
-    }
-    const canvas = fabricCanvasRef.current;
-    canvas.clear();
-    canvas.backgroundColor = "#ffffff";
-    canvas.renderAll();
-    toast.success("Canvas cleared!");
   };
 
   return (
-    <div className="h-full flex gap-6 p-6 max-w-7xl mx-auto">
-      <div className="flex-1">
-        <Card className="h-full p-6">
-          <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-foreground">Your Learning Workspace</h2>
-              <div className="flex gap-2">
-                <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Upload className="w-4 h-4" />
-                      Upload Image
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Upload Image</DialogTitle>
-                      <DialogDescription>
-                        Upload an image to include in your notebook or use for reference.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid w-full max-w-sm items-center gap-1.5">
-                        <Label htmlFor="image-upload">Select Image</Label>
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="cursor-pointer"
-                        />
-                      </div>
-                      {selectedFile && (
-                        <div className="text-sm text-muted-foreground">
-                          Selected: {selectedFile.name}
-                        </div>
-                      )}
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" onClick={handleUploadSubmit}>
-                        <FileUp className="w-4 h-4 mr-2" />
-                        Upload
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-
-                <Dialog open={generateModalOpen} onOpenChange={setGenerateModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      Generate Exercise
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Generate Custom Exercise</DialogTitle>
-                      <DialogDescription>
-                        Describe what kind of exercise you'd like to work on, and AI will create a tailored problem for you.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="exercise-prompt">Exercise Description</Label>
-                        <Textarea
-                          id="exercise-prompt"
-                          placeholder="E.g., 'Create a math problem about quadratic equations' or 'Generate a physics problem about momentum'"
-                          value={exercisePrompt}
-                          onChange={(e) => setExercisePrompt(e.target.value)}
-                          className="min-h-[100px]"
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" onClick={handleGenerateSubmit}>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-card shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">SenpAI - Notebook</h1>
+                <p className="text-sm text-muted-foreground">AI-powered learning companion</p>
               </div>
             </div>
             
-            {(uploadedImageUrl || generatedExercise) && (
-              <Card className="p-4 mb-4 bg-muted/30">
-                <div className="space-y-3">
-                  {uploadedImageUrl && (
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Uploaded Image:</h4>
-                      <img 
-                        src={uploadedImageUrl} 
-                        alt="Uploaded exercise" 
-                        className="max-w-full h-auto rounded-md border"
-                        style={{ maxHeight: '300px' }}
-                      />
-                    </div>
-                  )}
-                  {generatedExercise && (
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Generated Exercise:</h4>
-                      <div className="text-sm text-foreground whitespace-pre-wrap bg-background p-3 rounded-md border">
-                        {generatedExercise}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-            
-            <Tabs value={activeMode} onValueChange={setActiveMode} className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="text" className="gap-2">
-                  <Type className="w-4 h-4" />
-                  Text
-                </TabsTrigger>
-                <TabsTrigger value="drawing" className="gap-2">
-                  <PenTool className="w-4 h-4" />
-                  Drawing
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="text" className="flex-1">
-                <Textarea
-                  value={userWork}
-                  onChange={(e) => setUserWork(e.target.value)}
-                  placeholder="Start working through your problem here... Write down your thoughts, steps, calculations, or reasoning. I'll provide guidance as you work!"
-                  className="h-full resize-none text-base leading-relaxed"
-                />
-              </TabsContent>
-              
-              <TabsContent value="drawing" className="flex-1 flex flex-col">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-muted-foreground">Use your mouse to draw and write directly on the canvas</span>
-                  <Button variant="outline" size="sm" onClick={handleClearCanvas}>
-                    Clear Canvas
-                  </Button>
-                </div>
-                <div className="flex-1 border rounded-md bg-white overflow-hidden canvas-container">
-                  <canvas 
-                    ref={canvasRef} 
-                    className="block cursor-crosshair"
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
-            
-            <div className="flex justify-end mt-4">
-              <Button onClick={handleRequestGuidance} className="gap-2">
-                <Lightbulb className="w-4 h-4" />
-                Get AI Guidance
-              </Button>
+            <div className="flex items-center gap-4">
+              <ImageUpload onImageUpload={setUploadedImage} />
+              <PersonalitySelector
+                selectedPersonality={selectedPersonality}
+                onPersonalityChange={setSelectedPersonality}
+              />
             </div>
           </div>
-        </Card>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
+          {/* Left Column - Drawing Canvas (expanded) */}
+          <div className="lg:col-span-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Work Area</h2>
+                <p className="text-sm text-muted-foreground">Draw, write, and solve your exercise here</p>
+              </div>
+              
+              <DrawingCanvas 
+                ref={canvasRef}
+                className="bg-gradient-to-br from-canvas-bg to-notebook-paper shadow-notebook"
+                selectedPersonality={selectedPersonality}
+                onCanvasAnalysis={handleCanvasAnalysis}
+              />
+            </div>
+          </div>
+
+          {/* Right Column - AI Chat */}
+          <div className="lg:col-span-1">
+            <AIChat
+              selectedPersonality={selectedPersonality}
+              onAnalyzeCanvas={triggerCanvasAnalysis}
+              className="h-full shadow-chat bg-gradient-to-br from-card to-background"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="w-80">
-        <Card className="h-full p-4">
-          <h3 className="text-lg font-semibold mb-4 text-foreground">AI Guidance</h3>
-          <ScrollArea className="h-[calc(100%-100px)]">
-            <div className="space-y-4">
-              {aiGuidance.map((guidance) => (
-                <div key={guidance.id} className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm text-foreground">{guidance.content}</p>
-                  <span className="text-xs text-muted-foreground mt-2 block">
-                    {guidance.timestamp.toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-          <Separator className="my-4" />
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRequestGuidance} className="flex-1 gap-1">
-              <Send className="w-3 h-3" />
-              Ask Question
-            </Button>
-          </div>
-        </Card>
-      </div>
+      {/* Subtle paper texture overlay */}
+      <div 
+        className="fixed inset-0 pointer-events-none opacity-5" 
+        style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000' fill-opacity='0.1'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+        }}
+      />
     </div>
   );
 };

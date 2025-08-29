@@ -1,0 +1,24 @@
+{
+  "name": "senpai-doodle-backend",
+  "version": "1.0.0",
+  "description": "Backend for SenpAI Doodle Mentor AI with Cerebras and ElevenLabs integration",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "multer": "^2.0.0",
+    "openai": "^4.104.0",
+    "sharp": "^0.33.2",
+    "tesseract.js": "^5.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

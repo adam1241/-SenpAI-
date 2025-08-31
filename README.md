@@ -25,6 +25,11 @@ SenpAI is a an AI teacher that can help you learn new things and improve your kn
    cd SenpAI
    ```
 
+**Important Note:**
+You will need to provide `.env` files inside the backend and server folder.
+Check the `.env.example` files for more information.
+We provided these files for the judges so that they can run the project locally.
+
 2. **Set up Python backend**
 
    ```bash

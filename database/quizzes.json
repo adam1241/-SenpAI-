@@ -584,5 +584,66 @@
     "time": 10,
     "completed_times": 0,
     "best_score": 0
+  },
+  {
+    "id": 10,
+    "title": "German Beginner Quiz",
+    "questions": [
+      {
+        "question_text": "What does 'Guten Tag' mean in English?",
+        "options": [
+          "Good morning",
+          "Good day",
+          "Good night",
+          "Goodbye"
+        ],
+        "correct_answer": "Good day"
+      },
+      {
+        "question_text": "How do you say 'Thank you' in German?",
+        "options": [
+          "Bitte",
+          "Danke",
+          "Hallo",
+          "Tsch\u00fcss"
+        ],
+        "correct_answer": "Danke"
+      },
+      {
+        "question_text": "Which word means 'water' in German?",
+        "options": [
+          "Wetter",
+          "Winter",
+          "Wasser",
+          "Wald"
+        ],
+        "correct_answer": "Wasser"
+      },
+      {
+        "question_text": "What is 'house' in German?",
+        "options": [
+          "Haus",
+          "Hose",
+          "Himmel",
+          "Hund"
+        ],
+        "correct_answer": "Haus"
+      },
+      {
+        "question_text": "How do you say 'I am learning German' in German?",
+        "options": [
+          "Ich hei\u00dfe German",
+          "Ich lerne Deutsch",
+          "Ich spreche gut Deutsch",
+          "Ich verstehe Deutsch"
+        ],
+        "correct_answer": "Ich lerne Deutsch"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge of basic German vocabulary and phrases.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
   }
 ]

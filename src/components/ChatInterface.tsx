@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import senpaiLogo from "./logo/SenpAI2.png";
+import { ApiService, ChatMessage } from "@/services/api";
 
 interface Message {
   id: string;
@@ -39,20 +40,18 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
     setInputMessage("");
 
     // Prepare the history for the API
-    const apiHistory = [...messages, userMessage].map(({ id, timestamp, isMastery, isUser, ...rest }) => ({
+    const apiHistory: ChatMessage[] = [...messages, userMessage].map(({ id, timestamp, isMastery, isUser, ...rest }) => ({
       ...rest,
       role: isUser ? 'user' : 'assistant'
     }));
 
-
     try {
-      const response = await fetch('http://localhost:5001/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: apiHistory }),
-      });
+      const response = await ApiService.sendChatMessage(
+        apiHistory,
+        'calm',
+        false,
+        false // Use Python server
+      );
 
       if (!response.body) return;
 

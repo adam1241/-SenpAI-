@@ -118,5 +118,13 @@
     "deck_id": 3,
     "difficulty": "EASY",
     "last_reviewed": "2025-08-31T16:05:17.982709"
+  },
+  {
+    "id": 16,
+    "question": "What economic principle explains that resources are limited while human wants are unlimited?",
+    "answer": "Scarcity",
+    "deck_id": 4,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T18:32:36.372692"
   }
 ]

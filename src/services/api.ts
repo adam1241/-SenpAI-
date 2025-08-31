@@ -25,10 +25,12 @@ export class ApiService {
   static async sendChatMessage(
     messages: ChatMessage[], 
     personality: string = 'calm',
-    includeVoice: boolean = false
-  ): Promise<Response> { // Changed to return Response
+    includeVoice: boolean = false,
+    useJavaScriptServer: boolean = false
+  ): Promise<Response> { 
     try {
-      const response = await fetch(`${API_BASE_URL}/chat`, {
+      const baseUrl = useJavaScriptServer ? NOTEBOOK_API_BASE_URL : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

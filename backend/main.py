@@ -7,6 +7,7 @@ from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from prompts.socratic_tutor import get_socratic_tutor_prompt
 from tools.flash_cards_tool import FlashCardsTool
+from tools.quizz_tool import QuizzTool
 from utils.database import Database
 
 load_dotenv()
@@ -56,14 +57,19 @@ def chat():
         buffer = ""
         in_think_block = False
         flash_card_tool = FlashCardsTool()
-        action_regex = re.compile(
+        quizz_tool = QuizzTool()
+        
+        flashcard_action_regex = re.compile(
             r"//ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: (.*?)\/\/"
+        )
+        quiz_action_regex = re.compile(
+            r"//ACTION: CREATE_QUIZ// //QUIZ_JSON: (.*?)\/\/"
         )
 
         def process_buffer(buf):
             nonlocal in_think_block
             # First, handle flashcard actions
-            match = action_regex.search(buf)
+            match = flashcard_action_regex.search(buf)
             if match:
                 json_payload = match.group(1)
                 try:
@@ -71,7 +77,18 @@ def chat():
                 except Exception as e:
                     print(f"Error processing flashcard action: {e}")
                 # Remove the action text regardless of success
-                buf = action_regex.sub("", buf)
+                buf = flashcard_action_regex.sub("", buf)
+
+            # Second, handle quiz actions
+            match = quiz_action_regex.search(buf)
+            if match:
+                json_payload = match.group(1)
+                try:
+                    quizz_tool.add_quiz(json_payload)
+                except Exception as e:
+                    print(f"Error processing quiz action: {e}")
+                # Remove the action text regardless of success
+                buf = quiz_action_regex.sub("", buf)
 
             # Next, handle think blocks
             processed_output = ""
@@ -101,6 +118,9 @@ def chat():
             if not content:
                 continue
             buffer += content
+
+            with open("ai_output.log", "a") as f:
+                f.write(content)
             
             # Decide when to process the buffer.
             # Let's do it if it contains a newline character.
@@ -138,6 +158,15 @@ def get_flashcards():
     """
     flashcards = Database.load_table("flash_cards")
     return jsonify(flashcards)
+
+
+@app.route('/api/quizzes', methods=['GET'])
+def get_quizzes():
+    """
+    Endpoint to retrieve all quizzes.
+    """
+    quizzes = Database.load_table("quizzes")
+    return jsonify(quizzes)
 
 
 if __name__ == '__main__':

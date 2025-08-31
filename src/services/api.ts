@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -25,7 +25,7 @@ export class ApiService {
     messages: ChatMessage[], 
     personality: string = 'calm',
     includeVoice: boolean = false
-  ): Promise<ChatResponse> {
+  ): Promise<Response> { // Changed to return Response
     try {
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
@@ -43,7 +43,7 @@ export class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      return response;
     } catch (error) {
       console.error('API Error:', error);
       throw new Error('Failed to send chat message');
@@ -118,5 +118,29 @@ export class ApiService {
     }
   }
 }
+
+export const getQuizzes = async () => {
+  const response = await fetch(`${API_BASE_URL}/quizzes`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch quizzes');
+  }
+  return response.json();
+};
+
+export const getDecks = async () => {
+  const response = await fetch(`${API_BASE_URL}/decks`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch decks');
+  }
+  return response.json();
+};
+
+export const getFlashcards = async () => {
+  const response = await fetch(`${API_BASE_URL}/flashcards`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch flashcards');
+  }
+  return response.json();
+};
 
 export default ApiService;

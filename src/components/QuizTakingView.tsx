@@ -41,6 +41,7 @@ export const QuizTakingView = ({ quiz, onBack }: QuizTakingViewProps) => {
 
   const handleNext = () => {
     if (currentQuestion < quiz.questions.length - 1) {
+      setShowResults(false); // Reset showResults state
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setQuizCompleted(true);
@@ -115,14 +116,39 @@ export const QuizTakingView = ({ quiz, onBack }: QuizTakingViewProps) => {
       </div>
 
       {quizCompleted ? (
-        <Card className="p-8 text-center">
-          <div className="mb-6">
+        <Card className="p-8">
+          <div className="text-center mb-8">
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-foreground mb-2">Quiz Complete!</h3>
             <div className="text-lg text-muted-foreground">
               Your Score: {getScore().correct} out of {getScore().total}
             </div>
           </div>
+
+          <div className="space-y-6 mb-8">
+            {quiz.questions.map((q, index) => {
+              const userAnswer = selectedAnswers[q.id];
+              const correctAnswerIndex = q.correctAnswer;
+              const isCorrect = userAnswer !== undefined && parseInt(userAnswer) === correctAnswerIndex;
+
+              return (
+                <div key={q.id} className="p-4 border rounded-lg">
+                  <p className="font-semibold mb-2">{index + 1}. {q.question}</p>
+                  <div className={`flex items-center p-2 rounded ${isCorrect ? 'bg-green-100' : 'bg-red-100'}`}>
+                    {isCorrect ? <CheckCircle className="w-5 h-5 text-green-600 mr-2" /> : <XCircle className="w-5 h-5 text-red-600 mr-2" />}
+                    Your answer: {userAnswer !== undefined ? q.options[parseInt(userAnswer)] : "Not answered"}
+                  </div>
+                  {!isCorrect && (
+                    <div className="flex items-center p-2 mt-2 rounded bg-gray-100">
+                      <span className="text-gray-600 mr-2">Correct answer:</span>
+                      {q.options[correctAnswerIndex]}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           <div className="flex justify-center gap-4">
             <Button onClick={handleRestart} variant="learning" className="gap-2">
               <RotateCcw className="w-4 h-4" />

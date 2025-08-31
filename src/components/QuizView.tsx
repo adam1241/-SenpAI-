@@ -90,15 +90,34 @@ export const QuizView = () => {
 
   const handleCreateQuizSubmit = async (topic: string) => {
     toast.info(`Generating a quiz about "${topic}"...`);
+    const initialQuizCount = quizzes.length;
+
     try {
-      const response = await ApiService.sendChatMessage([
+      // Ask the AI to create the quiz
+      await ApiService.sendChatMessage([
         { role: 'user', content: `Please create a quiz about ${topic}` }
       ]);
-      
+
+      // Start polling to check for the new quiz
+      const poll = setInterval(async () => {
+        try {
+          const backendQuizzes = await getQuizzes();
+          if (backendQuizzes.length > initialQuizCount) {
+            clearInterval(poll);
+            const transformedQuizzes = transformQuizData(backendQuizzes);
+            setQuizzes(transformedQuizzes);
+            toast.success(`Successfully created a quiz about "${topic}"!`);
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+          clearInterval(poll);
+        }
+      }, 3000); // Poll every 3 seconds
+
+      // Stop polling after a timeout (e.g., 45 seconds)
       setTimeout(() => {
-        fetchQuizzes();
-        toast.success(`Successfully created a quiz about "${topic}"!`);
-      }, 10000); // 10 second delay
+        clearInterval(poll);
+      }, 45000);
 
     } catch (error) {
       console.error("Failed to create quiz:", error);

@@ -59,37 +59,45 @@ def chat():
         in_think_block = False
         flash_card_tool = FlashCardsTool()
         quizz_tool = QuizzTool()
+        decks_tool = DecksTool()
         
-        flashcard_action_regex = re.compile(
-            r"//ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: (.*?)\/\/"
+        flashcards_action_regex = re.compile(
+            r"//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: (.*?)\/\/"
         )
         quiz_action_regex = re.compile(
             r"//ACTION: CREATE_QUIZ// //QUIZ_JSON: (.*?)\/\/"
         )
+        deck_action_regex = re.compile(
+            r"//ACTION: CREATE_DECK// //DECK_JSON: (.*?)\/\/"
+        )
 
         def process_buffer(buf):
             nonlocal in_think_block
-            # First, handle flashcard actions
-            match = flashcard_action_regex.search(buf)
-            if match:
-                json_payload = match.group(1)
-                try:
-                    flash_card_tool.add_flash_card(json_payload)
-                except Exception as e:
-                    print(f"Error processing flashcard action: {e}")
-                # Remove the action text regardless of success
-                buf = flashcard_action_regex.sub("", buf)
 
-            # Second, handle quiz actions
-            match = quiz_action_regex.search(buf)
-            if match:
-                json_payload = match.group(1)
-                try:
-                    quizz_tool.add_quiz(json_payload)
-                except Exception as e:
-                    print(f"Error processing quiz action: {e}")
-                # Remove the action text regardless of success
-                buf = quiz_action_regex.sub("", buf)
+            action_handlers = [
+                (flashcards_action_regex, lambda p: flash_card_tool.add_flash_cards(p)),
+                (quiz_action_regex, lambda p: quizz_tool.add_quiz(p)),
+                (deck_action_regex, lambda p: decks_tool.add_deck(json.loads(p)))
+            ]
+
+            # Loop to handle multiple actions in the same buffer
+            while True:
+                match_found = False
+                for regex, handler in action_handlers:
+                    match = regex.search(buf)
+                    if match:
+                        json_payload = match.group(1)
+                        try:
+                            handler(json_payload)
+                        except Exception as e:
+                            print(f"Error processing action for {regex.pattern}: {e}")
+                        # Remove the action text and restart the loop
+                        buf = regex.sub("", buf, 1)
+                        match_found = True
+                        break # Restart search from the beginning
+                
+                if not match_found:
+                    break # No more actions found
 
             # Next, handle think blocks
             processed_output = ""
@@ -120,7 +128,7 @@ def chat():
                 continue
             buffer += content
 
-            with open("ai_output.log", "a") as f:
+            with open("ai_output.log", "a", encoding="utf-8") as f:
                 f.write(content)
             
             # Decide when to process the buffer.
@@ -203,7 +211,7 @@ def add_manual_flashcard():
         # The FlashCardsTool handles ID generation and validation
         flash_card_tool = FlashCardsTool()
         # The tool expects a JSON string, so we dump the dict back to a string
-        flash_card_tool.add_flash_card(json.dumps(flashcard_data))
+        flash_card_tool.add_flash_cards(json.dumps(flashcard_data))
         return jsonify({"message": "Flashcard added successfully"}), 201
     except Exception as e:
         print(f"Error adding manual flashcard: {e}")
@@ -226,6 +234,22 @@ def add_manual_deck():
     except Exception as e:
         print(f"Error adding manual deck: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/decks/<int:deck_id>', methods=['DELETE'])
+def delete_deck(deck_id):
+    """
+    Endpoint to delete a deck and its associated flashcards.
+    """
+    try:
+        decks_tool = DecksTool()
+        decks_tool.delete_deck(deck_id)
+        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        print(f"Error deleting deck: {e}")
+        return jsonify({"error": "An unexpected error occurred."}), 500
 
 
 if __name__ == '__main__':

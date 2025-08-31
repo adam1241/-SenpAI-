@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { ApiService } from "@/services/api";
 
 interface DrawingCanvasProps {
   className?: string;
@@ -120,36 +121,15 @@ export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(({
       
       console.log('Blob created, size:', blob.size);
       
-      const formData = new FormData();
-      formData.append('canvas', blob, 'canvas.png');
-      formData.append('personality', selectedPersonality);
-      formData.append('description', 'Canvas analysis request');
+      const result = await ApiService.analyzeCanvas(blob, 'Canvas analysis request', selectedPersonality);
 
-      console.log('Sending request to http://localhost:3001/api/analyze-canvas with personality:', selectedPersonality);
-
-      const analysisResponse = await fetch('http://localhost:3001/api/analyze-canvas', {
-        method: 'POST',
-        body: formData
-      });
-
-      console.log('Analysis response status:', analysisResponse.status);
-
-      if (analysisResponse.ok) {
-        const result = await analysisResponse.json();
-        console.log('Analysis result:', result);
-        
-        if (result.analysis) {
-          if (onCanvasAnalysis) {
-            onCanvasAnalysis(result.analysis);
-          }
-          toast.success(`AI Analysis: ${result.analysis.substring(0, 100)}...`);
-        } else {
-          toast.error('No analysis received from AI');
+      if (result && result.analysis) {
+        if (onCanvasAnalysis) {
+          onCanvasAnalysis(result.analysis);
         }
+        toast.success(`AI Analysis: ${result.analysis.substring(0, 100)}...`);
       } else {
-        const errorText = await analysisResponse.text();
-        console.error('Analysis response error:', errorText);
-        toast.error(`Analysis failed: ${analysisResponse.status} ${analysisResponse.statusText}`);
+        toast.error('No analysis received from AI');
       }
     } catch (error) {
       console.error('Canvas analysis failed:', error);

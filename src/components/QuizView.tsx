@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Clock, Trophy, Target, Play, Plus } from "lucide-react";
 import { QuizTakingView } from "./QuizTakingView";
+import { getQuizzes } from "@/services/api";
 
 interface Question {
   id: string;
@@ -25,13 +26,60 @@ interface Quiz {
   bestScore?: number;
 }
 
+// Backend interfaces to avoid type errors during transformation
+interface BackendQuestion {
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+}
+
+interface BackendQuiz {
+  id: number;
+  title: string;
+  description: string;
+  questions: BackendQuestion[];
+  difficulty: string;
+  time: number;
+  completed_times: number;
+  best_score: number;
+}
+
+const transformQuizData = (backendQuizzes: BackendQuiz[]): Quiz[] => {
+  return backendQuizzes.map((bq) => ({
+    id: bq.id.toString(),
+    title: bq.title,
+    description: bq.description,
+    difficulty: bq.difficulty.toLowerCase() as "easy" | "medium" | "hard",
+    category: "General", // Default category
+    estimatedTime: bq.time,
+    completedCount: bq.completed_times,
+    bestScore: bq.best_score,
+    questions: bq.questions.map((q, index) => ({
+      id: `${bq.id}-${index}`,
+      question: q.question_text,
+      options: q.options,
+      correctAnswer: q.options.indexOf(q.correct_answer),
+      explanation: "", // No explanation from backend
+    })),
+  }));
+};
+
 export const QuizView = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
-  // TODO: Fetch quizzes from the backend
   useEffect(() => {
-    // setQuizzes(fetchedQuizzes);
+    const fetchQuizzes = async () => {
+      try {
+        const backendQuizzes = await getQuizzes();
+        const transformedQuizzes = transformQuizData(backendQuizzes);
+        setQuizzes(transformedQuizzes);
+      } catch (error) {
+        console.error("Failed to fetch quizzes:", error);
+      }
+    };
+
+    fetchQuizzes();
   }, []);
 
   const handleStartQuiz = (quiz: Quiz) => {

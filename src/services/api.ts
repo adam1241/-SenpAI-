@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5001/api'; 
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -139,6 +139,20 @@ export const getFlashcards = async () => {
   const response = await fetch(`${API_BASE_URL}/flashcards`);
   if (!response.ok) {
     throw new Error('Failed to fetch flashcards');
+  }
+  return response.json();
+};
+
+export const saveManualQuiz = async (quizData: any) => {
+  const response = await fetch(`${API_BASE_URL}/quizzes/manual`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(quizData),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to save quiz');
   }
   return response.json();
 };

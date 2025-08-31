@@ -160,5 +160,226 @@
     "time": 10,
     "completed_times": 0,
     "best_score": 0
+  },
+  {
+    "id": 3,
+    "title": "go",
+    "questions": [
+      {
+        "question_text": "go",
+        "options": [
+          "go",
+          "fo"
+        ],
+        "correct_answer": "go"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "go",
+    "time": 1,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 4,
+    "title": "Solar System Quiz",
+    "questions": [
+      {
+        "question_text": "Which planet is known as the 'Red Planet'?",
+        "options": [
+          "Venus",
+          "Mars",
+          "Jupiter",
+          "Saturn"
+        ],
+        "correct_answer": "Mars"
+      },
+      {
+        "question_text": "What is the largest planet in our solar system?",
+        "options": [
+          "Earth",
+          "Saturn",
+          "Neptune",
+          "Jupiter"
+        ],
+        "correct_answer": "Jupiter"
+      },
+      {
+        "question_text": "Which planet has the most extensive ring system?",
+        "options": [
+          "Uranus",
+          "Neptune",
+          "Saturn",
+          "Mars"
+        ],
+        "correct_answer": "Saturn"
+      },
+      {
+        "question_text": "How many natural satellites (moons) does Earth have?",
+        "options": [
+          "1",
+          "2",
+          "3",
+          "0"
+        ],
+        "correct_answer": "1"
+      },
+      {
+        "question_text": "Which of these is NOT a gas giant?",
+        "options": [
+          "Jupiter",
+          "Saturn",
+          "Neptune",
+          "Mars"
+        ],
+        "correct_answer": "Mars"
+      },
+      {
+        "question_text": "What is the name of the dwarf planet located in the asteroid belt?",
+        "options": [
+          "Pluto",
+          "Eris",
+          "Ceres",
+          "Haumea"
+        ],
+        "correct_answer": "Ceres"
+      },
+      {
+        "question_text": "Which planet rotates on its side, with an axial tilt of about 98 degrees?",
+        "options": [
+          "Mercury",
+          "Uranus",
+          "Venus",
+          "Mars"
+        ],
+        "correct_answer": "Uranus"
+      },
+      {
+        "question_text": "What is the closest star to our solar system?",
+        "options": [
+          "Proxima Centauri",
+          "Sirius",
+          "Betelgeuse",
+          "Alpha Centauri A"
+        ],
+        "correct_answer": "Proxima Centauri"
+      },
+      {
+        "question_text": "Which moon is known for having a subsurface ocean and is a prime candidate for potential life?",
+        "options": [
+          "Europa",
+          "Titan",
+          "Ganymede",
+          "Callisto"
+        ],
+        "correct_answer": "Europa"
+      },
+      {
+        "question_text": "What is the name of the region beyond Neptune that contains many icy bodies and dwarf planets?",
+        "options": [
+          "Oort Cloud",
+          "Kuiper Belt",
+          "Asteroid Belt",
+          "Heliosphere"
+        ],
+        "correct_answer": "Kuiper Belt"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your knowledge of the planets, moons, and features of our solar system.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 5,
+    "title": "Plankton Knowledge Quiz",
+    "questions": [
+      {
+        "question_text": "What does the term 'plankton' primarily refer to?",
+        "options": [
+          "A type of marine plant",
+          "Organisms that drift with ocean currents",
+          "Large ocean predators",
+          "Deep-sea floor dwellers"
+        ],
+        "correct_answer": "Organisms that drift with ocean currents"
+      },
+      {
+        "question_text": "Which of the following is a major role of phytoplankton in marine ecosystems?",
+        "options": [
+          "Decomposing organic matter",
+          "Producing oxygen through photosynthesis",
+          "Hunting small fish",
+          "Filtering pollutants from water"
+        ],
+        "correct_answer": "Producing oxygen through photosynthesis"
+      },
+      {
+        "question_text": "What is the primary energy source for phytoplankton?",
+        "options": [
+          "Chemical energy from hydrothermal vents",
+          "Consuming other plankton",
+          "Sunlight",
+          "Decaying matter"
+        ],
+        "correct_answer": "Sunlight"
+      },
+      {
+        "question_text": "Which of these is an example of zooplankton?",
+        "options": [
+          "Diatoms",
+          "Cyanobacteria",
+          "Krill",
+          "Seaweed"
+        ],
+        "correct_answer": "Krill"
+      },
+      {
+        "question_text": "How do zooplankton typically obtain their energy?",
+        "options": [
+          "Photosynthesis",
+          "Absorbing sunlight through their skin",
+          "Consuming phytoplankton or other small organisms",
+          "Breaking down minerals"
+        ],
+        "correct_answer": "Consuming phytoplankton or other small organisms"
+      },
+      {
+        "question_text": "What environmental factor is most critical for phytoplankton blooms?",
+        "options": [
+          "High salinity",
+          "Cold water temperatures",
+          "Availability of nutrients and sunlight",
+          "Strong ocean currents"
+        ],
+        "correct_answer": "Availability of nutrients and sunlight"
+      },
+      {
+        "question_text": "Which gas do phytoplankton contribute significantly to producing?",
+        "options": [
+          "Carbon dioxide",
+          "Nitrogen",
+          "Methane",
+          "Oxygen"
+        ],
+        "correct_answer": "Oxygen"
+      },
+      {
+        "question_text": "What is the base of the marine food web?",
+        "options": [
+          "Whales",
+          "Coral",
+          "Phytoplankton",
+          "Seagrass"
+        ],
+        "correct_answer": "Phytoplankton"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your understanding of plankton types, roles, and ecological importance.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
   }
 ]

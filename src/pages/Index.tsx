@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LearningHeader } from "@/components/LearningHeader";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NotebookView } from "@/components/NotebookView";
@@ -20,6 +20,13 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
   // Lifted the messages state here
   const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#quiz') {
+      setActiveSection('quiz');
+    }
+  }, []);
 
   const [newFlashcardsCount, setNewFlashcardsCount] = useState(3);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);

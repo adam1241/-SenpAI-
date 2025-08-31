@@ -10,10 +10,16 @@ export const NotebookView = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [canvasAnalysis, setCanvasAnalysis] = useState<string | null>(null);
   const canvasRef = useRef<{ analyzeCanvas: () => void } | null>(null);
+  const chatRef = useRef<{ addCanvasAnalysis: (analysis: string) => void } | null>(null);
 
   const handleCanvasAnalysis = (analysis: string) => {
     setCanvasAnalysis(analysis);
     console.log("Canvas analysis received:", analysis);
+    
+    // Send analysis to chatbot as a system message
+    if (chatRef.current) {
+      chatRef.current.addCanvasAnalysis(analysis);
+    }
   };
 
   const triggerCanvasAnalysis = () => {
@@ -74,6 +80,7 @@ export const NotebookView = () => {
           {/* Right Column - AI Chat */}
           <div className="lg:col-span-1">
             <AIChat
+              ref={chatRef}
               selectedPersonality={selectedPersonality}
               onAnalyzeCanvas={triggerCanvasAnalysis}
               className="h-full shadow-chat bg-gradient-to-br from-card to-background"

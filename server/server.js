@@ -100,33 +100,34 @@ class OpenAICanvasAnalysisClient{
       const base64Image = imageBuffer.toString('base64');
       const imageDataUrl = `data:image/png;base64,${base64Image}`;
 
-      const prompt = `You are an expert at analyzing a student's handwritten work on a digital canvas. Your job is to do two things:
-1.  **Interpret the mathematical expression** the student has written.
-2.  **Describe the visual characteristics** of the student's writing.
+      const prompt =  `You are analyzing a student's mathematical work on a digital canvas. Your job is to interpret what the student has written/drawn as mathematical expressions.
 
-**Part 1: Interpretation**
-- Interpret all marks as mathematical notation (equations, variables, etc.).
-- Use LaTeX notation for all expressions, enclosed in \( \). For example: \(x^2 + 5 = 14\).
-
-**Part 2: Visual Description**
-- Describe the quality of the handwriting (e.g., "neatly written", "a bit messy", "hard to read").
-- Point out any specific characters that are ambiguous or poorly formed (e.g., "the '2' could be mistaken for a 'z'", "the plus sign is not centered").
-- Mention the layout and alignment (e.g., "the equation is well-centered", "the terms are not aligned properly").
-- Note any visible erasures, corrections, or crossed-out parts.
-
-**Response Format:**
-Combine both parts into a single description. Start with the interpretation, then add the visual details.
-
-Example 1:
-"The student has written: \(x^2 + 5 = 14\). The handwriting is neat and easy to read. All characters are clearly formed and the equation is well-aligned."
-
-Example 2:
-"The student has written: \(y = 3x - 2\). The handwriting is a bit messy, and the 'x' is written very large. There seems to be an erased number before the '3'."
-
-Example 3:
-"The student appears to be writing: \(z = 9/y\) (incomplete). The 'z' is ambiguous and could possibly be a '2'. The fraction line is not straight."
-
-Now, analyze the following image and provide your combined interpretation and description.`;
+      **CRITICAL: Always assume the student is writing mathematics. Interpret all marks, lines, and symbols as mathematical notation.**
+      IMPORTANT: If this looks like mathematical notation (equations, derivatives like dV/dt, integrals, etc.), interpret it as advanced mathematics including differential equations, calculus, or algebra.
+      
+      **OUTPUT FORMAT: Use LaTeX notation for all mathematical expressions enclosed in \\( \\) for inline math.**
+      
+      Look at this image and tell me exactly what mathematical expression or equation the student has written. Consider:
+      
+      - Intersecting lines = "×" (multiplication) or variable "X" 
+      - Horizontal lines = "=" (equals) or "-" (minus/subtraction)
+      - Single letters = variables (a, b, c, x, y, z, etc.)
+      - Curved lines = parentheses, fractions, or other math symbols
+      - Positioning = mathematical relationships (like "x = " or "2 + 3")
+      - Derivatives should be written as \\(\\frac{dV}{dt}\\) or \\(V'(t)\\)
+      - Integrals should be written as \\(\\int f(x) dx\\)
+      - Fractions should be written as \\(\\frac{a}{b}\\)
+      
+      **Respond in this format:**
+      "The student has written: \\([LaTeX mathematical expression]\\)"
+      
+      If you see multiple expressions or steps, list them as:
+      "The student has written: \\([expression 1]\\), \\([expression 2]\\)"
+      
+      If the expression appears incomplete, say:
+      "The student appears to be writing: \\([partial LaTeX expression]\\) (incomplete)"
+      
+      Do NOT describe it as drawings or abstract shapes. Always interpret it as mathematics that the student is trying to express, even if roughly drawn.`;
 
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
@@ -533,20 +534,20 @@ app.post('/api/analyze-canvas', upload.single('canvas'), async (req, res) => {
         // Create Socratic analysis prompt
         const socraticPrompt = `You are a Socratic tutor. Your goal is to help a student learn by asking guiding questions. You must not give direct answers.
 
-A student has been working on a canvas, and an analysis of their work is below.
+A student has been working on a canvas. Below is an analysis of what the student has drawn/written, provided by OpenAI Vision to help you understand their work:
 
-Student's work:
+OpenAI Vision Analysis of Student's Canvas Work:
 ---
 ${visionResult.analysis}
 ---
 
-Your task is to respond to the student based on their work. Follow these rules strictly:
+Your task is to respond to the student based on what they've actually created on the canvas. Follow these rules strictly:
 1. **NEVER give the final answer or a direct solution.**
 2. **ALWAYS respond with a question.** Your question should guide the student to think for themselves.
 3. If the student's work is correct, ask a question that prompts them to explain their reasoning or consider the next step (e.g., "That looks right. Can you explain why you did it that way?" or "Great start. What do you think the next step is?").
 4. If the student's work is incorrect, ask a question that helps them spot their own error (e.g., "Are you sure about that step? What happens if you try to verify it?" or "I see what you did there. What was your thinking for that part?").
 5. If the student's work is a question, guide them to find the answer themselves (e.g., "That's a good question. What have you tried so far?" or "How could you break that problem down into smaller pieces?").
-6. Keep your response concise (1-3 sentences) and focused on a single guiding question.`;
+6. Keep your response concise and focused on a single guiding question.`;
         analysisPrompt = socraticPrompt;
 
         if (description) {

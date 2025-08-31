@@ -54,7 +54,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
         const response = await ApiService.sendChatMessage(
           contextMessages,
           selectedPersonality,
-          isVoiceEnabled
+          isVoiceEnabled,
+          true // Use JavaScript server
         );
 
         const chatResponse = await response.json();
@@ -299,7 +300,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
       const response = await ApiService.sendChatMessage(
         chatMessages, 
         selectedPersonality, 
-        isVoiceEnabled
+        isVoiceEnabled,
+        true // Use JavaScript server
       );
 
       const chatResponse = await response.json();

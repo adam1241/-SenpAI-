@@ -13,5 +13,10 @@
     "id": 3,
     "name": "Space - Beginner",
     "description": "A deck for Space - Beginner"
+  },
+  {
+    "id": 4,
+    "name": "Economy Principles",
+    "description": "A beginner-friendly deck covering fundamental economic principles such as scarcity, opportunity cost, supply and demand, inflation, and market systems."
   }
 ]

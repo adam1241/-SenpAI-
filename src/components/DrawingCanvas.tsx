@@ -106,11 +106,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(({
     try {
       console.log('Starting canvas capture for analysis...');
       
-      // Get canvas as image data
+      // Get canvas as image data with maximum quality
       const dataURL = fabricCanvas.toDataURL({
         format: 'png',
         quality: 1.0,
-        multiplier: 2
+        multiplier: 6,
+        enableRetinaScaling: true
       });
       
       console.log('Canvas dataURL generated, length:', dataURL.length);

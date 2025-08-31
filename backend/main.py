@@ -46,7 +46,7 @@ def chat():
 
         stream = client.chat.completions.create(
             messages=api_messages,
-            model="qwen-3-235b-a22b",
+            model='qwen-3-235b-a22b-instruct-2507',
             stream=True,
             max_completion_tokens=40000,
             temperature=0.6,

@@ -139,6 +139,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
                   Ready to explore? Ask me anything you'd like to learn about. I'll guide you through discovery using the Socratic method.
                 </p>
               </div>
+
               
               {/* Quick Start Suggestions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">

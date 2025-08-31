@@ -3,7 +3,7 @@ import { LearningHeader } from "@/components/LearningHeader";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NotebookView } from "@/components/NotebookView";
 import { QuizView } from "@/components/QuizView";
-import { HistoryView } from "@/components/HistoryView";
+
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { FlashcardDecksView } from "@/components/FlashcardDecksView";
 
@@ -17,7 +17,7 @@ interface Message {
 }
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
+  const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "flashcards">("chat");
   // Lifted the messages state here
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -59,8 +59,7 @@ const Index = () => {
         return <NotebookView />;
       case "quiz":
         return <QuizView />;
-      case "history":
-        return <HistoryView />;
+      
       case "flashcards":
         return <FlashcardDecksView />;
       default:

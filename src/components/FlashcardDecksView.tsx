@@ -1,83 +1,123 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, BookOpen, Calendar, TrendingUp } from "lucide-react";
+import { Plus, BookOpen, Calendar, TrendingUp, MoreVertical } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
+import ApiService, { Deck, Flashcard as FlashcardFromAPI } from "@/services/api";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
-// Interface for data coming from the backend
-interface DeckFromAPI {
-  id: number;
-  name: string;
-  description: string;
+
+interface FlashcardDecksViewProps {
+  initialDecks: Deck[];
+  isLoading: boolean;
+  onDecksUpdate: () => void;
 }
 
-interface FlashcardFromAPI {
-  id: number;
-  question: string;
-  answer: string;
-  deck_id: number;
-  difficulty: "EASY" | "MEDIUM" | "HARD";
-  last_reviewed: string;
-}
-
-// Enriched interface for local state
-interface Deck extends DeckFromAPI {
-  cardCount: number;
-  newCards: number; // For now, we'll make this static
-  reviewCards: number; // For now, we'll make this static
-  lastStudied?: Date; // For now, we'll make this static
-}
-
-export const FlashcardDecksView = () => {
-  const [decks, setDecks] = useState<Deck[]>([]);
+export const FlashcardDecksView = ({ initialDecks, isLoading, onDecksUpdate }: FlashcardDecksViewProps) => {
+  const [decks, setDecks] = useState<Deck[]>(initialDecks);
   const [allFlashcards, setAllFlashcards] = useState<FlashcardFromAPI[]>([]);
   const [cardsForStudy, setCardsForStudy] = useState<FlashcardFromAPI[]>([]);
 
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
+  const [deckToDelete, setDeckToDelete] = useState<Deck | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  useEffect(() => {
+    setDecks(initialDecks);
+  }, [initialDecks]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    // This effect handles searching. The initial load is handled by the parent.
+    const handler = setTimeout(async () => {
       try {
-        const [decksRes, flashcardsRes] = await Promise.all([
-          fetch("http://localhost:5001/api/decks"),
-          fetch("http://localhost:5001/api/flashcards"),
-        ]);
-        
-        const decksData: DeckFromAPI[] = await decksRes.json();
-        const flashcardsData: FlashcardFromAPI[] = await flashcardsRes.json();
-        setAllFlashcards(flashcardsData); // Store all cards
-
-        // Enrich decks with card counts
-        const enrichedDecks: Deck[] = decksData.map(deck => {
-          const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
-          const cardCount = cardsInDeck.length;
-          // For now, let's consider all cards as 'reviewable' to activate the button
-          const reviewCards = cardCount; 
-
-          return {
-            ...deck,
-            cardCount: cardCount,
-            newCards: 0, 
-            reviewCards: reviewCards, // Use the calculated count
-          };
-        });
-
-        setDecks(enrichedDecks);
-
+        const decksData = await ApiService.getDecks(searchTerm);
+        setDecks(decksData);
       } catch (error) {
-        console.error("Failed to fetch flashcard data:", error);
+        console.error("Failed to fetch searched decks:", error);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    // Fetch all flashcards once for the study modal functionality
+    const fetchAllCards = async () => {
+      if (allFlashcards.length === 0) {
+        try {
+          const flashcardsData = await ApiService.getFlashcards();
+          setAllFlashcards(flashcardsData);
+        } catch (error) {
+          console.error("Failed to fetch flashcards:", error);
+        }
       }
     };
-
-    fetchData();
-  }, []);
+    fetchAllCards();
+  }, [allFlashcards.length]);
 
   // TODO: Fetch cards for the selected deck from the backend
   const sampleCards = [];
+
+  const handleCreateDeck = async (name: string, description: string) => {
+    try {
+      await ApiService.createDeck(name, description);
+      onDecksUpdate(); // Trigger refetch in parent
+    } catch (error) {
+      console.error("Failed to create deck:", error);
+      throw error;
+    }
+  };
+
+  const handleDeleteDeck = async () => {
+    if (!deckToDelete) return;
+
+    try {
+      await ApiService.deleteDeck(deckToDelete.id);
+      onDecksUpdate(); // Trigger refetch in parent
+      toast.success(`Deck "${deckToDelete.name}" deleted.`);
+    } catch (error) {
+      console.error("Failed to delete deck:", error);
+      toast.error("Failed to delete deck.");
+    } finally {
+      setDeckToDelete(null);
+    }
+  };
+
+  const handleStudyDeck = (deck: Deck) => {
+    setSelectedDeck(deck);
+    
+    const today = new Date().toISOString().split('T')[0];
+
+    // Filter for new cards (interval 0) and cards due for review
+    const dueCards = allFlashcards.filter(card => {
+      if (card.deck_id !== deck.id) return false;
+      
+      const isNew = !card.interval || card.interval === 0;
+      const isDue = card.next_review_date && card.next_review_date <= today;
+
+      return isNew || isDue;
+    });
+
+    setCardsForStudy(dueCards);
+    setStudyModalOpen(true);
+  };
 
   const formatLastStudied = (date?: Date) => {
     if (!date) return "Never";
@@ -99,28 +139,6 @@ export const FlashcardDecksView = () => {
     return decks.reduce((total, deck) => total + deck.reviewCards, 0);
   };
 
-  const handleCreateDeck = (name: string, description: string) => {
-    // This should now be a POST request to the backend
-    // For now, we'll just optimistically update the UI
-    const newDeck: Deck = {
-      id: (decks.length + 1), // This is not robust, backend should return the new object
-      name,
-      description,
-      cardCount: 0,
-      newCards: 0,
-      reviewCards: 0,
-    };
-    setDecks([...decks, newDeck]);
-  };
-
-  const handleStudyDeck = (deck: Deck) => {
-    setSelectedDeck(deck);
-    // Filter the cards for the selected deck
-    const studyCards = allFlashcards.filter(card => card.deck_id === deck.id);
-    setCardsForStudy(studyCards);
-    setStudyModalOpen(true);
-  };
-
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="mb-8">
@@ -133,6 +151,16 @@ export const FlashcardDecksView = () => {
             <Plus className="w-4 h-4" />
             New Deck
           </Button>
+        </div>
+
+        <div className="mb-6">
+          <Input
+            type="text"
+            placeholder="Search in decks and cards..."
+            className="w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         {/* Study Summary */}
@@ -184,57 +212,112 @@ export const FlashcardDecksView = () => {
       </div>
 
       {/* Decks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {decks.map((deck) => (
-          <Card key={deck.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg">{deck.name}</CardTitle>
-                  <CardDescription className="mt-1">{deck.description}</CardDescription>
-                </div>
-                <div className="flex gap-1">
-                  {deck.newCards > 0 && (
-                    <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
-                      {deck.newCards} new
-                    </Badge>
-                  )}
-                  {deck.reviewCards > 0 && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                      {deck.reviewCards} due
-                    </Badge>
-                  )}
-                </div>
+      {isLoading ? (
+        <p>Loading...</p> // Replace with a skeleton loader later
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {decks.map((deck) => (
+            <div key={deck.id} className="relative">
+              <Link
+                to={`/decks/${deck.id}${searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : ''}`}
+                className="no-underline"
+              >
+                <Card className="hover:shadow-lg transition-shadow h-full">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{deck.name}</CardTitle>
+                        <CardDescription className="mt-1">{deck.description}</CardDescription>
+                      </div>
+                      <div className="flex gap-1">
+                        {deck.newCards > 0 && (
+                          <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
+                            {deck.newCards} new
+                          </Badge>
+                        )}
+                        {deck.reviewCards > 0 && (
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            {deck.reviewCards} due
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total Cards:</span>
+                        <span className="font-medium">{deck.cardCount}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Last Studied:</span>
+                        <span className="font-medium">{formatLastStudied(deck.lastStudied as Date | undefined)}</span>
+                      </div>
+                      <div className="pt-2">
+                        <Button
+                          className="w-full"
+                          disabled={deck.newCards === 0 && deck.reviewCards === 0}
+                          onClick={(e) => {
+                            e.preventDefault(); // Prevent navigation
+                            handleStudyDeck(deck);
+                          }}
+                        >
+                          {deck.reviewCards > 0 ? `Study ${deck.reviewCards} cards` : "No Cards to Study"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <div
+                className="absolute top-2 right-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => alert("Edit clicked for " + deck.name)}>
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeckToDelete(deck)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </CardHeader>
+            </div>
+          ))}
+        </div>
+      )}
 
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Cards:</span>
-                  <span className="font-medium">{deck.cardCount}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Last Studied:</span>
-                  <span className="font-medium">{formatLastStudied(deck.lastStudied)}</span>
-                </div>
-                
-                <div className="pt-2">
-                  <Button 
-                    className="w-full" 
-                    disabled={deck.newCards === 0 && deck.reviewCards === 0}
-                    onClick={() => handleStudyDeck(deck)}
-                  >
-                    {deck.newCards > 0 || deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Modals & Dialogs */}
+      <AlertDialog open={!!deckToDelete} onOpenChange={() => setDeckToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the deck "{deckToDelete?.name}" and all its associated cards.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteDeck}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Modals */}
       <StudyModal
         isOpen={studyModalOpen}
         onClose={() => setStudyModalOpen(false)}
@@ -244,6 +327,8 @@ export const FlashcardDecksView = () => {
           question: card.question,
           answer: card.answer,
           concept: selectedDeck?.name || "Concept",
+          question_image: card.question_image,
+          answer_image: card.answer_image,
         }))}
       />
 

@@ -10,26 +10,34 @@ import { toast } from "sonner";
 interface NewDeckModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateDeck: (name: string, description: string) => void;
+  onCreateDeck: (name: string, description: string) => Promise<void>;
 }
 
 export const NewDeckModal = ({ isOpen, onClose, onCreateDeck }: NewDeckModalProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       toast.error("Please enter a deck name");
       return;
     }
 
-    onCreateDeck(name.trim(), description.trim());
-    toast.success("New deck created successfully! 📚");
-    
-    // Reset form
-    setName("");
-    setDescription("");
-    onClose();
+    setIsSaving(true);
+    try {
+      await onCreateDeck(name.trim(), description.trim());
+      toast.success("New deck created successfully! 📚");
+      
+      // Reset form and close
+      setName("");
+      setDescription("");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to create deck. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClose = () => {
@@ -80,12 +88,11 @@ export const NewDeckModal = ({ isOpen, onClose, onCreateDeck }: NewDeckModalProp
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose} disabled={isSaving}>
               Cancel
             </Button>
-            <Button onClick={handleSave} className="gap-2">
-              <Save className="w-4 h-4" />
-              Create Deck
+            <Button onClick={handleSave} className="gap-2" disabled={isSaving}>
+              {isSaving ? "Creating..." : <><Save className="w-4 h-4" /> Create Deck</>}
             </Button>
           </div>
         </div>

@@ -5,15 +5,21 @@
     "answer": "A function that remembers the variables from the environment in which it was created, even after that environment has closed.",
     "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2024-07-26T10:00:00Z"
+    "last_reviewed": "2025-08-31T14:14:44.858698",
+    "interval": 1,
+    "ease_factor": 2.5,
+    "next_review_date": "2025-09-01"
   },
   {
     "id": 2,
     "question": "What is the powerhouse of the cell?",
-    "answer": "The mitochondrion is known as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP).",
+    "answer": "The mitochondrion is known as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP) .",
     "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2024-07-26T10:05:00Z"
+    "last_reviewed": "2025-08-31T14:17:51.176914",
+    "interval": 3,
+    "ease_factor": 2.5,
+    "next_review_date": "2025-09-03"
   },
   {
     "id": 3,
@@ -29,7 +35,10 @@
     "answer": "Microscopic aquatic organisms that drift or float in water, forming the base of many aquatic food chains. They include phytoplankton (plants) and zooplankton (animals).",
     "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2025-07-26T18:08:47.584488"
+    "last_reviewed": "2025-08-31T14:17:54.273242",
+    "interval": 8,
+    "ease_factor": 2.65,
+    "next_review_date": "2025-09-08"
   },
   {
     "id": 5,
@@ -38,5 +47,43 @@
     "deck_id": 2,
     "difficulty": "EASY",
     "last_reviewed": "2025-07-26T18:08:47.584488"
+  },
+  {
+    "id": 6,
+    "question": "blabla\n",
+    "answer": "test",
+    "deck_id": 4,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T13:33:35.671061"
+  },
+  {
+    "id": 7,
+    "question": "**test** blabla",
+    "answer": "test",
+    "deck_id": 4,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T13:57:20.148864"
+  },
+  {
+    "id": 8,
+    "question": "test",
+    "answer": "test",
+    "deck_id": 4,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T14:05:07.354644",
+    "question_image": "/api/uploads/20250813_180734_20250831140451.jpg",
+    "answer_image": "/api/uploads/20250813_180734_20250831140501.jpg"
+  },
+  {
+    "id": 9,
+    "question": "test",
+    "answer": "test",
+    "deck_id": 4,
+    "last_reviewed": null,
+    "next_review_date": "2025-08-31",
+    "interval": 0,
+    "ease_factor": 2.5,
+    "question_image": null,
+    "answer_image": null
   }
 ]

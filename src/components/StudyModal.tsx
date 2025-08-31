@@ -5,12 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import ApiService from "@/services/api";
 
 interface StudyCard {
   id: string;
   question: string;
   answer: string;
   concept: string;
+  question_image?: string;
+  answer_image?: string;
 }
 
 interface StudyModalProps {
@@ -32,19 +37,27 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
     setIsFlipped(!isFlipped);
   };
 
-  const handleDifficulty = (difficulty: 'easy' | 'medium' | 'hard') => {
+  const handleDifficulty = async (difficulty: 'easy' | 'medium' | 'hard') => {
     if (!currentCard) return;
     
-    setStudiedCards(prev => new Set([...prev, currentCard.id]));
-    
-    // Move to next card
-    if (currentCardIndex < cards.length - 1) {
-      setCurrentCardIndex(prev => prev + 1);
-      setIsFlipped(false);
-    } else {
-      // Study session complete
-      toast.success("Study session completed! 🎉");
-      onClose();
+    try {
+      // Send review to the backend
+      await ApiService.reviewFlashcard(parseInt(currentCard.id), difficulty);
+      
+      setStudiedCards(prev => new Set([...prev, currentCard.id]));
+      
+      // Move to next card
+      if (currentCardIndex < cards.length - 1) {
+        setCurrentCardIndex(prev => prev + 1);
+        setIsFlipped(false);
+      } else {
+        // Study session complete
+        toast.success("Study session completed! 🎉");
+        onClose();
+      }
+    } catch (error) {
+      toast.error("Failed to save review. Please try again.");
+      console.error(error);
     }
   };
 
@@ -59,7 +72,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl flex flex-col max-h-[90vh]">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
@@ -72,7 +85,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
           </div>
         </DialogHeader>
         
-        <div className="space-y-6 pt-4">
+        <div className="space-y-6 pt-4 flex-grow overflow-y-auto pr-6">
           {/* Progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -98,7 +111,11 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
               {!isFlipped ? (
                 <div>
                   <div className="text-xs text-primary font-medium mb-4 tracking-wider">QUESTION</div>
-                  <p className="text-lg text-foreground leading-relaxed">{currentCard.question}</p>
+                  <div className="text-lg text-foreground leading-relaxed prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {`${currentCard.question}${currentCard.question_image ? `\n\n![Question Image](${ApiService.getBaseUrl()}${currentCard.question_image})` : ''}`}
+                    </ReactMarkdown>
+                  </div>
                   <div className="mt-6 text-sm text-muted-foreground">
                     Click to reveal answer
                   </div>
@@ -106,7 +123,11 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
               ) : (
                 <div>
                   <div className="text-xs text-success font-medium mb-4 tracking-wider">ANSWER</div>
-                  <p className="text-lg text-foreground leading-relaxed">{currentCard.answer}</p>
+                  <div className="text-lg text-foreground leading-relaxed prose dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                     {`${currentCard.answer}${currentCard.answer_image ? `\n\n![Answer Image](${ApiService.getBaseUrl()}${currentCard.answer_image})` : ''}`}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>

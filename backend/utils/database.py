@@ -41,3 +41,11 @@ class Database:
         # Write back the complete list
         with open(Database.tables[table_name], "w") as f:
             json.dump(existing_data, f, indent=2)
+            
+    @staticmethod
+    def save_table(table_name, data):
+        """
+        Saves the entire data to a table, overwriting the existing content.
+        """
+        with open(Database.tables[table_name], "w") as f:
+            json.dump(data, f, indent=2)

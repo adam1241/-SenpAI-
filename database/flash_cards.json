@@ -38,5 +38,21 @@
     "deck_id": 2,
     "difficulty": "EASY",
     "last_reviewed": "2025-07-26T18:08:47.584488"
+  },
+  {
+    "id": 6,
+    "question": "What is the green pigment in plants that captures sunlight?",
+    "answer": "Chlorophyll",
+    "deck_id": 2,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T03:23:45.669645"
+  },
+  {
+    "id": 7,
+    "question": "Where in the plant cell does photosynthesis take place?",
+    "answer": "In the chloroplasts",
+    "deck_id": 2,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T03:23:45.669645"
   }
 ]

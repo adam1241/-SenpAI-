@@ -381,5 +381,208 @@
     "time": 10,
     "completed_times": 0,
     "best_score": 0
+  },
+  {
+    "id": 6,
+    "title": "Basic Japanese Vocabulary Quiz",
+    "questions": [
+      {
+        "question_text": "What does '\u3053\u3093\u306b\u3061\u306f' (Konnichiwa) mean in English?",
+        "options": [
+          "Goodbye",
+          "Hello",
+          "Thank you",
+          "Excuse me"
+        ],
+        "correct_answer": "Hello"
+      },
+      {
+        "question_text": "What does '\u3042\u308a\u304c\u3068\u3046' (Arigatou) mean in English?",
+        "options": [
+          "Yes",
+          "No",
+          "Thank you",
+          "Please"
+        ],
+        "correct_answer": "Thank you"
+      },
+      {
+        "question_text": "What does '\u3059\u307f\u307e\u305b\u3093' (Sumimasen) mean in English?",
+        "options": [
+          "Excuse me",
+          "Hello",
+          "Good morning",
+          "Good night"
+        ],
+        "correct_answer": "Excuse me"
+      },
+      {
+        "question_text": "What does '\u306f\u3044' (Hai) mean in English?",
+        "options": [
+          "No",
+          "Yes",
+          "Maybe",
+          "Please"
+        ],
+        "correct_answer": "Yes"
+      },
+      {
+        "question_text": "What does '\u3044\u3044\u3048' (Iie) mean in English?",
+        "options": [
+          "Yes",
+          "No",
+          "Hello",
+          "Goodbye"
+        ],
+        "correct_answer": "No"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge of essential Japanese words.",
+    "time": 5,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 7,
+    "title": "spanish",
+    "questions": [
+      {
+        "question_text": "s",
+        "options": [
+          "d",
+          "f",
+          "e"
+        ],
+        "correct_answer": "f"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "ddd",
+    "time": 1,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 8,
+    "title": "Football Basics Quiz",
+    "questions": [
+      {
+        "question_text": "How many players are on a football team during a match?",
+        "options": [
+          "9",
+          "10",
+          "11",
+          "12"
+        ],
+        "correct_answer": "11"
+      },
+      {
+        "question_text": "What is it called when a player scores three goals in a single game?",
+        "options": [
+          "Hat-trick",
+          "Goal rush",
+          "Triple score",
+          "Three-peat"
+        ],
+        "correct_answer": "Hat-trick"
+      },
+      {
+        "question_text": "Which country won the FIFA World Cup in 2018?",
+        "options": [
+          "Brazil",
+          "Germany",
+          "France",
+          "Argentina"
+        ],
+        "correct_answer": "France"
+      },
+      {
+        "question_text": "What happens when the ball fully crosses the sideline?",
+        "options": [
+          "Goal kick",
+          "Corner kick",
+          "Free kick",
+          "Throw-in"
+        ],
+        "correct_answer": "Throw-in"
+      },
+      {
+        "question_text": "How long does a standard football match last?",
+        "options": [
+          "60 minutes",
+          "70 minutes",
+          "90 minutes",
+          "100 minutes"
+        ],
+        "correct_answer": "90 minutes"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge on the fundamentals of football (soccer).",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 9,
+    "title": "Basics of Space",
+    "questions": [
+      {
+        "question_text": "How many planets are in our Solar System?",
+        "options": [
+          "7",
+          "8",
+          "9",
+          "10"
+        ],
+        "correct_answer": "8"
+      },
+      {
+        "question_text": "Which planet is known as the Red Planet?",
+        "options": [
+          "Venus",
+          "Jupiter",
+          "Mars",
+          "Saturn"
+        ],
+        "correct_answer": "Mars"
+      },
+      {
+        "question_text": "What is the name of the galaxy that contains our Solar System?",
+        "options": [
+          "Andromeda",
+          "Whirlpool Galaxy",
+          "Milky Way",
+          "Triangulum"
+        ],
+        "correct_answer": "Milky Way"
+      },
+      {
+        "question_text": "What is the closest star to Earth?",
+        "options": [
+          "Proxima Centauri",
+          "Sirius",
+          "The Sun",
+          "Alpha Centauri"
+        ],
+        "correct_answer": "The Sun"
+      },
+      {
+        "question_text": "What is Earth's natural satellite called?",
+        "options": [
+          "Titan",
+          "Ganymede",
+          "Europa",
+          "The Moon"
+        ],
+        "correct_answer": "The Moon"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge on basic space facts.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
   }
 ]

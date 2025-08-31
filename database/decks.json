@@ -1,32 +1,17 @@
 [
   {
     "id": 1,
-    "name": "JavaScript Concepts",
-    "description": "Fundamental concepts in JavaScript programming."
+    "name": "German - Beginner",
+    "description": "Easy German flashcards for beginners focusing on basic vocabulary and phrases."
   },
   {
     "id": 2,
-    "name": "Biology 101",
-    "description": "Introductory concepts in biology."
+    "name": "Japanese - Beginner",
+    "description": "A deck for Japanese - Beginner"
   },
   {
     "id": 3,
-    "name": "AI Fundamentals",
-    "description": "Fundamental concepts in AI programming."
-  },
-  {
-    "id": 4,
-    "name": "german",
-    "description": ""
-  },
-  {
-    "id": 5,
-    "name": "spanish",
-    "description": ""
-  },
-  {
-    "id": 6,
-    "name": "arabic",
-    "description": ""
+    "name": "Space - Beginner",
+    "description": "A deck for Space - Beginner"
   }
 ]

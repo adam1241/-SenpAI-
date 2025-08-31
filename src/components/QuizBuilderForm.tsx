@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PlusCircle, Trash2, X } from 'lucide-react';
 import { saveManualQuiz } from '@/services/api';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface QuestionState {
   question_text: string;
@@ -20,6 +20,7 @@ export const QuizBuilderForm = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<QuestionState[]>([]);
+  const navigate = useNavigate();
 
   const addQuestion = () => {
     setQuestions([...questions, { question_text: '', options: ['', ''], correct_answer: '' }]);
@@ -87,7 +88,7 @@ export const QuizBuilderForm = () => {
     try {
       await saveManualQuiz(quizData);
       toast.success("Quiz saved successfully!");
-      // TODO: Redirect to the quiz view page
+      navigate('/#quiz'); // Redirect to the quiz view page
     } catch (error) {
       console.error("Failed to save quiz:", error);
       toast.error("Failed to save quiz.");

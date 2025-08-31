@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Clock, Trophy, Target, Play, Plus } from "lucide-react";
 import { QuizTakingView } from "./QuizTakingView";
 import { getQuizzes } from "@/services/api";
+import { CreateQuizModal } from "./CreateQuizModal";
+import ApiService from "@/services/api";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface Question {
   id: string;
@@ -67,20 +71,40 @@ const transformQuizData = (backendQuizzes: BackendQuiz[]): Quiz[] => {
 export const QuizView = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
+  const fetchQuizzes = useCallback(async () => {
+    try {
+      const backendQuizzes = await getQuizzes();
+      const transformedQuizzes = transformQuizData(backendQuizzes);
+      setQuizzes(transformedQuizzes);
+    } catch (error) {
+      console.error("Failed to fetch quizzes:", error);
+      toast.error("Failed to load quizzes.");
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchQuizzes = async () => {
-      try {
-        const backendQuizzes = await getQuizzes();
-        const transformedQuizzes = transformQuizData(backendQuizzes);
-        setQuizzes(transformedQuizzes);
-      } catch (error) {
-        console.error("Failed to fetch quizzes:", error);
-      }
-    };
-
     fetchQuizzes();
-  }, []);
+  }, [fetchQuizzes]);
+
+  const handleCreateQuizSubmit = async (topic: string) => {
+    toast.info(`Generating a quiz about "${topic}"...`);
+    try {
+      const response = await ApiService.sendChatMessage([
+        { role: 'user', content: `Please create a quiz about ${topic}` }
+      ]);
+      
+      setTimeout(() => {
+        fetchQuizzes();
+        toast.success(`Successfully created a quiz about "${topic}"!`);
+      }, 10000); // 10 second delay
+
+    } catch (error) {
+      console.error("Failed to create quiz:", error);
+      toast.error("Something went wrong while creating the quiz.");
+    }
+  };
 
   const handleStartQuiz = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -120,10 +144,17 @@ export const QuizView = () => {
             <Brain className="w-8 h-8 text-primary" />
             Learning Quizzes
           </h1>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Create Quiz
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button className="gap-2" onClick={() => setCreateModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Create with AI
+            </Button>
+            <Link to="/build-quiz">
+              <Button variant="outline" className="gap-2">
+                Build Manually
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Statistics */}
@@ -235,6 +266,11 @@ export const QuizView = () => {
           ))}
         </div>
       </div>
+      <CreateQuizModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSubmit={handleCreateQuizSubmit}
+      />
     </div>
   );
 };

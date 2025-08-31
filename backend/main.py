@@ -169,5 +169,25 @@ def get_quizzes():
     return jsonify(quizzes)
 
 
+@app.route('/api/quizzes/manual', methods=['POST'])
+def add_manual_quiz():
+    """
+    Endpoint to manually add a new quiz.
+    """
+    quiz_data = request.get_json()
+    if not quiz_data:
+        return Response("No quiz data provided", status=400)
+
+    try:
+        # The QuizzTool now handles ID generation and validation
+        quizz_tool = QuizzTool()
+        # The tool expects a JSON string, so we dump the dict back to a string
+        quizz_tool.add_quiz(json.dumps(quiz_data))
+        return jsonify({"message": "Quiz added successfully"}), 201
+    except Exception as e:
+        print(f"Error adding manual quiz: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

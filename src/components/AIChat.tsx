@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Send, Bot, User, Brain, Lightbulb, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiService, ChatMessage } from "@/services/api";
-
 
 interface Message {
   id: string;
@@ -22,7 +21,11 @@ interface AIChatProps {
   onAnalyzeCanvas?: () => void;
 }
 
-export const AIChat = ({ className, selectedPersonality, onAnalyzeCanvas }: AIChatProps) => {
+interface AIChatRef {
+  addCanvasAnalysis: (analysis: string) => void;
+}
+
+export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedPersonality, onAnalyzeCanvas }, ref) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -32,6 +35,59 @@ export const AIChat = ({ className, selectedPersonality, onAnalyzeCanvas }: AICh
   const [isPlaying, setIsPlaying] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    addCanvasAnalysis: async (analysis: string) => {
+      console.log('📝 Canvas analysis received:', analysis);
+      
+      setIsTyping(true);
+      
+      try {
+        // Send analysis directly to chatbot without showing raw analysis
+        const contextMessages = convertToChatMessages(messages);
+        contextMessages.push({
+          role: 'user' as const,
+          content: `I need help with my canvas work. Here's what I've created: ${analysis}. Please speak directly to me as the student and provide teaching guidance and ask follow-up questions.`
+        });
+
+        const chatResponse = await ApiService.sendChatMessage(
+          contextMessages,
+          selectedPersonality,
+          isVoiceEnabled
+        );
+
+        // Add only the AI's intelligent response
+        const aiResponseMessage: Message = {
+          id: Date.now().toString(),
+          content: chatResponse.message,
+          isUser: false,
+          timestamp: new Date(chatResponse.timestamp)
+        };
+
+        setMessages(prev => [...prev, aiResponseMessage]);
+        
+        // Play audio if available
+        if (chatResponse.audio) {
+          await playAudio(chatResponse.audio);
+        } else if (isVoiceEnabled) {
+          await fallbackTextToSpeech(chatResponse.message);
+        }
+        
+      } catch (error) {
+        console.error('Canvas analysis error:', error);
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          content: "Sorry, I couldn't analyze your work right now. Please try again later.",
+          isUser: false,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsTyping(false);
+      }
+    }
+  }));
 
   // Check backend connection
   const checkBackendConnection = useCallback(async () => {
@@ -201,14 +257,10 @@ export const AIChat = ({ className, selectedPersonality, onAnalyzeCanvas }: AICh
   }, [selectedPersonality]);
 
   // Auto-scroll to bottom when messages change (important for long conversations)
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
     
   useEffect(()=>{
-    if(typeof window?.MathJax !== "undefined"){
-      window.MathJax.typeset()
+    if(typeof (window as any)?.MathJax !== "undefined"){
+      (window as any).MathJax.typeset()
     }
   },[messages])
 
@@ -288,65 +340,8 @@ export const AIChat = ({ className, selectedPersonality, onAnalyzeCanvas }: AICh
   const handleAnalyzeCanvas = async () => {
     if (!isBackendConnected) return;
     
+    // Trigger canvas analysis from DrawingCanvas component
     onAnalyzeCanvas?.();
-    
-    const analysisMessage: Message = {
-      id: Date.now().toString(),
-      content: "Let me analyze your work...",
-      isUser: false,
-      timestamp: new Date(),
-      type: 'analysis'
-    };
-
-    setMessages(prev => [...prev, analysisMessage]);
-    setIsTyping(true);
-    setBackendError("");
-
-    try {
-      // For now, we'll send a description of the canvas analysis request
-      const response = await ApiService.analyzeCanvas(
-        undefined, 
-        "Please analyze the student's current work on the canvas and provide feedback based on their drawing or mathematical work.",
-        selectedPersonality
-      );
-
-      const feedbackMessage: Message = {
-        id: Date.now().toString(),
-        content: response.analysis,
-        isUser: false,
-        timestamp: new Date(response.timestamp),
-        type: 'analysis'
-      };
-
-      setMessages(prev => [...prev, feedbackMessage]);
-      
-      // Generate voice for analysis if enabled
-      if (isVoiceEnabled) {
-        try {
-          const audioBlob = await ApiService.generateVoice(response.analysis, selectedPersonality);
-          await playAudio(undefined, audioBlob);
-        } catch (voiceError) {
-          console.error('Voice generation failed:', voiceError);
-          await fallbackTextToSpeech(response.analysis);
-        }
-      }
-      
-    } catch (error) {
-      console.error('Canvas analysis error:', error);
-      setBackendError("Failed to analyze canvas. Please try again.");
-      
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: "Sorry, I couldn't analyze your work right now. Please try again later.",
-        isUser: false,
-        timestamp: new Date(),
-        type: 'analysis'
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsTyping(false);
-    }
   };
 
   const getMessageIcon = (type?: string) => {
@@ -512,4 +507,4 @@ export const AIChat = ({ className, selectedPersonality, onAnalyzeCanvas }: AICh
       </div>
     </Card>
   );
-};
+});

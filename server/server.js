@@ -103,6 +103,9 @@ class OpenAICanvasAnalysisClient{
       const prompt = `You are analyzing a student's mathematical work on a digital canvas. Your job is to interpret what the student has written/drawn as mathematical expressions.
 
 **CRITICAL: Always assume the student is writing mathematics. Interpret all marks, lines, and symbols as mathematical notation.**
+IMPORTANT: If this looks like mathematical notation (equations, derivatives like dV/dt, integrals, etc.), interpret it as advanced mathematics including differential equations, calculus, or algebra.
+
+**OUTPUT FORMAT: Use LaTeX notation for all mathematical expressions enclosed in \\( \\) for inline math.**
 
 Look at this image and tell me exactly what mathematical expression or equation the student has written. Consider:
 
@@ -111,15 +114,18 @@ Look at this image and tell me exactly what mathematical expression or equation 
 - Single letters = variables (a, b, c, x, y, z, etc.)
 - Curved lines = parentheses, fractions, or other math symbols
 - Positioning = mathematical relationships (like "x = " or "2 + 3")
+- Derivatives should be written as \\(\\frac{dV}{dt}\\) or \\(V'(t)\\)
+- Integrals should be written as \\(\\int f(x) dx\\)
+- Fractions should be written as \\(\\frac{a}{b}\\)
 
 **Respond in this format:**
-"The student has written: [mathematical expression]"
+"The student has written: \\([LaTeX mathematical expression]\\)"
 
 If you see multiple expressions or steps, list them as:
-"The student has written: [expression 1], [expression 2]"
+"The student has written: \\([expression 1]\\), \\([expression 2]\\)"
 
 If the expression appears incomplete, say:
-"The student appears to be writing: [partial expression] (incomplete)"
+"The student appears to be writing: \\([partial LaTeX expression]\\) (incomplete)"
 
 Do NOT describe it as drawings or abstract shapes. Always interpret it as mathematics that the student is trying to express, even if roughly drawn.`;
 

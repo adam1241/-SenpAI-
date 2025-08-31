@@ -2,13 +2,14 @@
 
 # SenpAI
 
-An AI teacher that helps you learn through interactive tools including flashcards, doodle analysis, and personalized learning experiences.
+SenpAI is a an AI teacher that can help you learn new things and improve your knowledge. It differentiates from other AIs by providing multiple tools that are designed to improve your learning experience.
+
 
 ## Features
-- Automatic flashcard creation and management
-- Doodle Mentor AI with handwriting recognition
-- Interactive notebook interface
-- Study reminders and progress tracking
+- Automatic Flashcard creation and management
+- Automatic and manual creation of quizzes
+- A canvas where you can write your exercise answers and the AI will analyze your work
+
 
 ## Quick Start
 

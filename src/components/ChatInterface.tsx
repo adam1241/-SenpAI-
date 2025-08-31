@@ -140,15 +140,6 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
                 </p>
               </div>
 
-              <div className="flex justify-center mb-6">
-                <video 
-                  controls 
-                  className="w-full max-w-3xl rounded-lg shadow-lg"
-                >
-                  <source src="/promotion.mp4" type="video/mp4" />
-                  Votre navigateur ne supporte pas la balise vidéo.
-                </video>
-              </div>
               
               {/* Quick Start Suggestions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">

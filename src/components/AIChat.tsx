@@ -51,11 +51,13 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
           content: `I need help with my canvas work. Here's what I've created: ${analysis}. Please speak directly to me as the student and provide teaching guidance and ask follow-up questions.`
         });
 
-        const chatResponse = await ApiService.sendChatMessage(
+        const response = await ApiService.sendChatMessage(
           contextMessages,
           selectedPersonality,
           isVoiceEnabled
         );
+
+        const chatResponse = await response.json();
 
         // Add only the AI's intelligent response
         const aiResponseMessage: Message = {
@@ -300,22 +302,24 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
         isVoiceEnabled
       );
 
+      const chatResponse = await response.json();
+
       const aiResponse: Message = {
         id: Date.now().toString(),
-        content: response.message,
+        content: chatResponse.message,
         isUser: false,
-        timestamp: new Date(response.timestamp),
+        timestamp: new Date(chatResponse.timestamp),
         type: 'feedback'
       };
 
       setMessages(prev => [...prev, aiResponse]);
       
       // Play audio if available
-      if (response.audio) {
-        await playAudio(response.audio);
+      if (chatResponse.audio) {
+        await playAudio(chatResponse.audio);
       } else if (isVoiceEnabled) {
         // Fallback to text-to-speech
-        await fallbackTextToSpeech(response.message);
+        await fallbackTextToSpeech(chatResponse.message);
       }
       
     } catch (error) {

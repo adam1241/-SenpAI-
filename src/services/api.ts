@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:5001/api'; 
+const API_BASE_URL = 'http://localhost:5001/api';
+const NOTEBOOK_API_BASE_URL = 'http://localhost:3001/api';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -17,7 +18,7 @@ export interface ChatResponse {
 export interface AnalysisResponse {
   analysis: string;
   personality: string;
-  timestamp: string;
+  timestamp:string;
 }
 
 export class ApiService {
@@ -27,7 +28,7 @@ export class ApiService {
     includeVoice: boolean = false
   ): Promise<Response> { // Changed to return Response
     try {
-      const response = await fetch(`${API_BASE_URL}/chat`, {
+      const response = await fetch(`${NOTEBOOK_API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ export class ApiService {
 
   static async generateVoice(text: string, personality: string = 'calm'): Promise<Blob> {
     try {
-      const response = await fetch(`${API_BASE_URL}/voice`, {
+      const response = await fetch(`${NOTEBOOK_API_BASE_URL}/voice`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +93,7 @@ export class ApiService {
       
       formData.append('personality', personality);
 
-      const response = await fetch(`${API_BASE_URL}/analyze-canvas`, {
+      const response = await fetch(`${NOTEBOOK_API_BASE_URL}/analyze-canvas`, {
         method: 'POST',
         body: formData
       });
@@ -110,7 +111,7 @@ export class ApiService {
 
   static async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
+      const response = await fetch(`${NOTEBOOK_API_BASE_URL.replace('/api', '')}/health`);
       return response.ok;
     } catch (error) {
       console.error('Health check failed:', error);

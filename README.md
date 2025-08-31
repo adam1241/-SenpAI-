@@ -75,7 +75,9 @@ You need to run three services simultaneously:
 2. **Start the Node.js server** (Terminal 2):
 
    ```bash
-   npm run server
+   cd server/
+   npm run dev
+
    ```
 
 3. **Start the frontend** (Terminal 3):

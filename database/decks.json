@@ -13,5 +13,20 @@
     "id": 3,
     "name": "AI Fundamentals",
     "description": "Fundamental concepts in AI programming."
+  },
+  {
+    "id": 4,
+    "name": "german",
+    "description": ""
+  },
+  {
+    "id": 5,
+    "name": "spanish",
+    "description": ""
+  },
+  {
+    "id": 6,
+    "name": "arabic",
+    "description": ""
   }
 ]

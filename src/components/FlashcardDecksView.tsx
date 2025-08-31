@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, BookOpen, Calendar, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, BookOpen, Calendar, TrendingUp, RefreshCw } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
+import { AddFlashcardModal } from "./AddFlashcardModal"; // Import the new modal
+import { getDecks, getFlashcards, saveManualDeck } from "@/services/api"; // Import API functions
 
 // Interface for data coming from the backend
 interface DeckFromAPI {
@@ -25,9 +28,9 @@ interface FlashcardFromAPI {
 // Enriched interface for local state
 interface Deck extends DeckFromAPI {
   cardCount: number;
-  newCards: number; // For now, we'll make this static
-  reviewCards: number; // For now, we'll make this static
-  lastStudied?: Date; // For now, we'll make this static
+  newCards: number; 
+  reviewCards: number; 
+  lastStudied?: Date; 
 }
 
 export const FlashcardDecksView = () => {
@@ -37,47 +40,41 @@ export const FlashcardDecksView = () => {
 
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
+  const [addFlashcardModalOpen, setAddFlashcardModalOpen] = useState(false); // State for the new modal
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [decksRes, flashcardsRes] = await Promise.all([
-          fetch("http://localhost:5001/api/decks"),
-          fetch("http://localhost:5001/api/flashcards"),
-        ]);
-        
-        const decksData: DeckFromAPI[] = await decksRes.json();
-        const flashcardsData: FlashcardFromAPI[] = await flashcardsRes.json();
-        setAllFlashcards(flashcardsData); // Store all cards
+  const fetchData = useCallback(async () => {
+    try {
+      const [decksData, flashcardsData] = await Promise.all([
+        getDecks(),
+        getFlashcards(),
+      ]);
+      
+      setAllFlashcards(flashcardsData); 
 
-        // Enrich decks with card counts
-        const enrichedDecks: Deck[] = decksData.map(deck => {
-          const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
-          const cardCount = cardsInDeck.length;
-          // For now, let's consider all cards as 'reviewable' to activate the button
-          const reviewCards = cardCount; 
+      const enrichedDecks: Deck[] = decksData.map(deck => {
+        const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
+        const cardCount = cardsInDeck.length;
+        const reviewCards = cardCount; 
 
-          return {
-            ...deck,
-            cardCount: cardCount,
-            newCards: 0, 
-            reviewCards: reviewCards, // Use the calculated count
-          };
-        });
+        return {
+          ...deck,
+          cardCount: cardCount,
+          newCards: 0, 
+          reviewCards: reviewCards, 
+        };
+      });
 
-        setDecks(enrichedDecks);
+      setDecks(enrichedDecks);
 
-      } catch (error) {
-        console.error("Failed to fetch flashcard data:", error);
-      }
-    };
-
-    fetchData();
+    } catch (error) {
+      console.error("Failed to fetch flashcard data:", error);
+    }
   }, []);
 
-  // TODO: Fetch cards for the selected deck from the backend
-  const sampleCards = [];
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const formatLastStudied = (date?: Date) => {
     if (!date) return "Never";
@@ -99,23 +96,19 @@ export const FlashcardDecksView = () => {
     return decks.reduce((total, deck) => total + deck.reviewCards, 0);
   };
 
-  const handleCreateDeck = (name: string, description: string) => {
-    // This should now be a POST request to the backend
-    // For now, we'll just optimistically update the UI
-    const newDeck: Deck = {
-      id: (decks.length + 1), // This is not robust, backend should return the new object
-      name,
-      description,
-      cardCount: 0,
-      newCards: 0,
-      reviewCards: 0,
-    };
-    setDecks([...decks, newDeck]);
+  const handleCreateDeck = async (name: string, description: string) => {
+    try {
+      await saveManualDeck({ name, description });
+      toast.success("Deck created successfully!");
+      fetchData(); // Refetch all data
+    } catch (error) {
+      console.error("Failed to create deck:", error);
+      toast.error("Failed to create deck. Please try again.");
+    }
   };
 
   const handleStudyDeck = (deck: Deck) => {
     setSelectedDeck(deck);
-    // Filter the cards for the selected deck
     const studyCards = allFlashcards.filter(card => card.deck_id === deck.id);
     setCardsForStudy(studyCards);
     setStudyModalOpen(true);
@@ -129,10 +122,19 @@ export const FlashcardDecksView = () => {
             <h1 className="text-3xl font-bold text-foreground">Flashcard Decks</h1>
             <p className="text-muted-foreground">Organize and study your knowledge with spaced repetition</p>
           </div>
-          <Button className="gap-2" onClick={() => setNewDeckModalOpen(true)}>
-            <Plus className="w-4 h-4" />
-            New Deck
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={fetchData}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Add Flashcard
+            </Button>
+            <Button className="gap-2" onClick={() => setNewDeckModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              New Deck
+            </Button>
+          </div>
         </div>
 
         {/* Study Summary */}
@@ -174,7 +176,7 @@ export const FlashcardDecksView = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Cards</p>
                   <p className="text-2xl font-bold text-success">
-                    {decks.reduce((total, deck) => total + deck.cardCount, 0)}
+                    {allFlashcards.length}
                   </p>
                 </div>
               </div>
@@ -222,10 +224,10 @@ export const FlashcardDecksView = () => {
                 <div className="pt-2">
                   <Button 
                     className="w-full" 
-                    disabled={deck.newCards === 0 && deck.reviewCards === 0}
+                    disabled={deck.reviewCards === 0}
                     onClick={() => handleStudyDeck(deck)}
                   >
-                    {deck.newCards > 0 || deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
+                    {deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
                   </Button>
                 </div>
               </div>
@@ -251,6 +253,13 @@ export const FlashcardDecksView = () => {
         isOpen={newDeckModalOpen}
         onClose={() => setNewDeckModalOpen(false)}
         onCreateDeck={handleCreateDeck}
+      />
+
+      <AddFlashcardModal
+        isOpen={addFlashcardModalOpen}
+        onClose={() => setAddFlashcardModalOpen(false)}
+        decks={decks}
+        onFlashcardAdded={fetchData} // Pass the fetchData function to refetch data
       />
     </div>
   );

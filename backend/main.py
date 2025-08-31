@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from prompts.socratic_tutor import get_socratic_tutor_prompt
 from tools.flash_cards_tool import FlashCardsTool
 from tools.quizz_tool import QuizzTool
+from tools.decks_tool import DecksTool
 from utils.database import Database
 
 load_dotenv()
@@ -186,6 +187,44 @@ def add_manual_quiz():
         return jsonify({"message": "Quiz added successfully"}), 201
     except Exception as e:
         print(f"Error adding manual quiz: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/flashcards/manual', methods=['POST'])
+def add_manual_flashcard():
+    """
+    Endpoint to manually add a new flashcard.
+    """
+    flashcard_data = request.get_json()
+    if not flashcard_data:
+        return Response("No flashcard data provided", status=400)
+
+    try:
+        # The FlashCardsTool handles ID generation and validation
+        flash_card_tool = FlashCardsTool()
+        # The tool expects a JSON string, so we dump the dict back to a string
+        flash_card_tool.add_flash_card(json.dumps(flashcard_data))
+        return jsonify({"message": "Flashcard added successfully"}), 201
+    except Exception as e:
+        print(f"Error adding manual flashcard: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/decks/manual', methods=['POST'])
+def add_manual_deck():
+    """
+    Endpoint to manually add a new deck.
+    """
+    deck_data = request.get_json()
+    if not deck_data:
+        return Response("No deck data provided", status=400)
+
+    try:
+        decks_tool = DecksTool()
+        new_deck = decks_tool.add_deck(deck_data)
+        return jsonify(new_deck.model_dump()), 201
+    except Exception as e:
+        print(f"Error adding manual deck: {e}")
         return jsonify({"error": str(e)}), 500
 
 

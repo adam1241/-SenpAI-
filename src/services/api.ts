@@ -28,7 +28,7 @@ export class ApiService {
     includeVoice: boolean = false
   ): Promise<Response> { // Changed to return Response
     try {
-      const response = await fetch(`${NOTEBOOK_API_BASE_URL}/chat`, {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,6 +182,16 @@ export const saveManualDeck = async (deckData: { name: string, description: stri
   });
   if (!response.ok) {
     throw new Error('Failed to save deck');
+  }
+  return response.json();
+};
+
+export const deleteDeck = async (deckId: number) => {
+  const response = await fetch(`${API_BASE_URL}/decks/${deckId}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete deck');
   }
   return response.json();
 };

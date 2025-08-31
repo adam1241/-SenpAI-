@@ -1,178 +1,122 @@
 [
   {
     "id": 1,
-    "question": "What is a closure in JavaScript?",
-    "answer": "A function that remembers the variables from the environment in which it was created, even after that environment has closed.",
+    "question": "How do you say 'Hello' in German?",
+    "answer": "Hallo",
     "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2024-07-26T10:00:00Z"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 2,
-    "question": "What is the powerhouse of the cell?",
-    "answer": "The mitochondrion is known as the powerhouse of the cell because it generates most of the cell's supply of adenosine triphosphate (ATP).",
-    "deck_id": 2,
+    "question": "How do you say 'Goodbye' in German?",
+    "answer": "Auf Wiedersehen",
+    "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2024-07-26T10:05:00Z"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 3,
-    "question": "What is a Large Language Model (LLM)?",
-    "answer": "An AI system trained on vast text datasets to understand and generate human-like language through complex pattern recognition.",
-    "deck_id": 3,
+    "question": "How do you say 'Thank you' in German?",
+    "answer": "Danke",
+    "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2025-07-26T17:55:53.244641"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
+  },
+  {
+    "id": 4,
+    "question": "How do you say 'Yes' in German?",
+    "answer": "Ja",
+    "deck_id": 1,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 5,
-    "question": "What are plankton?",
-    "answer": "Microscopic aquatic organisms that drift or float in water, forming the base of many aquatic food chains. They include phytoplankton (plants) and zooplankton (animals).",
-    "deck_id": 2,
+    "question": "How do you say 'No' in German?",
+    "answer": "Nein",
+    "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2025-07-26T18:08:47.584488"
-  },
-  {
-    "id": 5,
-    "question": "What are plankton?",
-    "answer": "Diverse collection of drifting organisms in aquatic environments, including phytoplankton (photosynthetic) and zooplankton (animal-like), forming the base of many marine food webs.",
-    "deck_id": 2,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-07-26T18:08:47.584488"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 6,
-    "question": "What is the green pigment in plants that captures sunlight?",
-    "answer": "Chlorophyll",
+    "question": "What does '\u3053\u3093\u306b\u3061\u306f' (Konnichiwa) mean in English?",
+    "answer": "Hello",
     "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T03:23:45.669645"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 7,
-    "question": "Where in the plant cell does photosynthesis take place?",
-    "answer": "In the chloroplasts",
+    "question": "What does '\u3042\u308a\u304c\u3068\u3046' (Arigatou) mean in English?",
+    "answer": "Thank you",
     "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T03:23:45.669645"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 8,
-    "question": "essen",
-    "answer": "manger",
-    "deck_id": 4,
+    "question": "What does '\u3059\u307f\u307e\u305b\u3093' (Sumimasen) mean in English?",
+    "answer": "Excuse me / Sorry",
+    "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 9,
-    "question": "essen",
-    "answer": "manger",
-    "deck_id": 4,
+    "question": "What does '\u306f\u3044' (Hai) mean in English?",
+    "answer": "Yes",
+    "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 10,
-    "question": "What is the German word for 'hello'?",
-    "answer": "Hallo",
+    "question": "What does '\u3044\u3044\u3048' (Iie) mean in English?",
+    "answer": "No",
     "deck_id": 2,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T15:41:51.036381"
   },
   {
     "id": 11,
-    "question": "What is the German word for 'goodbye'?",
-    "answer": "Auf Wiedersehen",
-    "deck_id": 2,
+    "question": "What is a galaxy?",
+    "answer": "A massive system of stars, gas, dust, and dark matter held together by gravity.",
+    "deck_id": 3,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T16:05:17.982709"
   },
   {
     "id": 12,
-    "question": "What is the German word for 'please'?",
-    "answer": "bitte",
-    "deck_id": 2,
+    "question": "How many planets are in our Solar System?",
+    "answer": "Eight.",
+    "deck_id": 3,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T16:05:17.982709"
   },
   {
     "id": 13,
-    "question": "What is the German word for 'thank you'?",
-    "answer": "danke",
-    "deck_id": 2,
+    "question": "Which planet is known as the Red Planet?",
+    "answer": "Mars.",
+    "deck_id": 3,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T16:05:17.982709"
   },
   {
     "id": 14,
-    "question": "What is the German word for 'yes'?",
-    "answer": "ja",
-    "deck_id": 2,
+    "question": "What is the name of the star at the center of our Solar System?",
+    "answer": "The Sun.",
+    "deck_id": 3,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:43:30.368404"
+    "last_reviewed": "2025-08-31T16:05:17.982709"
   },
   {
     "id": 15,
-    "question": "d",
-    "answer": "w",
-    "deck_id": 2,
+    "question": "What is the name of Earth's natural satellite?",
+    "answer": "The Moon.",
+    "deck_id": 3,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 16,
-    "question": "essen",
-    "answer": "manger",
-    "deck_id": 5,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 17,
-    "question": "How do you say 'Hello' in Italian?",
-    "answer": "Ciao",
-    "deck_id": 5,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 18,
-    "question": "How do you say 'Goodbye' in Italian?",
-    "answer": "Arrivederci",
-    "deck_id": 5,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 19,
-    "question": "How do you say 'Please' in Italian?",
-    "answer": "Per favore",
-    "deck_id": 5,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 20,
-    "question": "How do you say 'Thank you' in Italian?",
-    "answer": "Grazie",
-    "deck_id": 5,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 21,
-    "question": "How do you say 'Yes' and 'No' in Italian?",
-    "answer": "S\u00ec and No",
-    "deck_id": 5,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
-  },
-  {
-    "id": 22,
-    "question": "makla",
-    "answer": "meat",
-    "deck_id": 6,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T14:49:42.529260"
+    "last_reviewed": "2025-08-31T16:05:17.982709"
   }
 ]

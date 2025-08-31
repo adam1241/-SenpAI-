@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, BookOpen, Calendar, TrendingUp, RefreshCw } from "lucide-react";
+import { Plus, BookOpen, Calendar, TrendingUp, RefreshCw, Trash2 } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
 import { AddFlashcardModal } from "./AddFlashcardModal"; // Import the new modal
-import { getDecks, getFlashcards, saveManualDeck } from "@/services/api"; // Import API functions
+import { getDecks, getFlashcards, saveManualDeck, deleteDeck } from "@/services/api"; // Import API functions
 
 // Interface for data coming from the backend
 interface DeckFromAPI {
@@ -49,10 +49,15 @@ export const FlashcardDecksView = () => {
         getDecks(),
         getFlashcards(),
       ]);
+
+      // Filter out decks with duplicate IDs to prevent React key errors
+      const uniqueDecksData = decksData.filter((deck, index, self) =>
+        index === self.findIndex((d) => d.id === deck.id)
+      );
       
       setAllFlashcards(flashcardsData); 
 
-      const enrichedDecks: Deck[] = decksData.map(deck => {
+      const enrichedDecks: Deck[] = uniqueDecksData.map(deck => {
         const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
         const cardCount = cardsInDeck.length;
         const reviewCards = cardCount; 
@@ -75,6 +80,19 @@ export const FlashcardDecksView = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleDeleteDeck = async (deckId: number) => {
+    if (window.confirm("Are you sure you want to delete this deck and all its cards?")) {
+      try {
+        await deleteDeck(deckId);
+        toast.success("Deck deleted successfully!");
+        fetchData(); // Refetch data to update the UI
+      } catch (error) {
+        console.error("Failed to delete deck:", error);
+        toast.error("Failed to delete deck. Please try again.");
+      }
+    }
+  };
 
   const formatLastStudied = (date?: Date) => {
     if (!date) return "Never";
@@ -188,14 +206,14 @@ export const FlashcardDecksView = () => {
       {/* Decks Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {decks.map((deck) => (
-          <Card key={deck.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card key={deck.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-lg">{deck.name}</CardTitle>
+                  <CardTitle className="text-lg cursor-pointer" onClick={() => handleStudyDeck(deck)}>{deck.name}</CardTitle>
                   <CardDescription className="mt-1">{deck.description}</CardDescription>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex items-center gap-1">
                   {deck.newCards > 0 && (
                     <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
                       {deck.newCards} new
@@ -206,6 +224,17 @@ export const FlashcardDecksView = () => {
                       {deck.reviewCards} due
                     </Badge>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteDeck(deck.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  </Button>
                 </div>
               </div>
             </CardHeader>

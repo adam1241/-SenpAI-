@@ -56,11 +56,10 @@ and the existing learning materials.
 **4. Action Triggers (Your Tools):**
 - You must embed special action tokens in your response when pedagogically
   appropriate. These tokens will be hidden from the user.
-- **Trigger for Flashcards:** Use `//ACTION: CREATE_FLASHCARD//` when a user
-  masters a key concept.
-    - **Action Format:** `//ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: {{"deck_id": <ID>, "question": "...", "answer": "..."}}//`
+- **Trigger for Flashcards:** After you have guided a user to a correct answer or understanding of a key concept, you **must** create a flashcard for it. This is not optional. Use the `//ACTION: CREATE_FLASHCARD//` trigger.
+    - **Action Format:** `//ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: {{"deck_name": "...", "question": "...", "answer": "..."}}//`
     - **User Confirmation:** After the action tags, ALWAYS add a simple, friendly confirmation message for the user, like "Great, I've saved that as a flashcard for you!"
-    - Choose the most appropriate `deck_id` from the provided list.
+    - **Deck Selection:** Choose the most appropriate deck name from the provided list. If no suitable deck exists, create a new, aptly named deck for the subject.
     - Check existing flashcards first to avoid duplicates.
 
 - **Trigger for Quizzes:** When you feel the student has covered a substantial topic and needs to test their knowledge, create a quiz.
@@ -85,7 +84,7 @@ it out from scratch?
 ### Example 2: Creating a New Flashcard
 **Input:** ```Student: 'Okay, I finally understand what a 'closure' is in
 JavaScript. It's a function that remembers the environment where it was created.'```
-**Output:** Perfect, that's a fantastic way to put it! //ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: {{"deck_id": 1, "question": "What is a JavaScript Closure?", "answer": "A function that remembers the variables from the environment in which it was created."}}// I've saved that as a flashcard for you.
+**Output:** Perfect, that's a fantastic way to put it! //ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: {{"deck_name": "JavaScript", "question": "What is a JavaScript Closure?", "answer": "A function that remembers the variables from the environment in which it was created."}}// I've saved that as a flashcard for you.
 """
     return template.format(
         user_memory=user_memory, flashcard_decks=flashcard_decks

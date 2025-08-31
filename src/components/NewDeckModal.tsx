@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +46,9 @@ export const NewDeckModal = ({ isOpen, onClose, onCreateDeck }: NewDeckModalProp
             <Plus className="w-5 h-5 text-primary" />
             Create New Deck
           </DialogTitle>
+          <DialogDescription>
+            Create a new deck to organize your flashcards.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 pt-4">

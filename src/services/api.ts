@@ -158,4 +158,32 @@ export const saveManualQuiz = async (quizData: any) => {
   return response.json();
 };
 
+export const saveManualFlashcard = async (flashcardData: any) => {
+  const response = await fetch(`${API_BASE_URL}/flashcards/manual`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(flashcardData),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to save flashcard');
+  }
+  return response.json();
+};
+
+export const saveManualDeck = async (deckData: { name: string, description: string }) => {
+  const response = await fetch(`${API_BASE_URL}/decks/manual`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(deckData),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to save deck');
+  }
+  return response.json();
+};
+
 export default ApiService;

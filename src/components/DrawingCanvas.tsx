@@ -108,8 +108,8 @@ export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(({
       // Get canvas as image data
       const dataURL = fabricCanvas.toDataURL({
         format: 'png',
-        quality: 0.8,
-        multiplier: 1
+        quality: 1.0,
+        multiplier: 2
       });
       
       console.log('Canvas dataURL generated, length:', dataURL.length);
@@ -166,7 +166,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(({
       clearTimeout(analysisTimeoutRef.current);
     }
 
-    analysisTimeoutRef.current = setTimeout(() => {
+    analysisTimeoutRef.current = window.setTimeout(() => {
       analyzeCanvas();
     }, 3000); // Wait 3 seconds after last change
   }, [fabricCanvas, analyzeCanvas]);

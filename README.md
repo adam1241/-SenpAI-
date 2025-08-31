@@ -82,6 +82,7 @@ You need to run three services simultaneously:
 
 3. **Start the frontend** (Terminal 3):
    ```bash
+   cd ..
    npm run dev
    ```
 

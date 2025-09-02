@@ -47,6 +47,9 @@
     /* Destructive - Soft error handling */
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
+    --color-easy: 75 92.6% 62.9%;
+    --color-medium: 47.9 95.8% 53.1%;
+    --color-hard: 0 84.2% 60.2%;
 
     /* UI Elements */
     --border: 220 20% 88%;

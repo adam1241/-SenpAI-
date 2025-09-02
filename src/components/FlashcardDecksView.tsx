@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, BookOpen, Calendar, TrendingUp, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, BookOpen, Calendar, TrendingUp, RefreshCw, Trash2, Pencil } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
+import { EditDeckModal } from "./EditDeckModal";
 import { AddFlashcardModal } from "./AddFlashcardModal"; // Import the new modal
-import { getDecks, getFlashcards, saveManualDeck, deleteDeck } from "@/services/api"; // Import API functions
+import { Input } from "@/components/ui/input";
+import { getDecks, getFlashcards, saveManualDeck, deleteDeck, updateDeck, importDeck } from "@/services/api"; // Import API functions
 
 // Interface for data coming from the backend
 interface DeckFromAPI {
@@ -23,6 +26,8 @@ interface FlashcardFromAPI {
   deck_id: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
   last_reviewed: string;
+  question_image_url?: string;
+  answer_image_url?: string;
 }
 
 // Enriched interface for local state
@@ -41,7 +46,16 @@ export const FlashcardDecksView = () => {
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
   const [addFlashcardModalOpen, setAddFlashcardModalOpen] = useState(false); // State for the new modal
+  const [editDeckModalOpen, setEditDeckModalOpen] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
+  const [deckToEdit, setDeckToEdit] = useState<Deck | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || "";
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const setSearchQuery = (value: string) => {
+    setSearchParams(value ? { q: value } : {}, { replace: true });
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -60,13 +74,38 @@ export const FlashcardDecksView = () => {
       const enrichedDecks: Deck[] = uniqueDecksData.map(deck => {
         const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
         const cardCount = cardsInDeck.length;
-        const reviewCards = cardCount; 
+        
+        let newCards = 0;
+        let reviewCards = 0;
+        const now = new Date();
+
+        cardsInDeck.forEach(card => {
+            const lastReviewed = new Date(card.last_reviewed);
+            let dueDate = new Date(lastReviewed);
+
+            switch (card.difficulty) {
+                case "HARD":
+                    newCards++;
+                    dueDate.setDate(lastReviewed.getDate() + 1);
+                    break;
+                case "MEDIUM":
+                    dueDate.setDate(lastReviewed.getDate() + 3);
+                    break;
+                case "EASY":
+                    dueDate.setDate(lastReviewed.getDate() + 7);
+                    break;
+            }
+
+            if (now >= dueDate) {
+                reviewCards++;
+            }
+        });
 
         return {
           ...deck,
           cardCount: cardCount,
-          newCards: 0, 
-          reviewCards: reviewCards, 
+          newCards: newCards,
+          reviewCards: reviewCards,
         };
       });
 
@@ -76,6 +115,27 @@ export const FlashcardDecksView = () => {
       console.error("Failed to fetch flashcard data:", error);
     }
   }, []);
+
+  const filteredDecks = useMemo(() => {
+    if (!searchQuery) {
+      return decks;
+    }
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return decks.filter(deck => {
+      const deckMatches =
+        deck.name.toLowerCase().includes(lowercasedQuery) ||
+        deck.description.toLowerCase().includes(lowercasedQuery);
+
+      const cardMatches = allFlashcards.some(
+        card =>
+          card.deck_id === deck.id &&
+          (card.question.toLowerCase().includes(lowercasedQuery) ||
+            card.answer.toLowerCase().includes(lowercasedQuery))
+      );
+
+      return deckMatches || cardMatches;
+    });
+  }, [searchQuery, decks, allFlashcards]);
 
   useEffect(() => {
     fetchData();
@@ -125,6 +185,53 @@ export const FlashcardDecksView = () => {
     }
   };
 
+  const handleUpdateDeck = async (deckId: number, name: string, description: string) => {
+    try {
+      await updateDeck(deckId, { name, description });
+      toast.success("Deck updated successfully!");
+      fetchData(); // Refetch all data
+    } catch (error) {
+      console.error("Failed to update deck:", error);
+      toast.error("Failed to update deck. Please try again.");
+    }
+  };
+
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const content = e.target?.result;
+            if (typeof content !== 'string') throw new Error("File content is not a string");
+            const data = JSON.parse(content);
+
+            // Basic validation
+            if (!data.name || !Array.isArray(data.flashcards)) {
+                throw new Error("Invalid file format: missing 'name' or 'flashcards' array.");
+            }
+
+            await importDeck(data);
+            toast.success(`Deck "${data.name}" imported successfully!`);
+            fetchData();
+        } catch (error) {
+            console.error("Failed to import deck:", error);
+            if (error instanceof Error) {
+                 toast.error(`Import failed: ${error.message}`);
+            } else {
+                 toast.error("An unknown error occurred during import.");
+            }
+        } finally {
+            // Reset file input
+            if (event.target) {
+                event.target.value = "";
+            }
+        }
+    };
+    reader.readAsText(file);
+  };
+
   const handleStudyDeck = (deck: Deck) => {
     setSelectedDeck(deck);
     const studyCards = allFlashcards.filter(card => card.deck_id === deck.id);
@@ -144,6 +251,14 @@ export const FlashcardDecksView = () => {
             <Button variant="outline" size="icon" onClick={fetchData}>
               <RefreshCw className="w-4 h-4" />
             </Button>
+            <Button onClick={() => importFileRef.current?.click()}>Import Deck</Button>
+            <Input
+                type="file"
+                ref={importFileRef}
+                className="hidden"
+                accept=".json"
+                onChange={handleFileImport}
+            />
             <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}>
               <Plus className="w-4 h-4" />
               Add Flashcard
@@ -153,6 +268,17 @@ export const FlashcardDecksView = () => {
               New Deck
             </Button>
           </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+            <Input
+                type="text"
+                placeholder="Search decks or flashcards..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+            />
         </div>
 
         {/* Study Summary */}
@@ -205,76 +331,95 @@ export const FlashcardDecksView = () => {
 
       {/* Decks Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {decks.map((deck) => (
-          <Card key={deck.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg cursor-pointer" onClick={() => handleStudyDeck(deck)}>{deck.name}</CardTitle>
-                  <CardDescription className="mt-1">{deck.description}</CardDescription>
+        {filteredDecks.map((deck) => (
+          <Link to={`/decks/${deck.id}?q=${searchQuery}`} key={deck.id} className="no-underline">
+            <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{deck.name}</CardTitle>
+                    <CardDescription className="mt-1">{deck.description}</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeckToEdit(deck);
+                        setEditDeckModalOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteDeck(deck.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {deck.newCards > 0 && (
-                    <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
-                      {deck.newCards} new
-                    </Badge>
-                  )}
-                  {deck.reviewCards > 0 && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                      {deck.reviewCards} due
-                    </Badge>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteDeck(deck.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
 
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Cards:</span>
-                  <span className="font-medium">{deck.cardCount}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Last Studied:</span>
-                  <span className="font-medium">{formatLastStudied(deck.lastStudied)}</span>
+              <CardContent className="flex-grow flex flex-col justify-between">
+                <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total Cards:</span>
+                        <span className="font-medium">{deck.cardCount}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Due for Review:</span>
+                        <span className="font-medium text-primary">{deck.reviewCards}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Last Studied:</span>
+                        <span className="font-medium">{formatLastStudied(deck.lastStudied)}</span>
+                    </div>
                 </div>
                 
-                <div className="pt-2">
+                <div className="pt-4 mt-auto">
                   <Button 
                     className="w-full" 
                     disabled={deck.reviewCards === 0}
-                    onClick={() => handleStudyDeck(deck)}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleStudyDeck(deck);
+                    }}
                   >
                     {deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
       {/* Modals */}
       <StudyModal
         isOpen={studyModalOpen}
-        onClose={() => setStudyModalOpen(false)}
+        onClose={() => {
+            setStudyModalOpen(false);
+            fetchData(); // Refetch data when the modal is closed
+        }}
         deckName={selectedDeck?.name || ""}
         cards={cardsForStudy.map(card => ({ 
           id: card.id.toString(),
           question: card.question,
           answer: card.answer,
           concept: selectedDeck?.name || "Concept",
+          question_image_url: card.question_image_url,
+          answer_image_url: card.answer_image_url,
         }))}
       />
 
@@ -282,6 +427,16 @@ export const FlashcardDecksView = () => {
         isOpen={newDeckModalOpen}
         onClose={() => setNewDeckModalOpen(false)}
         onCreateDeck={handleCreateDeck}
+      />
+
+      <EditDeckModal
+        isOpen={editDeckModalOpen}
+        onClose={() => {
+          setEditDeckModalOpen(false);
+          setDeckToEdit(null);
+        }}
+        onUpdateDeck={handleUpdateDeck}
+        deck={deckToEdit}
       />
 
       <AddFlashcardModal

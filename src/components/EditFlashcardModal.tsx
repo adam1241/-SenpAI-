@@ -11,40 +11,33 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { saveManualFlashcard, uploadImage } from "@/services/api";
+import { updateFlashcard, uploadImage } from "@/services/api";
 import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-
-interface Deck {
+interface Flashcard {
   id: number;
-  name: string;
+  question: string;
+  answer: string;
+  question_image_url?: string;
+  answer_image_url?: string;
 }
 
-interface AddFlashcardModalProps {
+interface EditFlashcardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  decks: Deck[];
-  onFlashcardAdded: () => void; // To refetch data in the parent
-  defaultDeckId?: number;
+  flashcard: Flashcard | null;
+  onFlashcardUpdated: () => void;
 }
 
-export const AddFlashcardModal = ({
+export const EditFlashcardModal = ({
   isOpen,
   onClose,
-  decks,
-  onFlashcardAdded,
-  defaultDeckId
-}: AddFlashcardModalProps) => {
+  flashcard,
+  onFlashcardUpdated,
+}: EditFlashcardModalProps) => {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [questionImageUrl, setQuestionImageUrl] = useState("");
@@ -55,24 +48,23 @@ export const AddFlashcardModal = ({
   const [isUploadingAnswer, setIsUploadingAnswer] = useState(false);
   const questionFileRef = useRef<HTMLInputElement>(null);
   const answerFileRef = useRef<HTMLInputElement>(null);
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      // Reset form when modal opens
-      setQuestion("");
-      setAnswer("");
-      setQuestionImageUrl("");
-      setAnswerImageUrl("");
-      setSelectedDeckId(defaultDeckId ? String(defaultDeckId) : null);
-      setQuestionImageMethod('url');
-      setAnswerImageMethod('url');
+    if (isOpen && flashcard) {
+      setQuestion(flashcard.question);
+      setAnswer(flashcard.answer);
+      const qImageUrl = flashcard.question_image_url || "";
+      const aImageUrl = flashcard.answer_image_url || "";
+      setQuestionImageUrl(qImageUrl);
+      setAnswerImageUrl(aImageUrl);
+      setQuestionImageMethod(qImageUrl ? 'url' : 'upload');
+      setAnswerImageMethod(aImageUrl ? 'url' : 'upload');
     }
-  }, [isOpen, defaultDeckId]);
+  }, [isOpen, flashcard]);
 
   const handleSave = async () => {
-    if (!question || !answer || !selectedDeckId) {
+    if (!question || !answer || !flashcard) {
       toast.error("Please fill out all fields.");
       return;
     }
@@ -82,17 +74,16 @@ export const AddFlashcardModal = ({
       const flashcardData = {
         question,
         answer,
-        deck_id: parseInt(selectedDeckId, 10),
         question_image_url: questionImageUrl,
         answer_image_url: answerImageUrl,
       };
-      await saveManualFlashcard(flashcardData);
-      toast.success("Flashcard created successfully!");
-      onFlashcardAdded(); // Notify parent to refetch
+      await updateFlashcard(flashcard.id, flashcardData);
+      toast.success("Flashcard updated successfully!");
+      onFlashcardUpdated();
       onClose();
     } catch (error) {
       console.error("Failed to save flashcard:", error);
-      toast.error("Failed to create flashcard. Please try again.");
+      toast.error("Failed to update flashcard. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -124,18 +115,18 @@ export const AddFlashcardModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add a New Flashcard</DialogTitle>
+          <DialogTitle>Edit Flashcard</DialogTitle>
           <DialogDescription>
-            Create a new flashcard and add it to one of your decks.
+            Update the question and answer for your flashcard.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="question" className="text-right">
+            <Label htmlFor="question-edit" className="text-right">
               Question
             </Label>
             <Textarea
-              id="question"
+              id="question-edit"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               className="col-span-3"
@@ -144,7 +135,7 @@ export const AddFlashcardModal = ({
             <p className="col-span-4 text-xs text-muted-foreground text-right">Markdown supported</p>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="question-image-url" className="text-right">
+            <Label htmlFor="question-image-url-edit" className="text-right">
                 Image
             </Label>
             <div className="col-span-3 space-y-2">
@@ -164,7 +155,7 @@ export const AddFlashcardModal = ({
                 
                 {questionImageMethod === 'url' ? (
                     <Input
-                        id="question-image-url"
+                        id="question-image-url-edit"
                         value={questionImageUrl}
                         onChange={(e) => setQuestionImageUrl(e.target.value)}
                         className="col-span-3"
@@ -173,7 +164,7 @@ export const AddFlashcardModal = ({
                 ) : (
                     <div>
                         <Input
-                            id="question-image-upload"
+                            id="question-image-upload-edit"
                             type="file"
                             accept="image/*"
                             ref={questionFileRef}
@@ -210,11 +201,11 @@ export const AddFlashcardModal = ({
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="answer" className="text-right">
+            <Label htmlFor="answer-edit" className="text-right">
               Answer
             </Label>
             <Textarea
-              id="answer"
+              id="answer-edit"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               className="col-span-3"
@@ -223,11 +214,11 @@ export const AddFlashcardModal = ({
             <p className="col-span-4 text-xs text-muted-foreground text-right">Markdown supported</p>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="answer-image-url" className="text-right">
+            <Label htmlFor="answer-image-url-edit" className="text-right">
                 Image
             </Label>
             <div className="col-span-3 space-y-2">
-                <ToggleGroup
+                 <ToggleGroup
                     type="single"
                     value={answerImageMethod}
                     onValueChange={(value: 'url' | 'upload') => {
@@ -242,8 +233,8 @@ export const AddFlashcardModal = ({
                 </ToggleGroup>
 
                 {answerImageMethod === 'url' ? (
-                     <Input
-                        id="answer-image-url"
+                    <Input
+                        id="answer-image-url-edit"
                         value={answerImageUrl}
                         onChange={(e) => setAnswerImageUrl(e.target.value)}
                         className="col-span-3"
@@ -252,7 +243,7 @@ export const AddFlashcardModal = ({
                 ) : (
                     <div>
                         <Input
-                            id="answer-image-upload"
+                            id="answer-image-upload-edit"
                             type="file"
                             accept="image/*"
                             ref={answerFileRef}
@@ -288,27 +279,6 @@ export const AddFlashcardModal = ({
                 )}
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="deck" className="text-right">
-              Deck
-            </Label>
-            <Select
-              value={selectedDeckId ?? undefined}
-              onValueChange={setSelectedDeckId}
-              disabled={!!defaultDeckId}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a deck" />
-              </SelectTrigger>
-              <SelectContent>
-                {decks.map((deck) => (
-                  <SelectItem key={deck.id} value={String(deck.id)}>
-                    {deck.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
@@ -317,7 +287,7 @@ export const AddFlashcardModal = ({
             </Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Flashcard"}
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

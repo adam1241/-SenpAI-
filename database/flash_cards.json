@@ -4,16 +4,20 @@
     "question": "How do you say 'Hello' in German?",
     "answer": "Hallo",
     "deck_id": 1,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "difficulty": "MEDIUM",
+    "last_reviewed": "2025-09-02T20:00:58.670000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 2,
     "question": "How do you say 'Goodbye' in German?",
     "answer": "Auf Wiedersehen",
     "deck_id": 1,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "difficulty": "HARD",
+    "last_reviewed": "2025-09-02T20:00:59.795000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 3,
@@ -21,7 +25,9 @@
     "answer": "Danke",
     "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "last_reviewed": "2025-09-02T20:01:01.059000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 4,
@@ -29,7 +35,9 @@
     "answer": "Ja",
     "deck_id": 1,
     "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "last_reviewed": "2025-09-02T20:01:02.295000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 5,
@@ -44,32 +52,40 @@
     "question": "What does '\u3053\u3093\u306b\u3061\u306f' (Konnichiwa) mean in English?",
     "answer": "Hello",
     "deck_id": 2,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "difficulty": "HARD",
+    "last_reviewed": "2025-09-02T20:00:32.729000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 7,
     "question": "What does '\u3042\u308a\u304c\u3068\u3046' (Arigatou) mean in English?",
     "answer": "Thank you",
     "deck_id": 2,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "difficulty": "HARD",
+    "last_reviewed": "2025-09-02T20:00:34.140000Z",
+    "question_image_url": "https://fr.smartsheet.com/sites/default/files/styles/1300px/public/kanban-1.webp?itok=YOJitAgM",
+    "answer_image_url": ""
   },
   {
     "id": 8,
     "question": "What does '\u3059\u307f\u307e\u305b\u3093' (Sumimasen) mean in English?",
     "answer": "Excuse me / Sorry",
     "deck_id": 2,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "difficulty": "HARD",
+    "last_reviewed": "2025-09-02T20:00:35.270000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 9,
     "question": "What does '\u306f\u3044' (Hai) mean in English?",
     "answer": "Yes",
     "deck_id": 2,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T15:41:51.036381"
+    "difficulty": "HARD",
+    "last_reviewed": "2025-09-02T20:00:36.443000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 10,
@@ -126,5 +142,15 @@
     "deck_id": 4,
     "difficulty": "EASY",
     "last_reviewed": "2025-08-31T18:32:36.372692"
+  },
+  {
+    "id": 17,
+    "question": "test",
+    "answer": "test",
+    "deck_id": 5,
+    "difficulty": "EASY",
+    "last_reviewed": "2025-09-02T20:58:24.495470",
+    "question_image_url": "",
+    "answer_image_url": ""
   }
 ]

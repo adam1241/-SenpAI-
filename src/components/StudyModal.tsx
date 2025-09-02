@@ -4,13 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, RotateCcw, X } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { toast } from "sonner";
+import { updateFlashcard } from "@/services/api";
 
 interface StudyCard {
   id: string;
   question: string;
   answer: string;
   concept: string;
+  question_image_url?: string;
+  answer_image_url?: string;
 }
 
 interface StudyModalProps {
@@ -24,6 +29,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [studiedCards, setStudiedCards] = useState<Set<string>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentCard = cards[currentCardIndex];
   const progress = ((currentCardIndex + 1) / cards.length) * 100;
@@ -32,19 +38,30 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
     setIsFlipped(!isFlipped);
   };
 
-  const handleDifficulty = (difficulty: 'easy' | 'medium' | 'hard') => {
-    if (!currentCard) return;
+  const handleDifficulty = async (difficulty: 'easy' | 'medium' | 'hard') => {
+    if (!currentCard || isSubmitting) return;
     
-    setStudiedCards(prev => new Set([...prev, currentCard.id]));
-    
-    // Move to next card
-    if (currentCardIndex < cards.length - 1) {
-      setCurrentCardIndex(prev => prev + 1);
-      setIsFlipped(false);
-    } else {
-      // Study session complete
-      toast.success("Study session completed! 🎉");
-      onClose();
+    setIsSubmitting(true);
+    try {
+      await updateFlashcard(parseInt(currentCard.id, 10), {
+        difficulty: difficulty.toUpperCase() as 'EASY' | 'MEDIUM' | 'HARD',
+        last_reviewed: new Date().toISOString(),
+      });
+      setStudiedCards(prev => new Set(prev).add(currentCard.id));
+      
+      // Move to next card
+      if (currentCardIndex < cards.length - 1) {
+        setCurrentCardIndex(prev => prev + 1);
+        setIsFlipped(false);
+      } else {
+        // Study session complete
+        toast.success("Study session completed! 🎉");
+        onClose();
+      }
+    } catch (error) {
+        toast.error("Failed to update card. Please try again.");
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -66,9 +83,6 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
               <BookOpen className="w-5 h-5 text-primary" />
               Studying: {deckName}
             </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X className="w-4 h-4" />
-            </Button>
           </div>
         </DialogHeader>
         
@@ -94,11 +108,16 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
             className="p-8 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20 min-h-[250px] flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg"
             onClick={handleFlip}
           >
-            <div className="text-center w-full">
+            <div className="text-center w-full space-y-4">
               {!isFlipped ? (
                 <div>
                   <div className="text-xs text-primary font-medium mb-4 tracking-wider">QUESTION</div>
-                  <p className="text-lg text-foreground leading-relaxed">{currentCard.question}</p>
+                  {currentCard.question_image_url && (
+                    <img src={currentCard.question_image_url} alt="Question" className="mb-4 rounded-md object-contain w-full max-h-48" />
+                  )}
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-lg text-foreground leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentCard.question}</ReactMarkdown>
+                  </div>
                   <div className="mt-6 text-sm text-muted-foreground">
                     Click to reveal answer
                   </div>
@@ -106,7 +125,12 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
               ) : (
                 <div>
                   <div className="text-xs text-success font-medium mb-4 tracking-wider">ANSWER</div>
-                  <p className="text-lg text-foreground leading-relaxed">{currentCard.answer}</p>
+                  {currentCard.answer_image_url && (
+                    <img src={currentCard.answer_image_url} alt="Answer" className="mb-4 rounded-md object-contain w-full max-h-48" />
+                  )}
+                   <div className="prose prose-sm dark:prose-invert max-w-none text-lg text-foreground leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentCard.answer}</ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
@@ -125,6 +149,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
                   variant="outline" 
                   onClick={() => handleDifficulty('hard')}
                   className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                  disabled={isSubmitting}
                 >
                   Hard
                 </Button>
@@ -132,6 +157,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
                   variant="outline" 
                   onClick={() => handleDifficulty('medium')}
                   className="border-warning/30 text-warning hover:bg-warning/10"
+                  disabled={isSubmitting}
                 >
                   Medium
                 </Button>
@@ -139,6 +165,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
                   variant="outline" 
                   onClick={() => handleDifficulty('easy')}
                   className="border-success/30 text-success hover:bg-success/10"
+                  disabled={isSubmitting}
                 >
                   Easy
                 </Button>

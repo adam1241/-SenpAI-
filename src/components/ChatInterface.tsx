@@ -22,9 +22,10 @@ interface ChatInterfaceProps {
   setMessages: Dispatch<SetStateAction<Message[]>>;
   userId: string;
   sessionId: string;
+  onActionProcessed: () => void;
 }
 
-export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId, sessionId }: ChatInterfaceProps) => {
+export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId, sessionId, onActionProcessed }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState("");
 
   const handleSendMessage = async () => {
@@ -77,6 +78,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
           });
         }
       }
+      onActionProcessed(); // Refresh flashcard count after response is complete
     } catch (error) {
       console.error("Error fetching AI response:", error);
       const aiMessage: Message = {

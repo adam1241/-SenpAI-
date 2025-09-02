@@ -15,7 +15,8 @@ class Database:
             _PROJECT_ROOT, "database", "flash_cards.json"
         ),
         "decks": os.path.join(_PROJECT_ROOT, "database", "decks.json"),
-        "quizzes": os.path.join(_PROJECT_ROOT, "database", "quizzes.json")
+        "quizzes": os.path.join(_PROJECT_ROOT, "database", "quizzes.json"),
+        "chat_history": os.path.join(_PROJECT_ROOT, "database", "chat_history.json")
     }
 
     @staticmethod

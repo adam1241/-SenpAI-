@@ -1,14 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, History, PenTool, Brain, CreditCard } from "lucide-react";
+import { BookOpen, History, PenTool, Brain, CreditCard, PlusCircle } from "lucide-react";
 import senpaiLogo from "./logo/SenpAI2.png";
 
 interface LearningHeaderProps {
   activeSection: "chat" | "notebook" | "quiz" | "history" | "flashcards";
   onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
   newFlashcardsCount?: number;
+  onNewChat: () => void;
 }
 
-export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCount = 0 }: LearningHeaderProps) => {
+export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCount = 0, onNewChat }: LearningHeaderProps) => {
   return (
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
@@ -33,6 +34,16 @@ export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCo
             >
               <Brain className="w-4 h-4" />
               Tutor Chat
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onNewChat}
+              className="gap-2"
+            >
+              <PlusCircle className="w-4 h-4" />
+              New Chat
             </Button>
 
             <Button

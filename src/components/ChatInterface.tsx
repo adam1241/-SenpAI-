@@ -19,10 +19,12 @@ interface ChatInterfaceProps {
   onCreateFlashcard: (concept: string, question: string, answer: string) => void;
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
+  sessionId: string;
 }
 
-export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: ChatInterfaceProps) => {
+export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, sessionId }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState("");
+  const userId = "default_user";
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -51,7 +53,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ messages: apiHistory }),
+        body: JSON.stringify({ messages: apiHistory, user_id: userId, session_id: sessionId }),
       });
 
       if (!response.body) return;
@@ -121,6 +123,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
     );
     toast.success("Flashcard created! 📚");
   };
+
+  
 
   return (
     <div className="flex flex-col h-full">

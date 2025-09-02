@@ -38,7 +38,7 @@ interface Deck extends DeckFromAPI {
   lastStudied?: Date; 
 }
 
-export const FlashcardDecksView = () => {
+export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void }) => {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [allFlashcards, setAllFlashcards] = useState<FlashcardFromAPI[]>([]);
   const [cardsForStudy, setCardsForStudy] = useState<FlashcardFromAPI[]>([]);
@@ -110,11 +110,12 @@ export const FlashcardDecksView = () => {
       });
 
       setDecks(enrichedDecks);
+      onDataChange(); // Notify parent that data has changed
 
     } catch (error) {
       console.error("Failed to fetch flashcard data:", error);
     }
-  }, []);
+  }, [onDataChange]);
 
   const filteredDecks = useMemo(() => {
     if (!searchQuery) {

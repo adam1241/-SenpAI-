@@ -10,26 +10,37 @@ import { toast } from "sonner";
 interface NewDeckModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateDeck: (name: string, description: string) => void;
+  onCreateDeck: (name: string, description: string) => Promise<void>;
 }
 
 export const NewDeckModal = ({ isOpen, onClose, onCreateDeck }: NewDeckModalProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       toast.error("Please enter a deck name");
       return;
     }
 
-    onCreateDeck(name.trim(), description.trim());
-    toast.success("New deck created successfully! 📚");
-    
-    // Reset form
-    setName("");
-    setDescription("");
-    onClose();
+    setIsSaving(true);
+    try {
+      await onCreateDeck(name.trim(), description.trim());
+      
+      // The success toast is now shown in the parent component
+      // to ensure it only shows after a successful API call.
+      
+      // Reset form and close
+      setName("");
+      setDescription("");
+      onClose();
+    } catch (error) {
+      // The error toast is handled by the parent component (FlashcardDecksView)
+      // No need to show another one here.
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleClose = () => {
@@ -86,9 +97,9 @@ export const NewDeckModal = ({ isOpen, onClose, onCreateDeck }: NewDeckModalProp
             <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave} className="gap-2">
+            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
               <Save className="w-4 h-4" />
-              Create Deck
+              {isSaving ? "Creating..." : "Create Deck"}
             </Button>
           </div>
         </div>

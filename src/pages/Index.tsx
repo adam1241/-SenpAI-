@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { ApiService } from "@/services/api";
+import { ApiService, getFlashcards } from "@/services/api";
 import { LearningHeader } from "@/components/LearningHeader";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NotebookView } from "@/components/NotebookView";
@@ -8,6 +8,15 @@ import { QuizView } from "@/components/QuizView";
 import { HistoryView } from "@/components/HistoryView";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { FlashcardDecksView } from "@/components/FlashcardDecksView";
+
+interface Flashcard {
+  id: number;
+  question: string;
+  answer: string;
+  deck_id: number;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  last_reviewed: string;
+}
 
 // Lifted the Message interface here from ChatInterface
 interface Message {
@@ -22,6 +31,7 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [newFlashcardsCount, setNewFlashcardsCount] = useState(0);
 
   // --- Persistent User and Session IDs --- //
   const [userId] = useState(() => {
@@ -41,6 +51,20 @@ const Index = () => {
     }
     return storedSessionId;
   });
+
+  const fetchNewFlashcardsCount = useCallback(async () => {
+    try {
+      const allFlashcards: Flashcard[] = await getFlashcards();
+      const newCards = allFlashcards.filter(card => card.difficulty === 'HARD').length;
+      setNewFlashcardsCount(newCards);
+    } catch (error) {
+      console.error("Failed to fetch new flashcards count:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNewFlashcardsCount();
+  }, [fetchNewFlashcardsCount]);
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -76,7 +100,6 @@ const Index = () => {
     }
   }, []);
 
-  const [newFlashcardsCount, setNewFlashcardsCount] = useState(3);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [flashcardData, setFlashcardData] = useState<{
     concept: string;
@@ -125,6 +148,7 @@ const Index = () => {
             setMessages={setMessages}
             userId={userId}
             sessionId={sessionId}
+            onActionProcessed={fetchNewFlashcardsCount}
           />
         );
       case "notebook":
@@ -134,7 +158,7 @@ const Index = () => {
       case "history":
         return <HistoryView userId={userId} onSelectSession={handleLoadSession} />;
       case "flashcards":
-        return <FlashcardDecksView />;
+        return <FlashcardDecksView onDataChange={fetchNewFlashcardsCount} />;
       default:
         return (
           <ChatInterface 
@@ -143,6 +167,7 @@ const Index = () => {
             setMessages={setMessages}
             userId={userId}
             sessionId={sessionId}
+            onActionProcessed={fetchNewFlashcardsCount}
           />
         );
     }
@@ -163,7 +188,10 @@ const Index = () => {
 
       <FlashcardModal
         isOpen={isFlashcardModalOpen}
-        onClose={() => setIsFlashcardModalOpen(false)}
+        onClose={() => {
+          setIsFlashcardModalOpen(false);
+          fetchNewFlashcardsCount();
+        }}
         initialConcept={flashcardData.concept}
         initialQuestion={flashcardData.question}
         initialAnswer={flashcardData.answer}

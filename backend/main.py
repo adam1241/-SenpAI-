@@ -120,14 +120,17 @@ def get_deck(deck_id):
 @app.route('/api/decks/manual', methods=['POST'])
 def add_manual_deck():
     deck_data = request.get_json()
+    print(f"--- [API] Received data for new deck: {deck_data} ---") # DEBUG
     if not deck_data:
         return Response("No deck data provided", status=400)
     try:
         decks_tool = DecksTool()
         new_deck = decks_tool.add_deck(deck_data)
+        # Directly return the Pydantic model, Flask will handle serialization
+        print(f"--- [API] Deck created successfully. Returning: {new_deck.model_dump()} ---") # DEBUG
         return jsonify(new_deck.model_dump()), 201
     except Exception as e:
-        print(f"Error adding manual deck: {e}")
+        print(f"--- [API ERROR] Error adding manual deck: {e} ---") # DEBUG
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/decks/<int:deck_id>', methods=['PUT'])

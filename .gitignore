@@ -27,3 +27,8 @@ __pycache__
 
 .env
 backend/.env
+
+venv
+
+# Instruction files
+GEMINI.md

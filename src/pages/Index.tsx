@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import { LearningHeader } from "@/components/LearningHeader";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NotebookView } from "@/components/NotebookView";
@@ -18,8 +20,45 @@ interface Message {
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
-  // Lifted the messages state here
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const userId = "default_user";
+
+  // Use localStorage to persist sessionId
+  const [sessionId, setSessionId] = useState(() => {
+    let storedSessionId = localStorage.getItem('senpai-sessionId');
+    if (!storedSessionId) {
+      storedSessionId = uuidv4();
+      localStorage.setItem('senpai-sessionId', storedSessionId);
+    }
+    return storedSessionId;
+  });
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const response = await axios.get(`http://localhost:5001/api/conversations?user_id=${userId}&session_id=${sessionId}`);
+        if (response.data && response.data.length > 0) {
+          const formattedHistory = response.data.map((msg: any, index: number) => ({
+            id: `hist-${index}`,
+            content: msg.content,
+            isUser: msg.role === 'user',
+            timestamp: new Date(),
+          }));
+          setMessages(formattedHistory);
+        } else {
+          setMessages([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch chat history:", error);
+        setMessages([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    fetchChatHistory();
+  }, [sessionId]); // Re-fetch when sessionId changes
 
   const [newFlashcardsCount, setNewFlashcardsCount] = useState(3);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
@@ -38,7 +77,22 @@ const Index = () => {
     setIsFlashcardModalOpen(true);
   };
 
+  const handleNewChat = () => {
+    const newSessionId = uuidv4();
+    localStorage.setItem('senpai-sessionId', newSessionId);
+    setSessionId(newSessionId);
+    // setMessages is now handled by the useEffect
+  };
+
   const renderActiveSection = () => {
+    if (isLoadingHistory && activeSection === 'chat') {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <p>Loading conversation...</p>
+        </div>
+      );
+    }
+
     switch (activeSection) {
       case "chat":
         return (
@@ -46,6 +100,7 @@ const Index = () => {
             onCreateFlashcard={handleCreateFlashcard} 
             messages={messages}
             setMessages={setMessages}
+            sessionId={sessionId}
           />
         );
       case "notebook":
@@ -62,6 +117,7 @@ const Index = () => {
             onCreateFlashcard={handleCreateFlashcard} 
             messages={messages}
             setMessages={setMessages}
+            sessionId={sessionId}
           />
         );
     }
@@ -73,6 +129,7 @@ const Index = () => {
         activeSection={activeSection} 
         onSectionChange={setActiveSection}
         newFlashcardsCount={newFlashcardsCount}
+        onNewChat={handleNewChat}
       />
       
       <main className="h-[calc(100vh-80px)]">

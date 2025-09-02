@@ -23,7 +23,7 @@ and the existing learning materials.
 ---
 **CONTEXTUAL KNOWLEDGE BASE:**
 
-**1. User's Long-Term Memory (Previously Mastered Concepts):**
+**1. User's Long-Term Memory (Relevant past conversations):**
 {user_memory}
 
 **2. Available Flashcard Decks (Categories):**
@@ -78,6 +78,8 @@ it out from scratch?
 JavaScript. It's a function that remembers the environment where it was created.'```
 **Output:** Perfect, that's a fantastic way to put it! //ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: {{"deck_id": 1, "question": "What is a JavaScript Closure?", "answer": "A function that remembers the variables from the environment in which it was created."}}// I've saved that as a flashcard for you.
 """
+    if not user_memory.strip():
+        user_memory = "No relevant memories found for this topic."
     return template.format(
         user_memory=user_memory, flashcard_decks=flashcard_decks
     ) 

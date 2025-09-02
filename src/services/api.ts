@@ -23,6 +23,8 @@ export interface AnalysisResponse {
 export class ApiService {
   static async sendChatMessage(
     messages: ChatMessage[], 
+    userId: string,
+    sessionId: string,
     personality: string = 'calm',
     includeVoice: boolean = false
   ): Promise<ChatResponse> {
@@ -34,6 +36,8 @@ export class ApiService {
         },
         body: JSON.stringify({
           messages,
+          user_id: userId,
+          session_id: sessionId,
           personality,
           includeVoice
         })
@@ -115,6 +119,19 @@ export class ApiService {
     } catch (error) {
       console.error('Health check failed:', error);
       return false;
+    }
+  }
+
+  static async getConversations(userId: string): Promise<ChatMessage[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL.replace('3001', '5001')}/conversations?user_id=${userId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw new Error('Failed to fetch conversations');
     }
   }
 }

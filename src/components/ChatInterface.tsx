@@ -20,9 +20,11 @@ interface ChatInterfaceProps {
   onCreateFlashcard: (concept: string, question: string, answer: string) => void;
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
+  userId: string;
+  sessionId: string;
 }
 
-export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: ChatInterfaceProps) => {
+export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId, sessionId }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState("");
 
   const handleSendMessage = async () => {
@@ -36,7 +38,6 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const messageToSend = inputMessage;
     setInputMessage("");
 
     // Prepare the history for the API
@@ -46,12 +47,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
     }));
 
     try {
-      const response = await ApiService.sendChatMessage(
-        apiHistory,
-        'calm',
-        false,
-        false // Use Python server
-      );
+      const response = await ApiService.streamSocraticTutor(apiHistory, userId, sessionId);
 
       if (!response.body) return;
 
@@ -74,7 +70,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
         if (chunk) {
           setMessages(prev => {
             const lastMessage = prev[prev.length - 1];
-            if (!lastMessage.isUser) {
+            if (lastMessage && !lastMessage.isUser) {
               lastMessage.content += chunk;
             }
             return [...prev];
@@ -120,6 +116,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages }: Chat
     );
     toast.success("Flashcard created! 📚");
   };
+
+  
 
   return (
     <div className="flex flex-col h-full">

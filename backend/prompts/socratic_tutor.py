@@ -23,7 +23,7 @@ and the existing learning materials.
 ---
 **CONTEXTUAL KNOWLEDGE BASE:**
 
-**1. User's Long-Term Memory (Previously Mastered Concepts):**
+**1. User's Long-Term Memory (Relevant past conversations):**
 {user_memory}
 
 **2. Available Flashcard Decks (Categories):**
@@ -97,6 +97,8 @@ JavaScript. It's a function that remembers the environment where it was created.
 **Input:** ```Student: 'So, superposition means a particle can be in multiple states at once until it's measured. I think I get it now.'```
 **Output:** Exactly! You've grasped the core idea of quantum superposition. //ACTION: CREATE_FLASHCARD// //FLASHCARD_JSON: {{"deck_name": "Quantum Physics", "question": "What is quantum superposition?", "answer": "It is the principle that a quantum system can exist in multiple states at the same time until a measurement is made."}}// I've created a new 'Quantum Physics' deck and saved this as a flashcard for you.
 """
+    if not user_memory.strip():
+        user_memory = "No relevant memories found for this topic."
     return template.format(
         user_memory=user_memory, flashcard_decks=flashcard_decks
     ) 

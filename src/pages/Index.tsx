@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
+import { ApiService } from "@/services/api";
 import { LearningHeader } from "@/components/LearningHeader";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NotebookView } from "@/components/NotebookView";
 import { QuizView } from "@/components/QuizView";
-
+import { HistoryView } from "@/components/HistoryView";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { FlashcardDecksView } from "@/components/FlashcardDecksView";
 
@@ -22,9 +22,17 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<"chat" | "notebook" | "quiz" | "history" | "flashcards">("chat");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const userId = "default_user";
 
-  // Use localStorage to persist sessionId
+  // --- Persistent User and Session IDs --- //
+  const [userId] = useState(() => {
+    let storedUserId = localStorage.getItem('senpai-userId');
+    if (!storedUserId) {
+      storedUserId = uuidv4();
+      localStorage.setItem('senpai-userId', storedUserId);
+    }
+    return storedUserId;
+  });
+
   const [sessionId, setSessionId] = useState(() => {
     let storedSessionId = localStorage.getItem('senpai-sessionId');
     if (!storedSessionId) {
@@ -36,15 +44,16 @@ const Index = () => {
 
   useEffect(() => {
     const fetchChatHistory = async () => {
+      if (!userId || !sessionId) return;
       setIsLoadingHistory(true);
       try {
-        const response = await axios.get(`http://localhost:5001/api/conversations?user_id=${userId}&session_id=${sessionId}`);
-        if (response.data && response.data.length > 0) {
-          const formattedHistory = response.data.map((msg: any, index: number) => ({
+        const history = await ApiService.getConversations(userId, sessionId);
+        if (history && history.length > 0) {
+          const formattedHistory = history.map((msg: any, index: number) => ({
             id: `hist-${index}`,
             content: msg.content,
             isUser: msg.role === 'user',
-            timestamp: new Date(),
+            timestamp: new Date(), // Note: timestamp from DB is not used yet
           }));
           setMessages(formattedHistory);
         } else {
@@ -52,18 +61,20 @@ const Index = () => {
         }
       } catch (error) {
         console.error("Failed to fetch chat history:", error);
-        setMessages([]);
+        setMessages([]); // Clear messages on error
       } finally {
         setIsLoadingHistory(false);
       }
     };
     fetchChatHistory();
-  }, [sessionId]); // Re-fetch when sessionId changes
+  }, [userId, sessionId]); // Re-fetch when IDs change
 
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === '#quiz') {
       setActiveSection('quiz');
+    } else if (hash === '#history') {
+      setActiveSection('history');
     }
   }, []);
 
@@ -88,7 +99,14 @@ const Index = () => {
     const newSessionId = uuidv4();
     localStorage.setItem('senpai-sessionId', newSessionId);
     setSessionId(newSessionId);
-    // setMessages is now handled by the useEffect
+    setMessages([]); // Immediately clear messages for a new chat
+    setActiveSection('chat'); // Switch to chat view for the new chat
+  };
+
+  const handleLoadSession = (newSessionId: string) => {
+    localStorage.setItem('senpai-sessionId', newSessionId);
+    setSessionId(newSessionId);
+    setActiveSection('chat'); // Switch to chat view to see the loaded conversation
   };
 
   const renderActiveSection = () => {
@@ -107,6 +125,7 @@ const Index = () => {
             onCreateFlashcard={handleCreateFlashcard} 
             messages={messages}
             setMessages={setMessages}
+            userId={userId}
             sessionId={sessionId}
           />
         );
@@ -114,7 +133,8 @@ const Index = () => {
         return <NotebookView />;
       case "quiz":
         return <QuizView />;
-      
+      case "history":
+        return <HistoryView userId={userId} onSelectSession={handleLoadSession} />;
       case "flashcards":
         return <FlashcardDecksView />;
       default:
@@ -123,6 +143,7 @@ const Index = () => {
             onCreateFlashcard={handleCreateFlashcard} 
             messages={messages}
             setMessages={setMessages}
+            userId={userId}
             sessionId={sessionId}
           />
         );

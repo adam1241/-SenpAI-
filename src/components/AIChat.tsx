@@ -51,14 +51,11 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
           content: `I need help with my canvas work. Here's what I've created: ${analysis}. Please speak directly to me as the student and provide teaching guidance and ask follow-up questions.`
         });
 
-        const response = await ApiService.sendChatMessage(
+        const chatResponse = await ApiService.getNotebookChatResponse(
           contextMessages,
           selectedPersonality,
-          isVoiceEnabled,
-          true // Use JavaScript server
+          isVoiceEnabled
         );
-
-        const chatResponse = await response.json();
 
         // Add only the AI's intelligent response
         const aiResponseMessage: Message = {
@@ -95,16 +92,16 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
   // Check backend connection
   const checkBackendConnection = useCallback(async () => {
     try {
-      const isConnected = await ApiService.checkHealth();
+      const isConnected = await ApiService.checkNotebookHealth();
       setIsBackendConnected(isConnected);
       if (!isConnected) {
-        setBackendError("Backend server is not running. Please start the server first.");
+        setBackendError("Notebook server is not running. Please start the server first.");
       } else {
         setBackendError("");
       }
     } catch (error) {
       setIsBackendConnected(false);
-      setBackendError("Failed to connect to backend server.");
+      setBackendError("Failed to connect to Notebook server.");
     }
   }, []);
 
@@ -297,14 +294,11 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
       const chatMessages = convertToChatMessages([...messages, userMessage]);
       
       // Send to backend API
-      const response = await ApiService.sendChatMessage(
+      const chatResponse = await ApiService.getNotebookChatResponse(
         chatMessages, 
         selectedPersonality, 
-        isVoiceEnabled,
-        true // Use JavaScript server
+        isVoiceEnabled
       );
-
-      const chatResponse = await response.json();
 
       const aiResponse: Message = {
         id: Date.now().toString(),
@@ -449,8 +443,7 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
                   message.isUser
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-card text-card-foreground border shadow-sm'
-                }`}
-              >
+                }`}>
                 {message.isUser ? (
                   <p className="text-sm font-medium">{message.content}</p>
                 ) : (

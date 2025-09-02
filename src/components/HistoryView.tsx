@@ -6,33 +6,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Search, Calendar, MessageSquare, Star, BookOpen, Filter, Loader } from "lucide-react";
 import { toast } from "sonner";
+import { ApiService, HistoryItem } from "@/services/api";
 
-interface HistoryItem {
-  id: string;
-  title: string;
-  preview: string;
-  timestamp: string; // Keep as string from backend
-  type: "conversation" | "flashcard" | "quiz" | "notebook";
-  masteryMoments: number;
-  topics: string[];
+interface HistoryViewProps {
+  userId: string;
+  onSelectSession: (sessionId: string) => void;
 }
 
-export const HistoryView = () => {
+export const HistoryView = ({ userId, onSelectSession }: HistoryViewProps) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
-  const userId = "default_user"; // Assuming a default user
 
   useEffect(() => {
     const fetchHistory = async () => {
+      if (!userId) return;
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost:5001/api/history?user_id=${userId}`);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
+        const data = await ApiService.getHistory(userId);
         setHistory(data);
       } catch (error) {
         console.error("Failed to fetch history:", error);
@@ -43,7 +35,7 @@ export const HistoryView = () => {
     };
 
     fetchHistory();
-  }, []);
+  }, [userId]);
 
   const filteredHistory = history.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,10 +68,12 @@ export const HistoryView = () => {
   };
 
   const handleItemClick = (item: HistoryItem) => {
-    toast.info(`Opening ${item.title}...`);
-    // Here you would implement logic to switch to the chat view
-    // and load the specific conversation, e.g., by setting a global state
-    // with the session ID and switching the active view.
+    if (item.type === 'conversation') {
+      toast.info(`Loading conversation: ${item.title}...`);
+      onSelectSession(item.id);
+    } else {
+      toast.info(`This item type (${item.type}) cannot be loaded yet.`);
+    }
   };
 
   const renderContent = () => {

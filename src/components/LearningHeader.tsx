@@ -3,8 +3,8 @@ import { BookOpen, History, PenTool, Brain, CreditCard, PlusCircle } from "lucid
 import senpaiLogo from "./logo/SenpAI2.png";
 
 interface LearningHeaderProps {
-  activeSection: "chat" | "notebook" | "quiz" | "flashcards";
-  onSectionChange: (section: "chat" | "notebook" | "quiz" | "flashcards") => void;
+  activeSection: "chat" | "notebook" | "quiz" | "flashcards" | "history";
+  onSectionChange: (section: "chat" | "notebook" | "quiz" | "flashcards" | "history") => void;
   newFlashcardsCount?: number;
   onNewChat: () => void;
 }
@@ -34,6 +34,16 @@ export const LearningHeader = ({ activeSection, onSectionChange, newFlashcardsCo
             >
               <Brain className="w-4 h-4" />
               Tutor Chat
+            </Button>
+
+            <Button
+              variant={activeSection === "history" ? "learning" : "ghost"}
+              size="sm"
+              onClick={() => onSectionChange("history")}
+              className="gap-2"
+            >
+              <History className="w-4 h-4" />
+              History
             </Button>
 
             <Button

@@ -17,15 +17,17 @@ from utils.database import Database
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
 
-@app.after_request
-def after_request(response):
-    header = response.headers
-    header['Access-Control-Allow-Origin'] = 'http://localhost:8080'
-    header['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    header['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    return response
+# --- CORRECT & ROBUST CORS SETUP ---
+CORS(
+    app,
+    origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    supports_credentials=True,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
+)
+# --- END CORS SETUP ---
+
 
 # --- START: Corrected Mem0 Initialization ---
 # This configuration uses the new, correct structure from the documentation.
@@ -126,13 +128,13 @@ def chat():
         decks_tool = DecksTool()
         
         flashcards_action_regex = re.compile(
-            r"//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: (.*?)\/\/"
+            r"//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: (.*?)\\/"
         )
         quiz_action_regex = re.compile(
-            r"//ACTION: CREATE_QUIZ// //QUIZ_JSON: (.*?)\/\/"
+            r"//ACTION: CREATE_QUIZ// //QUIZ_JSON: (.*?)\\/"
         )
         deck_action_regex = re.compile(
-            r"//ACTION: CREATE_DECK// //DECK_JSON: (.*?)\/\/"
+            r"//ACTION: CREATE_DECK// //DECK_JSON: (.*?)\\/"
         )
 
         def process_buffer(buf):
@@ -396,12 +398,12 @@ def delete_deck(deck_id):
     try:
         decks_tool = DecksTool()
         decks_tool.delete_deck(deck_id)
-        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."}), 200
+        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."} ), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
         print(f"Error deleting deck: {e}")
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        return jsonify({"error": "An unexpected error occurred."} ), 500
 
 
 if __name__ == '__main__':

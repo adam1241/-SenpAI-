@@ -5,7 +5,7 @@ import { LearningHeader } from "@/components/LearningHeader";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NotebookView } from "@/components/NotebookView";
 import { QuizView } from "@/components/QuizView";
-import { HistoryView } from "@/components/HistoryView";
+
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { FlashcardDecksView } from "@/components/FlashcardDecksView";
 
@@ -60,6 +60,13 @@ const Index = () => {
     fetchChatHistory();
   }, [sessionId]); // Re-fetch when sessionId changes
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#quiz') {
+      setActiveSection('quiz');
+    }
+  }, []);
+
   const [newFlashcardsCount, setNewFlashcardsCount] = useState(3);
   const [isFlashcardModalOpen, setIsFlashcardModalOpen] = useState(false);
   const [flashcardData, setFlashcardData] = useState<{
@@ -107,8 +114,7 @@ const Index = () => {
         return <NotebookView />;
       case "quiz":
         return <QuizView />;
-      case "history":
-        return <HistoryView />;
+      
       case "flashcards":
         return <FlashcardDecksView />;
       default:

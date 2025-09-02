@@ -3,3 +3,4 @@ python-dotenv==0.21.0
 anthropic==0.25.7
 pydantic
 mem0ai[chroma,huggingface,openai]
+flask-cors

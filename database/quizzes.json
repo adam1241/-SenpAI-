@@ -1,1 +1,649 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "Understanding Gravity",
+    "questions": [
+      {
+        "question_text": "What is gravity?",
+        "options": [
+          "A force that pulls objects toward each other",
+          "A force that pushes objects apart",
+          "A type of energy",
+          "A magnetic field"
+        ],
+        "correct_answer": "A force that pulls objects toward each other"
+      },
+      {
+        "question_text": "Which scientist is most famously associated with the theory of gravity?",
+        "options": [
+          "Albert Einstein",
+          "Galileo Galilei",
+          "Isaac Newton",
+          "Stephen Hawking"
+        ],
+        "correct_answer": "Isaac Newton"
+      },
+      {
+        "question_text": "According to Einstein's theory of General Relativity, what causes gravity?",
+        "options": [
+          "Mass creates ripples in space and time",
+          "Objects naturally move downward",
+          "The Earth's magnetic field",
+          "Air pressure differences"
+        ],
+        "correct_answer": "Mass creates ripples in space and time"
+      },
+      {
+        "question_text": "If you drop a heavy object and a light object on the Moon (where there's no air), which hits the ground first?",
+        "options": [
+          "The heavy one",
+          "The light one",
+          "They hit at the same time",
+          "Neither moves"
+        ],
+        "correct_answer": "They hit at the same time"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your current understanding of gravity \u2014 from basic observations to deeper concepts.",
+    "time": 5,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 2,
+    "title": "Understanding Gravity",
+    "questions": [
+      {
+        "question_text": "What is gravity?",
+        "options": [
+          "A force that pushes objects apart",
+          "A force that pulls objects toward each other",
+          "A form of energy",
+          "A type of electromagnetic wave"
+        ],
+        "correct_answer": "A force that pulls objects toward each other"
+      },
+      {
+        "question_text": "Who is credited with developing the law of universal gravitation?",
+        "options": [
+          "Albert Einstein",
+          "Galileo Galilei",
+          "Isaac Newton",
+          "Nicolaus Copernicus"
+        ],
+        "correct_answer": "Isaac Newton"
+      },
+      {
+        "question_text": "How does the strength of gravity change as distance between two objects increases?",
+        "options": [
+          "It increases",
+          "It stays the same",
+          "It decreases",
+          "It disappears completely"
+        ],
+        "correct_answer": "It decreases"
+      },
+      {
+        "question_text": "Which planet has the strongest gravitational pull in our solar system?",
+        "options": [
+          "Earth",
+          "Mars",
+          "Jupiter",
+          "Saturn"
+        ],
+        "correct_answer": "Jupiter"
+      },
+      {
+        "question_text": "What happens to your mass and weight if you go to the Moon?",
+        "options": [
+          "Mass changes, weight stays the same",
+          "Both mass and weight stay the same",
+          "Mass stays the same, weight decreases",
+          "Both mass and weight decrease"
+        ],
+        "correct_answer": "Mass stays the same, weight decreases"
+      },
+      {
+        "question_text": "According to Einstein's theory of general relativity, what causes gravity?",
+        "options": [
+          "Magnetic fields",
+          "The bending of spacetime by mass and energy",
+          "Electric charges",
+          "The rotation of planets"
+        ],
+        "correct_answer": "The bending of spacetime by mass and energy"
+      },
+      {
+        "question_text": "Why do astronauts float in space?",
+        "options": [
+          "Because there is no gravity in space",
+          "Because they are far enough from Earth to escape gravity",
+          "Because they are in freefall around Earth",
+          "Because they are weightless"
+        ],
+        "correct_answer": "Because they are in freefall around Earth"
+      },
+      {
+        "question_text": "What two factors determine the gravitational force between two objects?",
+        "options": [
+          "Speed and temperature",
+          "Color and shape",
+          "Mass and distance",
+          "Volume and density"
+        ],
+        "correct_answer": "Mass and distance"
+      },
+      {
+        "question_text": "If Earth's mass suddenly doubled, what would happen to the gravitational force between Earth and the Moon?",
+        "options": [
+          "It would double",
+          "It would be halved",
+          "It would stay the same",
+          "It would quadruple"
+        ],
+        "correct_answer": "It would double"
+      },
+      {
+        "question_text": "Which of these is NOT an effect of Earth's gravity?",
+        "options": [
+          "Keeping the atmosphere in place",
+          "Causing tides",
+          "Making the Earth rotate",
+          "Pulling objects downward"
+        ],
+        "correct_answer": "Making the Earth rotate"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your knowledge on the fundamental concepts of gravity, from basic ideas to real-world applications.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 3,
+    "title": "go",
+    "questions": [
+      {
+        "question_text": "go",
+        "options": [
+          "go",
+          "fo"
+        ],
+        "correct_answer": "go"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "go",
+    "time": 1,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 4,
+    "title": "Solar System Quiz",
+    "questions": [
+      {
+        "question_text": "Which planet is known as the 'Red Planet'?",
+        "options": [
+          "Venus",
+          "Mars",
+          "Jupiter",
+          "Saturn"
+        ],
+        "correct_answer": "Mars"
+      },
+      {
+        "question_text": "What is the largest planet in our solar system?",
+        "options": [
+          "Earth",
+          "Saturn",
+          "Neptune",
+          "Jupiter"
+        ],
+        "correct_answer": "Jupiter"
+      },
+      {
+        "question_text": "Which planet has the most extensive ring system?",
+        "options": [
+          "Uranus",
+          "Neptune",
+          "Saturn",
+          "Mars"
+        ],
+        "correct_answer": "Saturn"
+      },
+      {
+        "question_text": "How many natural satellites (moons) does Earth have?",
+        "options": [
+          "1",
+          "2",
+          "3",
+          "0"
+        ],
+        "correct_answer": "1"
+      },
+      {
+        "question_text": "Which of these is NOT a gas giant?",
+        "options": [
+          "Jupiter",
+          "Saturn",
+          "Neptune",
+          "Mars"
+        ],
+        "correct_answer": "Mars"
+      },
+      {
+        "question_text": "What is the name of the dwarf planet located in the asteroid belt?",
+        "options": [
+          "Pluto",
+          "Eris",
+          "Ceres",
+          "Haumea"
+        ],
+        "correct_answer": "Ceres"
+      },
+      {
+        "question_text": "Which planet rotates on its side, with an axial tilt of about 98 degrees?",
+        "options": [
+          "Mercury",
+          "Uranus",
+          "Venus",
+          "Mars"
+        ],
+        "correct_answer": "Uranus"
+      },
+      {
+        "question_text": "What is the closest star to our solar system?",
+        "options": [
+          "Proxima Centauri",
+          "Sirius",
+          "Betelgeuse",
+          "Alpha Centauri A"
+        ],
+        "correct_answer": "Proxima Centauri"
+      },
+      {
+        "question_text": "Which moon is known for having a subsurface ocean and is a prime candidate for potential life?",
+        "options": [
+          "Europa",
+          "Titan",
+          "Ganymede",
+          "Callisto"
+        ],
+        "correct_answer": "Europa"
+      },
+      {
+        "question_text": "What is the name of the region beyond Neptune that contains many icy bodies and dwarf planets?",
+        "options": [
+          "Oort Cloud",
+          "Kuiper Belt",
+          "Asteroid Belt",
+          "Heliosphere"
+        ],
+        "correct_answer": "Kuiper Belt"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your knowledge of the planets, moons, and features of our solar system.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 5,
+    "title": "Plankton Knowledge Quiz",
+    "questions": [
+      {
+        "question_text": "What does the term 'plankton' primarily refer to?",
+        "options": [
+          "A type of marine plant",
+          "Organisms that drift with ocean currents",
+          "Large ocean predators",
+          "Deep-sea floor dwellers"
+        ],
+        "correct_answer": "Organisms that drift with ocean currents"
+      },
+      {
+        "question_text": "Which of the following is a major role of phytoplankton in marine ecosystems?",
+        "options": [
+          "Decomposing organic matter",
+          "Producing oxygen through photosynthesis",
+          "Hunting small fish",
+          "Filtering pollutants from water"
+        ],
+        "correct_answer": "Producing oxygen through photosynthesis"
+      },
+      {
+        "question_text": "What is the primary energy source for phytoplankton?",
+        "options": [
+          "Chemical energy from hydrothermal vents",
+          "Consuming other plankton",
+          "Sunlight",
+          "Decaying matter"
+        ],
+        "correct_answer": "Sunlight"
+      },
+      {
+        "question_text": "Which of these is an example of zooplankton?",
+        "options": [
+          "Diatoms",
+          "Cyanobacteria",
+          "Krill",
+          "Seaweed"
+        ],
+        "correct_answer": "Krill"
+      },
+      {
+        "question_text": "How do zooplankton typically obtain their energy?",
+        "options": [
+          "Photosynthesis",
+          "Absorbing sunlight through their skin",
+          "Consuming phytoplankton or other small organisms",
+          "Breaking down minerals"
+        ],
+        "correct_answer": "Consuming phytoplankton or other small organisms"
+      },
+      {
+        "question_text": "What environmental factor is most critical for phytoplankton blooms?",
+        "options": [
+          "High salinity",
+          "Cold water temperatures",
+          "Availability of nutrients and sunlight",
+          "Strong ocean currents"
+        ],
+        "correct_answer": "Availability of nutrients and sunlight"
+      },
+      {
+        "question_text": "Which gas do phytoplankton contribute significantly to producing?",
+        "options": [
+          "Carbon dioxide",
+          "Nitrogen",
+          "Methane",
+          "Oxygen"
+        ],
+        "correct_answer": "Oxygen"
+      },
+      {
+        "question_text": "What is the base of the marine food web?",
+        "options": [
+          "Whales",
+          "Coral",
+          "Phytoplankton",
+          "Seagrass"
+        ],
+        "correct_answer": "Phytoplankton"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your understanding of plankton types, roles, and ecological importance.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 6,
+    "title": "Basic Japanese Vocabulary Quiz",
+    "questions": [
+      {
+        "question_text": "What does '\u3053\u3093\u306b\u3061\u306f' (Konnichiwa) mean in English?",
+        "options": [
+          "Goodbye",
+          "Hello",
+          "Thank you",
+          "Excuse me"
+        ],
+        "correct_answer": "Hello"
+      },
+      {
+        "question_text": "What does '\u3042\u308a\u304c\u3068\u3046' (Arigatou) mean in English?",
+        "options": [
+          "Yes",
+          "No",
+          "Thank you",
+          "Please"
+        ],
+        "correct_answer": "Thank you"
+      },
+      {
+        "question_text": "What does '\u3059\u307f\u307e\u305b\u3093' (Sumimasen) mean in English?",
+        "options": [
+          "Excuse me",
+          "Hello",
+          "Good morning",
+          "Good night"
+        ],
+        "correct_answer": "Excuse me"
+      },
+      {
+        "question_text": "What does '\u306f\u3044' (Hai) mean in English?",
+        "options": [
+          "No",
+          "Yes",
+          "Maybe",
+          "Please"
+        ],
+        "correct_answer": "Yes"
+      },
+      {
+        "question_text": "What does '\u3044\u3044\u3048' (Iie) mean in English?",
+        "options": [
+          "Yes",
+          "No",
+          "Hello",
+          "Goodbye"
+        ],
+        "correct_answer": "No"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge of essential Japanese words.",
+    "time": 5,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 7,
+    "title": "spanish",
+    "questions": [
+      {
+        "question_text": "s",
+        "options": [
+          "d",
+          "f",
+          "e"
+        ],
+        "correct_answer": "f"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "ddd",
+    "time": 1,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 8,
+    "title": "Football Basics Quiz",
+    "questions": [
+      {
+        "question_text": "How many players are on a football team during a match?",
+        "options": [
+          "9",
+          "10",
+          "11",
+          "12"
+        ],
+        "correct_answer": "11"
+      },
+      {
+        "question_text": "What is it called when a player scores three goals in a single game?",
+        "options": [
+          "Hat-trick",
+          "Goal rush",
+          "Triple score",
+          "Three-peat"
+        ],
+        "correct_answer": "Hat-trick"
+      },
+      {
+        "question_text": "Which country won the FIFA World Cup in 2018?",
+        "options": [
+          "Brazil",
+          "Germany",
+          "France",
+          "Argentina"
+        ],
+        "correct_answer": "France"
+      },
+      {
+        "question_text": "What happens when the ball fully crosses the sideline?",
+        "options": [
+          "Goal kick",
+          "Corner kick",
+          "Free kick",
+          "Throw-in"
+        ],
+        "correct_answer": "Throw-in"
+      },
+      {
+        "question_text": "How long does a standard football match last?",
+        "options": [
+          "60 minutes",
+          "70 minutes",
+          "90 minutes",
+          "100 minutes"
+        ],
+        "correct_answer": "90 minutes"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge on the fundamentals of football (soccer).",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 9,
+    "title": "Basics of Space",
+    "questions": [
+      {
+        "question_text": "How many planets are in our Solar System?",
+        "options": [
+          "7",
+          "8",
+          "9",
+          "10"
+        ],
+        "correct_answer": "8"
+      },
+      {
+        "question_text": "Which planet is known as the Red Planet?",
+        "options": [
+          "Venus",
+          "Jupiter",
+          "Mars",
+          "Saturn"
+        ],
+        "correct_answer": "Mars"
+      },
+      {
+        "question_text": "What is the name of the galaxy that contains our Solar System?",
+        "options": [
+          "Andromeda",
+          "Whirlpool Galaxy",
+          "Milky Way",
+          "Triangulum"
+        ],
+        "correct_answer": "Milky Way"
+      },
+      {
+        "question_text": "What is the closest star to Earth?",
+        "options": [
+          "Proxima Centauri",
+          "Sirius",
+          "The Sun",
+          "Alpha Centauri"
+        ],
+        "correct_answer": "The Sun"
+      },
+      {
+        "question_text": "What is Earth's natural satellite called?",
+        "options": [
+          "Titan",
+          "Ganymede",
+          "Europa",
+          "The Moon"
+        ],
+        "correct_answer": "The Moon"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge on basic space facts.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 10,
+    "title": "German Beginner Quiz",
+    "questions": [
+      {
+        "question_text": "What does 'Guten Tag' mean in English?",
+        "options": [
+          "Good morning",
+          "Good day",
+          "Good night",
+          "Goodbye"
+        ],
+        "correct_answer": "Good day"
+      },
+      {
+        "question_text": "How do you say 'Thank you' in German?",
+        "options": [
+          "Bitte",
+          "Danke",
+          "Hallo",
+          "Tsch\u00fcss"
+        ],
+        "correct_answer": "Danke"
+      },
+      {
+        "question_text": "Which word means 'water' in German?",
+        "options": [
+          "Wetter",
+          "Winter",
+          "Wasser",
+          "Wald"
+        ],
+        "correct_answer": "Wasser"
+      },
+      {
+        "question_text": "What is 'house' in German?",
+        "options": [
+          "Haus",
+          "Hose",
+          "Himmel",
+          "Hund"
+        ],
+        "correct_answer": "Haus"
+      },
+      {
+        "question_text": "How do you say 'I am learning German' in German?",
+        "options": [
+          "Ich hei\u00dfe German",
+          "Ich lerne Deutsch",
+          "Ich spreche gut Deutsch",
+          "Ich verstehe Deutsch"
+        ],
+        "correct_answer": "Ich lerne Deutsch"
+      }
+    ],
+    "difficulty": "EASY",
+    "description": "Test your knowledge of basic German vocabulary and phrases.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  }
+]

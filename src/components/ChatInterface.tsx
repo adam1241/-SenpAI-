@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import senpaiLogo from "./logo/SenpAI2.png";
+import { ApiService, ChatMessage } from "@/services/api";
 
 interface Message {
   id: string;
@@ -41,20 +42,13 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, sessio
     setInputMessage("");
 
     // Prepare the history for the API
-    const apiHistory = [...messages, userMessage].map(({ id, timestamp, isMastery, isUser, ...rest }) => ({
+    const apiHistory: ChatMessage[] = [...messages, userMessage].map(({ id, timestamp, isMastery, isUser, ...rest }) => ({
       ...rest,
       role: isUser ? 'user' : 'assistant'
     }));
 
-
     try {
-      const response = await fetch('http://localhost:5001/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: apiHistory, user_id: userId, session_id: sessionId }),
-      });
+      const response = await ApiService.streamChat(apiHistory, userId, sessionId);
 
       if (!response.body) return;
 
@@ -144,15 +138,6 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, sessio
                 </p>
               </div>
 
-              <div className="flex justify-center mb-6">
-                <video 
-                  controls 
-                  className="w-full max-w-3xl rounded-lg shadow-lg"
-                >
-                  <source src="/promotion.mp4" type="video/mp4" />
-                  Votre navigateur ne supporte pas la balise vidéo.
-                </video>
-              </div>
               
               {/* Quick Start Suggestions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">

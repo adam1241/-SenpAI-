@@ -34,6 +34,51 @@ class DecksTool:
         """
         return Database.load_table("decks")
 
+    def get_deck_by_id(self, deck_id: int):
+        """
+        Retrieves a single deck by its ID.
+        """
+        decks = self.get_decks()
+        for deck in decks:
+            if deck['id'] == deck_id:
+                return deck
+        return None
+
+    def update_deck(self, deck_id: int, deck_update_data: dict):
+        """
+        Updates a deck with new data.
+        """
+        try:
+            decks = self.get_decks()
+            deck_found = False
+            updated_decks = []
+            for deck in decks:
+                if deck['id'] == deck_id:
+                    deck_found = True
+                    # Update the deck's data
+                    deck['name'] = deck_update_data.get('name', deck['name'])
+                    deck['description'] = deck_update_data.get('description', deck['description'])
+                    
+                    # Validate the updated data
+                    validated_deck = Deck.model_validate(deck)
+                    updated_decks.append(validated_deck.model_dump(mode="json"))
+                else:
+                    updated_decks.append(deck)
+
+            if not deck_found:
+                raise ValueError(f"Deck with ID {deck_id} not found.")
+
+            Database.save_table("decks", updated_decks)
+            
+            # Find and return the updated deck data
+            for updated_deck in updated_decks:
+                if updated_deck['id'] == deck_id:
+                    return updated_deck
+
+        except ValidationError as e:
+            raise ValueError(f"Pydantic validation error: {e}")
+
+
     def delete_deck(self, deck_id: int):
         """
         Deletes a deck and all its associated flashcards.

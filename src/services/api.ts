@@ -130,6 +130,22 @@ export const getQuizzes = async () => {
   return response.json();
 };
 
+export const getDeck = async (deckId: number) => {
+  const response = await fetch(`${API_BASE_URL}/decks/${deckId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch deck');
+  }
+  return response.json();
+}
+
+export const getFlashcardsForDeck = async (deckId: number) => {
+    const response = await fetch(`${API_BASE_URL}/decks/${deckId}/flashcards`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch flashcards for deck');
+    }
+    return response.json();
+}
+
 export const getDecks = async () => {
   const response = await fetch(`${API_BASE_URL}/decks`);
   if (!response.ok) {
@@ -174,6 +190,67 @@ export const saveManualFlashcard = async (flashcardData: any) => {
   return response.json();
 };
 
+export const updateFlashcard = async (cardId: number, flashcardData: { 
+    question?: string, 
+    answer?: string, 
+    question_image_url?: string, 
+    answer_image_url?: string,
+    difficulty?: 'EASY' | 'MEDIUM' | 'HARD',
+    last_reviewed?: string,
+}) => {
+    const response = await fetch(`${API_BASE_URL}/flashcards/${cardId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(flashcardData),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to update flashcard');
+    }
+    return response.json();
+};
+
+export const deleteFlashcard = async (cardId: number) => {
+    const response = await fetch(`${API_BASE_URL}/flashcards/${cardId}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to delete flashcard');
+    }
+    return response.json();
+};
+
+export const uploadImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to upload image');
+    }
+    return response.json();
+};
+
+export const importDeck = async (deckData: any) => {
+    const response = await fetch(`${API_BASE_URL}/import`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(deckData),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to import deck');
+    }
+    return response.json();
+};
+
 export const saveManualDeck = async (deckData: { name: string, description: string }) => {
   const response = await fetch(`${API_BASE_URL}/decks/manual`, {
     method: 'POST',
@@ -184,6 +261,20 @@ export const saveManualDeck = async (deckData: { name: string, description: stri
   });
   if (!response.ok) {
     throw new Error('Failed to save deck');
+  }
+  return response.json();
+};
+
+export const updateDeck = async (deckId: number, deckData: { name: string, description: string }) => {
+  const response = await fetch(`${API_BASE_URL}/decks/${deckId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(deckData),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update deck');
   }
   return response.json();
 };

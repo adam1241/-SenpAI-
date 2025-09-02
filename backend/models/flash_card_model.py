@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 from datetime import datetime
 
 class FlashCard(BaseModel):
@@ -9,3 +9,5 @@ class FlashCard(BaseModel):
     deck_id: int
     difficulty: Literal["EASY", "MEDIUM", "HARD"]
     last_reviewed: datetime = datetime.now()
+    question_image_url: Optional[str] = None
+    answer_image_url: Optional[str] = None

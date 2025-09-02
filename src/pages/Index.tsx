@@ -22,9 +22,9 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === '#quiz') {
-      setActiveSection('quiz');
+    const hash = window.location.hash.substring(1); // remove #
+    if (hash === 'quiz' || hash === 'notebook' || hash === 'flashcards' || hash === 'chat') {
+      setActiveSection(hash);
     }
   }, []);
 

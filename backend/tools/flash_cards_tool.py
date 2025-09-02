@@ -51,6 +51,9 @@ class FlashCardsTool:
                 card_data['id'] = next_card_id
                 next_card_id += 1
                 card_data['difficulty'] = card_data.get('difficulty', "EASY")
+                card_data['question_image_url'] = card_data.get('question_image_url')
+                card_data['answer_image_url'] = card_data.get('answer_image_url')
+
 
                 validated_card = FlashCard.model_validate(card_data)
                 Database.add_to_table(
@@ -81,6 +84,56 @@ class FlashCardsTool:
         """
         all_cards = self.get_flash_cards()
         return [card for card in all_cards if card['deck_id'] == deck_id]
+
+    def update_flash_card(self, card_id: int, card_update_data: dict):
+        """
+        Updates a flashcard with new data.
+        """
+        try:
+            all_cards = self.get_flash_cards()
+            card_found = False
+            updated_cards = []
+            for card in all_cards:
+                if card['id'] == card_id:
+                    card_found = True
+                    # Update fields if provided
+                    card['question'] = card_update_data.get('question', card['question'])
+                    card['answer'] = card_update_data.get('answer', card['answer'])
+                    card['question_image_url'] = card_update_data.get('question_image_url', card.get('question_image_url'))
+                    card['answer_image_url'] = card_update_data.get('answer_image_url', card.get('answer_image_url'))
+                    card['difficulty'] = card_update_data.get('difficulty', card['difficulty'])
+                    card['last_reviewed'] = card_update_data.get('last_reviewed', card['last_reviewed'])
+                    
+                    # Validate the updated data
+                    validated_card = FlashCard.model_validate(card)
+                    updated_cards.append(validated_card.model_dump(mode="json"))
+                else:
+                    updated_cards.append(card)
+
+            if not card_found:
+                raise ValueError(f"Flashcard with ID {card_id} not found.")
+
+            Database.save_table("flash_cards", updated_cards)
+            
+            for updated_card in updated_cards:
+                if updated_card['id'] == card_id:
+                    return updated_card
+        
+        except ValidationError as e:
+            raise ValueError(f"Pydantic validation error: {e}")
+
+    def delete_flash_card(self, card_id: int):
+        """
+        Deletes a single flashcard by its ID.
+        """
+        all_cards = self.get_flash_cards()
+        initial_cards_length = len(all_cards)
+        updated_cards = [card for card in all_cards if card['id'] != card_id]
+
+        if len(updated_cards) == initial_cards_length:
+            raise ValueError(f"Flashcard with ID {card_id} not found.")
+            
+        Database.save_table("flash_cards", updated_cards)
 
 
 if __name__ == '__main__':

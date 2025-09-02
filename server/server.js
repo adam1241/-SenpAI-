@@ -100,28 +100,34 @@ class OpenAICanvasAnalysisClient{
       const base64Image = imageBuffer.toString('base64');
       const imageDataUrl = `data:image/png;base64,${base64Image}`;
 
-      const prompt = `You are analyzing a student's mathematical work on a digital canvas. Your job is to interpret what the student has written/drawn as mathematical expressions.
+      const prompt =  `You are analyzing a student's mathematical work on a digital canvas. Your job is to interpret what the student has written/drawn as mathematical expressions.
 
-**CRITICAL: Always assume the student is writing mathematics. Interpret all marks, lines, and symbols as mathematical notation.**
-
-Look at this image and tell me exactly what mathematical expression or equation the student has written. Consider:
-
-- Intersecting lines = "×" (multiplication) or variable "X" 
-- Horizontal lines = "=" (equals) or "-" (minus/subtraction)
-- Single letters = variables (a, b, c, x, y, z, etc.)
-- Curved lines = parentheses, fractions, or other math symbols
-- Positioning = mathematical relationships (like "x = " or "2 + 3")
-
-**Respond in this format:**
-"The student has written: [mathematical expression]"
-
-If you see multiple expressions or steps, list them as:
-"The student has written: [expression 1], [expression 2]"
-
-If the expression appears incomplete, say:
-"The student appears to be writing: [partial expression] (incomplete)"
-
-Do NOT describe it as drawings or abstract shapes. Always interpret it as mathematics that the student is trying to express, even if roughly drawn.`;
+      **CRITICAL: Always assume the student is writing mathematics. Interpret all marks, lines, and symbols as mathematical notation.**
+      IMPORTANT: If this looks like mathematical notation (equations, derivatives like dV/dt, integrals, etc.), interpret it as advanced mathematics including differential equations, calculus, or algebra.
+      
+      **OUTPUT FORMAT: Use LaTeX notation for all mathematical expressions enclosed in \\( \\) for inline math.**
+      
+      Look at this image and tell me exactly what mathematical expression or equation the student has written. Consider:
+      
+      - Intersecting lines = "×" (multiplication) or variable "X" 
+      - Horizontal lines = "=" (equals) or "-" (minus/subtraction)
+      - Single letters = variables (a, b, c, x, y, z, etc.)
+      - Curved lines = parentheses, fractions, or other math symbols
+      - Positioning = mathematical relationships (like "x = " or "2 + 3")
+      - Derivatives should be written as \\(\\frac{dV}{dt}\\) or \\(V'(t)\\)
+      - Integrals should be written as \\(\\int f(x) dx\\)
+      - Fractions should be written as \\(\\frac{a}{b}\\)
+      
+      **Respond in this format:**
+      "The student has written: \\([LaTeX mathematical expression]\\)"
+      
+      If you see multiple expressions or steps, list them as:
+      "The student has written: \\([expression 1]\\), \\([expression 2]\\)"
+      
+      If the expression appears incomplete, say:
+      "The student appears to be writing: \\([partial LaTeX expression]\\) (incomplete)"
+      
+      Do NOT describe it as drawings or abstract shapes. Always interpret it as mathematics that the student is trying to express, even if roughly drawn.`;
 
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
@@ -188,14 +194,22 @@ class CerebrasClient {
 
     try {
       const config = personalityConfigs[personality];
-      const systemMessage = {
-        role: 'system',
-        content: config.systemPrompt
-      };
+      let finalMessages = [...messages];
+
+      // Check if the user message contains Socratic instructions.
+      const isSocratic = messages.some(msg => msg.role === 'user' && msg.content.includes('You are a Socratic tutor'));
+
+      if (!isSocratic) {
+        const systemMessage = {
+          role: 'system',
+          content: config.systemPrompt
+        };
+        finalMessages = [systemMessage, ...messages];
+      }
 
       const response = await axios.post(`${this.baseUrl}/chat/completions`, {
         model: 'llama3.1-8b',
-        messages: [systemMessage, ...messages],
+        messages: finalMessages,
         max_tokens: 500,
         temperature: 0.7,
         stream: false
@@ -517,19 +531,24 @@ app.post('/api/analyze-canvas', upload.single('canvas'), async (req, res) => {
         console.log('✅ OpenAI Vision analysis completed');
         console.log('📝 Vision analysis:', visionResult.analysis);
         
-        // Create analysis prompt based on OpenAI's detailed description
-        analysisPrompt = `You are a tutor analyzing a student's canvas work. OpenAI Vision has provided this detailed analysis of what the student created:
+        // Create Socratic analysis prompt
+        const socraticPrompt = `You are a Socratic tutor. Your goal is to help a student learn by asking guiding questions. You must not give direct answers.
 
-"${visionResult.analysis}"
+A student has been working on a canvas. Below is an analysis of what the student has drawn/written, provided by OpenAI Vision to help you understand their work:
 
-Based on this detailed description of the student's work:
-- If it contains mathematical content, check for correctness and guide them through any errors
-- If it shows questions or problems, use the Socratic method to help them think through solutions
-- If it contains diagrams or drawings, help them understand concepts or improve their work
-- Provide specific, actionable feedback based on what they've created
-- Ask follow-up questions to test their understanding
+OpenAI Vision Analysis of Student's Canvas Work:
+---
+${visionResult.analysis}
+---
 
-Be encouraging but precise. Keep your response focused and educational.`;
+Your task is to respond to the student based on what they've actually created on the canvas. Follow these rules strictly:
+1. **NEVER give the final answer or a direct solution.**
+2. **ALWAYS respond with a question.** Your question should guide the student to think for themselves.
+3. If the student's work is correct, ask a question that prompts them to explain their reasoning or consider the next step (e.g., "That looks right. Can you explain why you did it that way?" or "Great start. What do you think the next step is?").
+4. If the student's work is incorrect, ask a question that helps them spot their own error (e.g., "Are you sure about that step? What happens if you try to verify it?" or "I see what you did there. What was your thinking for that part?").
+5. If the student's work is a question, guide them to find the answer themselves (e.g., "That's a good question. What have you tried so far?" or "How could you break that problem down into smaller pieces?").
+6. Keep your response concise and focused on a single guiding question.`;
+        analysisPrompt = socraticPrompt;
 
         if (description) {
           analysisPrompt += `\n\nAdditional context from student: ${description}`;
@@ -555,46 +574,24 @@ Be encouraging but precise. Keep your response focused and educational.`;
         const contentType = OCRService.detectContentType(ocrResult.text);
         console.log(`🔍 Content type detected: ${contentType}`);
         
-        // Create analysis prompt based on extracted text and content type
-        switch (contentType) {
-          case 'math':
-            analysisPrompt = `You are a math tutor. The student has written/drawn mathematical content on their canvas: "${ocrResult.text}"
+        // Create Socratic analysis prompt
+        const socraticPrompt = `You are a Socratic tutor. Your goal is to help a student learn by asking guiding questions. You must not give direct answers.
 
-Analyze this mathematical work:
-- Check if equations or calculations are correct
-- Identify any errors and explain how to fix them
-- Guide them through the next steps if the work is incomplete
-- Ask questions to test their understanding
-- If it's a problem setup, help them think about the approach
+A student has been working on a canvas, and an analysis of their work is below.
 
-Be encouraging but precise. Point out specific mistakes and provide clear guidance. Keep your response focused and educational (2-3 sentences).`;
-            break;
-            
-          case 'question':
-            analysisPrompt = `The student has written a question on their canvas: "${ocrResult.text}"
+Student's work:
+---
+${ocrResult.text}
+---
 
-As their tutor, don't answer directly. Instead:
-- Ask them what they think the answer might be
-- Guide them to break down the question into smaller parts
-- Help them identify what information they need
-- Suggest a method or approach to find the answer
-- Encourage them to think through the problem step by step
-
-Be supportive and guide their thinking process. Keep your response brief and focused on helping them learn (2-3 sentences).`;
-            break;
-            
-          default:
-            analysisPrompt = `The student has written text/notes on their canvas: "${ocrResult.text}"
-
-As their tutor, provide helpful feedback:
-- Check if the content is accurate and complete
-- Suggest ways to organize or expand their notes
-- Ask questions to test their understanding
-- Help them connect concepts to other topics
-- Encourage deeper thinking about the subject
-
-Be encouraging and educational. Keep your response constructive and brief (2-3 sentences).`;
-        }
+Your task is to respond to the student based on their work. Follow these rules strictly:
+1. **NEVER give the final answer or a direct solution.**
+2. **ALWAYS respond with a question.** Your question should guide the student to think for themselves.
+3. If the student's work is correct, ask a question that prompts them to explain their reasoning or consider the next step (e.g., "That looks right. Can you explain why you did it that way?" or "Great start. What do you think the next step is?").
+4. If the student's work is incorrect, ask a question that helps them spot their own error (e.g., "Are you sure about that step? What happens if you try to verify it?" or "I see what you did there. What was your thinking for that part?").
+5. If the student's work is a question, guide them to find the answer themselves (e.g., "That's a good question. What have you tried so far?" or "How could you break that problem down into smaller pieces?").
+6. Keep your response concise (1-3 sentences) and focused on a single guiding question.`;
+        analysisPrompt = socraticPrompt;
         
         if (description) {
           analysisPrompt += `\n\nAdditional context: ${description}`;

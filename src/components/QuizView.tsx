@@ -1,9 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Clock, Trophy, Target, Play, Plus } from "lucide-react";
 import { QuizTakingView } from "./QuizTakingView";
+import { getQuizzes } from "@/services/api";
+import { CreateQuizModal } from "./CreateQuizModal";
+import ApiService from "@/services/api";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface Question {
   id: string;
@@ -25,14 +30,100 @@ interface Quiz {
   bestScore?: number;
 }
 
+// Backend interfaces to avoid type errors during transformation
+interface BackendQuestion {
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+}
+
+interface BackendQuiz {
+  id: number;
+  title: string;
+  description: string;
+  questions: BackendQuestion[];
+  difficulty: string;
+  time: number;
+  completed_times: number;
+  best_score: number;
+}
+
+const transformQuizData = (backendQuizzes: BackendQuiz[]): Quiz[] => {
+  return backendQuizzes.map((bq) => ({
+    id: bq.id.toString(),
+    title: bq.title,
+    description: bq.description,
+    difficulty: bq.difficulty.toLowerCase() as "easy" | "medium" | "hard",
+    category: "General", // Default category
+    estimatedTime: bq.time,
+    completedCount: bq.completed_times,
+    bestScore: bq.best_score,
+    questions: bq.questions.map((q, index) => ({
+      id: `${bq.id}-${index}`,
+      question: q.question_text,
+      options: q.options,
+      correctAnswer: q.options.indexOf(q.correct_answer),
+      explanation: "", // No explanation from backend
+    })),
+  }));
+};
+
 export const QuizView = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
-  // TODO: Fetch quizzes from the backend
-  useEffect(() => {
-    // setQuizzes(fetchedQuizzes);
+  const fetchQuizzes = useCallback(async () => {
+    try {
+      const backendQuizzes = await getQuizzes();
+      const transformedQuizzes = transformQuizData(backendQuizzes);
+      setQuizzes(transformedQuizzes);
+    } catch (error) {
+      console.error("Failed to fetch quizzes:", error);
+      toast.error("Failed to load quizzes.");
+    }
   }, []);
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, [fetchQuizzes]);
+
+  const handleCreateQuizSubmit = async (topic: string) => {
+    toast.info(`Generating a quiz about "${topic}"...`);
+    const initialQuizCount = quizzes.length;
+
+    try {
+      // Ask the AI to create the quiz
+      await ApiService.sendChatMessage([
+        { role: 'user', content: `Please create a quiz about ${topic}` }
+      ]);
+
+      // Start polling to check for the new quiz
+      const poll = setInterval(async () => {
+        try {
+          const backendQuizzes = await getQuizzes();
+          if (backendQuizzes.length > initialQuizCount) {
+            clearInterval(poll);
+            const transformedQuizzes = transformQuizData(backendQuizzes);
+            setQuizzes(transformedQuizzes);
+            toast.success(`Successfully created a quiz about "${topic}"!`);
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+          clearInterval(poll);
+        }
+      }, 3000); // Poll every 3 seconds
+
+      // Stop polling after a timeout (e.g., 45 seconds)
+      setTimeout(() => {
+        clearInterval(poll);
+      }, 45000);
+
+    } catch (error) {
+      console.error("Failed to create quiz:", error);
+      toast.error("Something went wrong while creating the quiz.");
+    }
+  };
 
   const handleStartQuiz = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -72,10 +163,17 @@ export const QuizView = () => {
             <Brain className="w-8 h-8 text-primary" />
             Learning Quizzes
           </h1>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Create Quiz
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button className="gap-2" onClick={() => setCreateModalOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Create with AI
+            </Button>
+            <Link to="/build-quiz">
+              <Button variant="outline" className="gap-2">
+                Build Manually
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Statistics */}
@@ -187,6 +285,11 @@ export const QuizView = () => {
           ))}
         </div>
       </div>
+      <CreateQuizModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSubmit={handleCreateQuizSubmit}
+      />
     </div>
   );
 };

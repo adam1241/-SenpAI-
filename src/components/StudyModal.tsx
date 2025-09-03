@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, RotateCcw, X } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { toast } from "sonner";
 import { updateFlashcard } from "@/services/api";
 
@@ -116,7 +117,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
                     <img src={currentCard.question_image_url} alt="Question" className="mb-4 rounded-md object-contain w-full max-h-48" />
                   )}
                   <div className="prose prose-sm dark:prose-invert max-w-none text-lg text-foreground leading-relaxed">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentCard.question}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{currentCard.question}</ReactMarkdown>
                   </div>
                   <div className="mt-6 text-sm text-muted-foreground">
                     Click to reveal answer
@@ -129,7 +130,7 @@ export const StudyModal = ({ isOpen, onClose, deckName, cards }: StudyModalProps
                     <img src={currentCard.answer_image_url} alt="Answer" className="mb-4 rounded-md object-contain w-full max-h-48" />
                   )}
                    <div className="prose prose-sm dark:prose-invert max-w-none text-lg text-foreground leading-relaxed">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentCard.answer}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{currentCard.answer}</ReactMarkdown>
                   </div>
                 </div>
               )}

@@ -55,7 +55,8 @@ config = {
 memory = Memory.from_config(config)
 # --- END: Corrected Mem0 Initialization ---
 
-UPLOAD_FOLDER = 'uploads'
+# Define a robust, absolute path for the uploads folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -79,6 +80,7 @@ def upload_file():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(filepath)
         file_url = f'{request.host_url.rstrip("/")}/uploads/{unique_filename}'
+        print(f"--- [API UPLOAD] Generated file URL: {file_url} ---") # DEBUG
         return jsonify({"filePath": file_url}), 201
     return jsonify({"error": "File upload failed"}), 500
 
@@ -306,8 +308,8 @@ def chat():
         decks_json_string = json.dumps(decks, indent=2)
         system_prompt_content = get_socratic_tutor_prompt(
             user_memory=memory_context,
-            flashcard_decks=decks_json_string
-        )
+                flashcard_decks=decks_json_string
+            )
         system_prompt = {"role": "system", "content": system_prompt_content}
         api_messages = [system_prompt] + conversation_history
         stream = client.chat.completions.create(
@@ -323,7 +325,7 @@ def chat():
         flashcards_action_regex = re.compile(r"//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: (.*?)\\/")
         quiz_action_regex = re.compile(r"//ACTION: CREATE_QUIZ// //QUIZ_JSON: (.*?)\\/")
         deck_action_regex = re.compile(r"//ACTION: CREATE_DECK// //DECK_JSON: (.*?)\\/")
-        
+
         def process_buffer(buf):
             nonlocal in_think_block
             action_handlers = [

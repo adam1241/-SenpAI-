@@ -4,7 +4,10 @@ import { getDeck, getFlashcardsForDeck, deleteFlashcard } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
+} from 'recharts';
+import rehypeRaw from 'rehype-raw';
 import { ArrowLeft, Plus, Pencil, Trash2, Smile, Meh, Frown, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -301,8 +304,16 @@ const DeckViewPage = () => {
                     <CardContent className="p-6 space-y-4 flex-grow">
                         <div>
                             <p className="text-xs text-muted-foreground font-semibold uppercase">Question</p>
-                            <div className="prose prose-sm dark:prose-invert max-w-none mt-1">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.question}</ReactMarkdown>
+                            <div className="prose dark:prose-invert max-w-none">
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  rehypePlugins={[rehypeRaw]}
+                                  components={{
+                                    a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" />
+                                  }}
+                                >
+                                  {card.question}
+                                </ReactMarkdown>
                             </div>
                             {card.question_image_url && (
                                 <img src={card.question_image_url} alt="Question" className="mt-2 rounded-md object-cover w-full h-auto" />
@@ -311,8 +322,16 @@ const DeckViewPage = () => {
                         <Separator />
                         <div>
                             <p className="text-xs text-muted-foreground font-semibold uppercase">Answer</p>
-                            <div className="prose prose-sm dark:prose-invert max-w-none mt-1 text-muted-foreground">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{card.answer}</ReactMarkdown>
+                            <div className="prose dark:prose-invert max-w-none mt-2">
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  rehypePlugins={[rehypeRaw]}
+                                  components={{
+                                    a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" />
+                                  }}
+                                >
+                                  {card.answer}
+                                </ReactMarkdown>
                             </div>
                             {card.answer_image_url && (
                                 <img src={card.answer_image_url} alt="Answer" className="mt-2 rounded-md object-cover w-full h-auto" />

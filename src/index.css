@@ -39,6 +39,7 @@
     --success: 145 85% 45%;
     --success-foreground: 0 0% 100%;
     --success-light: 145 45% 92%;
+    --success-hover: 145 80% 40%;
 
     /* Warning - Gentle encouragement */
     --warning: 45 95% 60%;
@@ -87,6 +88,10 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom user message colors */
+    --user-message-background: 220 15% 94%;
+    --user-message-foreground: 215 25% 25%;
   }
 
   .dark {
@@ -114,6 +119,9 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
+    --success: 145 70% 55%; /* Lighter green for dark mode */
+    --success-hover: 145 70% 50%; /* Slightly darker for hover in dark mode */
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -125,6 +133,10 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Custom user message colors */
+    --user-message-background: 222.2 84% 8%; /* A slightly lighter shade of the dark background */
+    --user-message-foreground: 210 40% 98%;
   }
 }
 

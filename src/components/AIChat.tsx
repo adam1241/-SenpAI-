@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { ApiService, ChatMessage } from "@/services/api";
+import "katex/dist/katex.min.css";
 
 interface Message {
   id: string;
@@ -13,6 +18,7 @@ interface Message {
   isUser: boolean;
   timestamp: Date;
   type?: 'analysis' | 'help' | 'feedback';
+  responseType?: 'question' | 'explanation' | 'encouragement' | 'code' | 'warning' | 'success';
 }
 
 interface AIChatProps {
@@ -24,6 +30,32 @@ interface AIChatProps {
 interface AIChatRef {
   addCanvasAnalysis: (analysis: string) => void;
 }
+
+// Helper function to determine response type from content
+const getResponseType = (content: string): 'question' | 'explanation' | 'encouragement' | 'code' | 'warning' | 'success' => {
+  const lowerContent = content.toLowerCase();
+  
+  if (content.includes('```') || content.includes('`')) return 'code';
+  if (lowerContent.includes('what') && lowerContent.includes('?')) return 'question';
+  if (lowerContent.includes('great') || lowerContent.includes('excellent') || lowerContent.includes('perfect')) return 'success';
+  if (lowerContent.includes('warning') || lowerContent.includes('careful') || lowerContent.includes('note')) return 'warning';
+  if (lowerContent.includes('you can') || lowerContent.includes('keep going') || lowerContent.includes('try')) return 'encouragement';
+  
+  return 'explanation';
+};
+
+// Helper function to get color class based on response type
+const getResponseTypeColor = (type?: string) => {
+  switch (type) {
+    case 'question': return 'border-l-blue-500';
+    case 'explanation': return 'border-l-green-500';
+    case 'encouragement': return 'border-l-yellow-500';
+    case 'code': return 'border-l-purple-500';
+    case 'warning': return 'border-l-orange-500';
+    case 'success': return 'border-l-emerald-500';
+    default: return 'border-l-gray-400';
+  }
+};
 
 export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedPersonality, onAnalyzeCanvas }, ref) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -62,7 +94,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
           id: Date.now().toString(),
           content: chatResponse.message,
           isUser: false,
-          timestamp: new Date(chatResponse.timestamp)
+          timestamp: new Date(chatResponse.timestamp),
+          responseType: getResponseType(chatResponse.message)
         };
 
         setMessages(prev => [...prev, aiResponseMessage]);
@@ -80,7 +113,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
           id: Date.now().toString(),
           content: "Sorry, I couldn't analyze your work right now. Please try again later.",
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          responseType: 'warning'
         };
         setMessages(prev => [...prev, errorMessage]);
       } finally {
@@ -251,18 +285,11 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
         content: personalityGreetings[selectedPersonality],
         isUser: false,
         timestamp: new Date(),
-        type: 'help'
+        type: 'help',
+        responseType: 'encouragement'
       }
     ]);
   }, [selectedPersonality]);
-
-  // Auto-scroll to bottom when messages change (important for long conversations)
-    
-  useEffect(()=>{
-    if(typeof (window as any)?.MathJax !== "undefined"){
-      (window as any).MathJax.typeset()
-    }
-  },[messages])
 
   // Convert messages to chat format for API
   const convertToChatMessages = (messages: Message[]): ChatMessage[] => {
@@ -305,7 +332,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
         content: chatResponse.message,
         isUser: false,
         timestamp: new Date(chatResponse.timestamp),
-        type: 'feedback'
+        type: 'feedback',
+        responseType: getResponseType(chatResponse.message)
       };
 
       setMessages(prev => [...prev, aiResponse]);
@@ -328,7 +356,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
         content: "Sorry, I'm having trouble connecting right now. Please try again later.",
         isUser: false,
         timestamp: new Date(),
-        type: 'feedback'
+        type: 'feedback',
+        responseType: 'warning'
       };
       
       setMessages(prev => [...prev, errorMessage]);
@@ -439,24 +468,53 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
               )}
               
               <div
-                className={`max-w-[80%] p-3 rounded-lg ${
+                className={`max-w-[80%] p-3 rounded-lg border-l-4 ${
                   message.isUser
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card text-card-foreground border shadow-sm'
+                    ? 'bg-user-message text-user-message-foreground border-l-primary'
+                    : `bg-card text-card-foreground border shadow-sm ${getResponseTypeColor(message.responseType)}`
                 }`}>
-                {message.isUser ? (
-                  <p className="text-sm font-medium">{message.content}</p>
-                ) : (
-                  <p className="text-sm font-medium text-foreground">{message.content}</p>
-                )}
-                <span className={`text-xs mt-1 block ${
-                  message.isUser ? 'opacity-70' : 'opacity-60 text-muted-foreground'
-                }`}>
-                  {message.timestamp.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </span>
+                <div className="text-sm prose prose-sm max-w-none">
+                  {message.isUser ? (
+                    <p className="font-medium">{message.content}</p>
+                  ) : (
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                      components={{
+                        p: ({children}) => <p className="mb-2 last:mb-0 font-medium text-foreground">{children}</p>,
+                        code: ({children, className}) => {
+                          const isInline = !className;
+                          return isInline ? (
+                            <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</code>
+                          ) : (
+                            <code className="block bg-muted p-2 rounded text-xs font-mono whitespace-pre-wrap">{children}</code>
+                          );
+                        },
+                        pre: ({children}) => <pre className="bg-muted p-2 rounded overflow-x-auto mb-2">{children}</pre>,
+                        strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+                        em: ({children}) => <em className="italic">{children}</em>,
+                        ul: ({children}) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                        ol: ({children}) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                        li: ({children}) => <li className="mb-1">{children}</li>,
+                        // Style math elements
+                        span: ({children, className}) => {
+                          if (className?.includes('math')) {
+                            return <span className={`${className} inline-block`}>{children}</span>;
+                          }
+                          return <span className={className}>{children}</span>;
+                        },
+                        div: ({children, className}) => {
+                          if (className?.includes('math')) {
+                            return <div className={`${className} my-4 overflow-x-auto`}>{children}</div>;
+                          }
+                          return <div className={className}>{children}</div>;
+                        }
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  )}
+                </div>
               </div>
 
               {message.isUser && (

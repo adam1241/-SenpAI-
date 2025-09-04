@@ -147,41 +147,45 @@ export const HistoryView = ({ userId, onSelectSession }: HistoryViewProps) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Learning History</h2>
-        
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search your learning history..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+    <div className="h-full overflow-hidden flex flex-col">
+      <div className="flex-shrink-0 max-w-6xl mx-auto p-6 w-full">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Learning History</h2>
           
-          <div className="flex gap-2">
-            {["all", "conversation", "flashcard", "quiz", "notebook"].map((type) => (
-              <Button
-                key={type}
-                variant={filterType === type ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterType(type)}
-                className="gap-2"
-              >
-                {type !== "all" && getTypeIcon(type)}
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </Button>
-            ))}
+          <div className="flex gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search your learning history..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              {["all", "conversation", "flashcard", "quiz", "notebook"].map((type) => (
+                <Button
+                  key={type}
+                  variant={filterType === type ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType(type)}
+                  className="gap-2"
+                >
+                  {type !== "all" && getTypeIcon(type)}
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <ScrollArea className="h-[600px]">
-        {renderContent()}
-      </ScrollArea>
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto px-6 pb-6">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 };

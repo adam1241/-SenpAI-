@@ -49,7 +49,8 @@ export default {
 				success: {
 					DEFAULT: 'hsl(var(--success))',
 					foreground: 'hsl(var(--success-foreground))',
-					light: 'hsl(var(--success-light))'
+					light: 'hsl(var(--success-light))',
+					hover: 'hsl(var(--success-hover))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
@@ -72,6 +73,10 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				'user-message': {
+					DEFAULT: 'hsl(var(--user-message-background))',
+					foreground: 'hsl(var(--user-message-foreground))'
 				}
 			},
 			borderRadius: {

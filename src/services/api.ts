@@ -1,14 +1,20 @@
 import axios from 'axios';
 
 // ====================================================================
-// BACKEND SERVER URLS
+// ENVIRONMENT DETECTION AND BACKEND CONFIGURATION
 // ====================================================================
 
-// Python backend (Port 5001) for Socratic tutoring, memory, and flashcards
-const SOCRATIC_TUTOR_API_URL = 'http://localhost:5001/api';
+// Detect if we're in development (local) or production (Lovable)
+const isLocalDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// Node.js backend (Port 3001) for Notebook, canvas analysis, and voice generation
-const NOTEBOOK_API_URL = 'http://localhost:3001/api';
+// Backend URLs based on environment
+const SOCRATIC_TUTOR_API_URL = isLocalDevelopment 
+  ? 'http://localhost:5001/api' 
+  : '/api/supabase'; // Will use Supabase functions
+
+const NOTEBOOK_API_URL = isLocalDevelopment 
+  ? 'http://localhost:3001/api'
+  : '/api/supabase'; // Will use Supabase functions
 
 // ====================================================================
 // TYPE DEFINITIONS

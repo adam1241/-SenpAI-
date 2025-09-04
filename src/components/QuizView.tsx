@@ -1,14 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Clock, Trophy, Target, Play, Plus } from "lucide-react";
+import { BookOpen, Clock, Trophy, Target, Play, Plus, Brain } from "lucide-react";
 import { QuizTakingView } from "./QuizTakingView";
 import { getQuizzes } from "@/services/api";
 import { CreateQuizModal } from "./CreateQuizModal";
 import ApiService from "@/services/api";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface Question {
   id: string;
@@ -28,6 +31,10 @@ interface Quiz {
   estimatedTime: number;
   completedCount: number;
   bestScore?: number;
+}
+
+interface QuizViewProps {
+  onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
 }
 
 // Backend interfaces to avoid type errors during transformation
@@ -68,10 +75,13 @@ const transformQuizData = (backendQuizzes: BackendQuiz[]): Quiz[] => {
   }));
 };
 
-export const QuizView = () => {
+export const QuizView = ({ onSectionChange }: QuizViewProps) => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || "";
+  const difficultyFilter = searchParams.get('difficulty') || "all";
 
   const fetchQuizzes = useCallback(async () => {
     try {
@@ -88,15 +98,27 @@ export const QuizView = () => {
     fetchQuizzes();
   }, [fetchQuizzes]);
 
+  const filteredQuizzes = useMemo(() => {
+    return quizzes.filter(quiz => {
+      const searchLower = searchQuery.toLowerCase();
+      const titleMatch = quiz.title.toLowerCase().includes(searchLower);
+      const descriptionMatch = quiz.description.toLowerCase().includes(searchLower);
+      const difficultyMatch = difficultyFilter === 'all' || quiz.difficulty === difficultyFilter;
+      return (titleMatch || descriptionMatch) && difficultyMatch;
+    });
+  }, [quizzes, searchQuery, difficultyFilter]);
+
   const handleCreateQuizSubmit = async (topic: string) => {
     toast.info(`Generating a quiz about "${topic}"...`);
     const initialQuizCount = quizzes.length;
 
     try {
-      // Ask the AI to create the quiz
-      await ApiService.sendChatMessage([
-        { role: 'user', content: `Please create a quiz about ${topic}` }
-      ]);
+      // Ask the AI to create the quiz via the Socratic Tutor
+      const response = await ApiService.streamSocraticTutor(
+        [{ role: 'user', content: `Please create a quiz about ${topic}` }],
+        'user-id', // You might want to get this from props or context
+        'session-id' // You might want to get this from props or context
+      );
 
       // Start polling to check for the new quiz
       const poll = setInterval(async () => {
@@ -156,11 +178,24 @@ export const QuizView = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="h-full overflow-auto relative">
+      <div className="absolute top-6 right-6 z-10">
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" onClick={() => onSectionChange('chat')} className="border-2 border-success hover:bg-success-hover">
+              <Brain className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Tutor Chat</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Brain className="w-8 h-8 text-primary" />
+            <BookOpen className="w-8 h-8 text-primary" />
             Learning Quizzes
           </h1>
           <div className="flex items-center gap-2">
@@ -213,7 +248,7 @@ export const QuizView = () => {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Average Score
               </CardTitle>
-              <Brain className="h-4 w-4 text-primary" />
+              <Trophy className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{getAverageScore()}%</div>
@@ -224,9 +259,38 @@ export const QuizView = () => {
           </Card>
         </div>
 
+        {/* Search and Filter */}
+        <div className="flex gap-4 mb-8">
+          <Select value={difficultyFilter} onValueChange={value => setSearchParams(params => {
+            if (value === 'all') params.delete('difficulty');
+            else params.set('difficulty', value);
+            return params;
+          })}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Difficulties</SelectItem>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="hard">Hard</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            type="text"
+            placeholder="Search quizzes..."
+            value={searchQuery}
+            onChange={e => setSearchParams(params => {
+              params.set('q', e.target.value);
+              return params;
+            })}
+            className="w-full"
+          />
+        </div>
+
         {/* Quiz Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {quizzes.map((quiz) => (
+          {filteredQuizzes.map((quiz) => (
             <Card key={quiz.id} className="hover:shadow-md transition-shadow cursor-pointer group">
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
@@ -290,6 +354,7 @@ export const QuizView = () => {
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateQuizSubmit}
       />
+      </div>
     </div>
   );
 };

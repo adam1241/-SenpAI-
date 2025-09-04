@@ -278,11 +278,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
       return;
     }
 
-    // Call API to update the message on the backend
+    // Update the message locally (no backend endpoint yet)
     try {
-      await ApiService.updateMessage(editingMessageId, editingContent);
-      
-      // Update the message in the local state
       setMessages(messages.map(m => 
         m.id === editingMessageId ? { ...m, content: editingContent } : m
       ));

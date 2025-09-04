@@ -266,9 +266,10 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
     }
   };
 
+  // Auto scroll to bottom when messages change
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   // Check backend connection on component mount
   useEffect(() => {

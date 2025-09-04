@@ -151,38 +151,42 @@ export const AppSidebar = ({
               Tools
             </div>
           )}
-          {menuItems.map((item) => (
-            <Tooltip key={item.id} delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  key={item.id}
-                  variant={activeSection === item.section ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => {
-                    if (item.id === 'chat') {
-                      handleTutorChatClick();
-                    } else {
-                      onSectionChange(item.section);
-                    }
-                  }}
-                  className={`w-full gap-3 relative ${isCollapsed ? 'justify-center p-2' : 'justify-start'}`}
-                >
-                  <item.icon className="w-4 h-4 flex-shrink-0" />
-                  {!isCollapsed && item.label}
-                  {item.badge && item.id === 'flashcards' && (
-                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px] border border-background">
-                      {item.badge}
-                    </span>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              {isCollapsed && (
+          {menuItems.map((item) => {
+            const buttonContent = (
+              <Button
+                key={item.id}
+                variant={activeSection === item.section ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  if (item.id === 'chat') {
+                    handleTutorChatClick();
+                  } else {
+                    onSectionChange(item.section);
+                  }
+                }}
+                className={`w-full gap-3 relative ${isCollapsed ? 'justify-center p-2' : 'justify-start'}`}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                {!isCollapsed && item.label}
+                {item.badge && item.id === 'flashcards' && (
+                  <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px] border border-background">
+                    {item.badge}
+                  </span>
+                )}
+              </Button>
+            );
+
+            return isCollapsed ? (
+              <Tooltip key={item.id} delayDuration={0}>
+                <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
                 <TooltipContent side="right">
                   <p>{item.label}</p>
                 </TooltipContent>
-              )}
-            </Tooltip>
-          ))}
+              </Tooltip>
+            ) : (
+              buttonContent
+            );
+          })}
         </div>
 
         {/* History Section */}

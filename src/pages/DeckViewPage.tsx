@@ -1,14 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { getDeck, getFlashcardsForDeck, deleteFlashcard } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
 } from 'recharts';
 import rehypeRaw from 'rehype-raw';
-import { ArrowLeft, Plus, Pencil, Trash2, Smile, Meh, Frown, Download } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, Smile, Meh, Frown, Download, Sparkles, BookOpenCheck } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { AddFlashcardModal } from '@/components/AddFlashcardModal';
@@ -23,6 +26,7 @@ interface Flashcard {
   answer: string;
   deck_id: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
+  last_reviewed: string;
   question_image_url?: string;
   answer_image_url?: string;
 }
@@ -91,6 +95,7 @@ const DeckViewPage = () => {
   const { deckId } = useParams<{ deckId: string }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || "";
+  const difficultyFilter = searchParams.get('difficulty') || "ALL";
   const [deck, setDeck] = useState<Deck | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,49 +104,109 @@ const DeckViewPage = () => {
   const [editFlashcardModalOpen, setEditFlashcardModalOpen] = useState(false);
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [flashcardToEdit, setFlashcardToEdit] = useState<Flashcard | null>(null);
+  const [allFlashcardsForDeck, setAllFlashcardsForDeck] = useState<Flashcard[]>([]);
+  const [cardsForStudy, setCardsForStudy] = useState<Flashcard[]>([]);
 
 
   const numericDeckId = deckId ? parseInt(deckId, 10) : NaN;
 
-  const fetchData = async () => {
-    if (isNaN(numericDeckId)) {
-      setError("Invalid Deck ID.");
-      setLoading(false);
-      return;
-    }
+  const fetchDeckAndCards = useCallback(async () => {
+    console.log("1. Starting fetchDeckAndCards...");
+    setLoading(true);
     try {
-      setLoading(true);
+      if (!deckId) {
+        console.error("Fetch aborted: No Deck ID provided.");
+        setError("No Deck ID provided.");
+        return;
+      }
+      const numericDeckId = parseInt(deckId, 10);
+      if (isNaN(numericDeckId)) {
+        console.error("Fetch aborted: Invalid Deck ID.");
+        setError("Invalid Deck ID.");
+        return;
+      }
+      console.log(`2. Fetching data for deck ID: ${numericDeckId}`);
       const [deckData, flashcardsData] = await Promise.all([
         getDeck(numericDeckId),
         getFlashcardsForDeck(numericDeckId),
       ]);
+      console.log("3. API calls successful. Received:", { deckData, flashcardsData });
       setDeck(deckData);
-      setFlashcards(flashcardsData);
+      setAllFlashcardsForDeck(flashcardsData);
+      setFlashcards(flashcardsData); // Ensure flashcards state is updated
       setError(null);
-    } catch (err) {
-      setError("Failed to fetch deck data. The deck may not exist.");
-      console.error(err);
+    } catch (error) {
+      console.error("4. CATCH BLOCK: An error occurred during fetch.", error);
+      setError("Failed to load deck. It might not exist.");
     } finally {
+      console.log("5. FINALLY BLOCK: Setting loading to false.");
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, [deckId]);
 
-  const filteredFlashcards = useMemo(() => {
-    if (!searchQuery) {
-      return flashcards;
-    }
-    const lowercasedQuery = searchQuery.toLowerCase();
-    return flashcards.filter(
-      card =>
-        card.question.toLowerCase().includes(lowercasedQuery) ||
-        card.answer.toLowerCase().includes(lowercasedQuery)
-    );
-  }, [searchQuery, flashcards]);
+  useEffect(() => {
+    console.log("Component mounted or dependency changed. Calling fetchDeckAndCards.");
+    fetchDeckAndCards();
+  }, [fetchDeckAndCards]);
 
+  const { dueCards, newCards } = useMemo(() => {
+    const now = new Date();
+    const due: Flashcard[] = [];
+    const news: Flashcard[] = [];
+
+    allFlashcardsForDeck.forEach(card => {
+      if (card.difficulty === "HARD") {
+        news.push(card);
+      }
+      
+      const lastReviewed = new Date(card.last_reviewed);
+      let dueDate = new Date(lastReviewed);
+
+      switch (card.difficulty) {
+        case "HARD":
+          dueDate.setDate(lastReviewed.getDate() + 1);
+          break;
+        case "MEDIUM":
+          dueDate.setDate(lastReviewed.getDate() + 3);
+          break;
+        case "EASY":
+          dueDate.setDate(lastReviewed.getDate() + 7);
+          break;
+      }
+      if (now >= dueDate) {
+        due.push(card);
+      }
+    });
+    return { dueCards: due, newCards: news };
+  }, [allFlashcardsForDeck]);
+
+
+  const filteredFlashcards = useMemo(() => {
+    const query = searchParams.get('q') || '';
+    return allFlashcardsForDeck.filter(card => {
+      const searchMatch =
+        !query ||
+        card.question.toLowerCase().includes(query.toLowerCase()) ||
+        card.answer.toLowerCase().includes(query.toLowerCase());
+      
+      const difficultyMatch =
+        difficultyFilter === "ALL" || card.difficulty === difficultyFilter;
+
+      return searchMatch && difficultyMatch;
+    });
+  }, [allFlashcardsForDeck, searchParams, difficultyFilter]);
+
+  console.log(`Component rendering. Loading state: ${loading}, Deck state:`, deck);
+
+  const shuffleArray = (array: Flashcard[]) => {
+    return [...array].sort(() => Math.random() - 0.5);
+  };
+
+  const handleStartStudySession = (cards: Flashcard[], shuffle = false) => {
+    setCardsForStudy(shuffle ? shuffleArray(cards) : cards);
+    setStudyModalOpen(true);
+  };
+  
   const handleExport = () => {
     if (!deck) return;
     const exportData = {
@@ -188,7 +253,7 @@ const DeckViewPage = () => {
       try {
         await deleteFlashcard(cardId);
         toast.success("Flashcard deleted successfully!");
-        fetchData(); // Refetch data to update the UI
+        fetchDeckAndCards(); // Refetch data to update the UI
       } catch (error) {
         console.error("Failed to delete flashcard:", error);
         toast.error("Failed to delete flashcard. Please try again.");
@@ -197,22 +262,65 @@ const DeckViewPage = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    console.log("Render blocked: Loading is true.");
+    return <div className="flex items-center justify-center h-screen text-xl font-semibold">Loading...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    console.log(`Render blocked: Error state is "${error}".`);
+    return <div className="flex items-center justify-center h-screen text-red-500 text-xl font-semibold">{error}</div>;
+  }
+
+  if (!deck) {
+    console.log("Render blocked: Deck is null or undefined after loading.");
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-center">
+        <h2 className="text-2xl font-bold mb-4">Deck Not Found</h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          The deck you are looking for could not be loaded. It might have been deleted or the ID is incorrect.
+        </p>
+        <Link to="/#flashcards" className="mt-6">
+          <Button>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to All Decks
+          </Button>
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-4 md:p-6 max-w-4xl">
       <div className="mb-8">
-        <Button variant="ghost" asChild className="mb-4">
-          <Link to={`/?q=${searchQuery}#flashcards`}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to All Decks
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Button variant="outline" asChild>
+            <Link to={`/?q=${searchQuery}#flashcards`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to All Decks
+            </Link>
+          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => handleStartStudySession(dueCards, true)} disabled={dueCards.length === 0}>
+              Review Due ({dueCards.length})
+            </Button>
+            <Button onClick={() => handleStartStudySession(newCards, true)} variant="outline" disabled={newCards.length === 0}>
+              Study New ({newCards.length})
+            </Button>
+            <Button 
+              onClick={() => handleStartStudySession(allFlashcardsForDeck, true)} 
+              disabled={allFlashcardsForDeck.length === 0}
+              variant="secondary"
+              className="w-full sm:w-auto hover:bg-primary hover:text-primary-foreground"
+            >
+              <BookOpenCheck className="mr-2 h-4 w-4" />
+              Study All ({allFlashcardsForDeck.length})
+            </Button>
+            <Button variant="outline" onClick={() => setAddFlashcardModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Flashcard
+            </Button>
+          </div>
+        </div>
         <div className="flex items-center justify-between">
             <div>
                 <h1 className="text-3xl font-bold">{deck?.name}</h1>
@@ -222,13 +330,6 @@ const DeckViewPage = () => {
                  <Button variant="outline" onClick={handleExport} disabled={flashcards.length === 0}>
                     <Download className="w-4 h-4 mr-2" />
                     Export
-                </Button>
-                <Button variant="outline" onClick={() => setStudyModalOpen(true)} disabled={flashcards.length === 0}>
-                    Study All
-                </Button>
-                <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}>
-                    <Plus className="w-4 h-4" />
-                    Add Flashcard
                 </Button>
             </div>
         </div>
@@ -374,9 +475,8 @@ const DeckViewPage = () => {
       <AddFlashcardModal
         isOpen={addFlashcardModalOpen}
         onClose={() => setAddFlashcardModalOpen(false)}
-        decks={deck ? [deck] : []}
-        onFlashcardAdded={fetchData}
-        defaultDeckId={numericDeckId}
+        decks={deck ? [{ id: deck.id, name: deck.name }] : []}
+        onFlashcardAdded={fetchDeckAndCards}
       />
 
       <EditFlashcardModal
@@ -386,14 +486,14 @@ const DeckViewPage = () => {
             setFlashcardToEdit(null);
         }}
         flashcard={flashcardToEdit}
-        onFlashcardUpdated={fetchData}
+        onFlashcardUpdated={fetchDeckAndCards}
       />
 
         <StudyModal
             isOpen={studyModalOpen}
             onClose={() => setStudyModalOpen(false)}
             deckName={deck?.name || ""}
-            cards={flashcards.map(card => ({
+            cards={cardsForStudy.map(card => ({
                 id: card.id.toString(),
                 question: card.question,
                 answer: card.answer,

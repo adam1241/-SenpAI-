@@ -1,11 +1,17 @@
 import { useState, useRef } from "react";
-import { BookOpen, Brain } from "lucide-react";
+import { PenTool, Brain } from "lucide-react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { DrawingCanvas } from "@/components/DrawingCanvas";
 import { AIChat } from "@/components/AIChat";
 import { PersonalitySelector } from "@/components/PersonalitySelector";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-export const NotebookView = () => {
+interface NotebookViewProps {
+  onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
+}
+
+export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
   const [selectedPersonality, setSelectedPersonality] = useState<'calm' | 'angry' | 'cool' | 'lazy'>('calm');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [canvasAnalysis, setCanvasAnalysis] = useState<string | null>(null);
@@ -30,14 +36,14 @@ export const NotebookView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full bg-background flex flex-col overflow-y-auto">
       {/* Header */}
-      <header className="border-b border-border bg-card shadow-sm">
+      <header className="border-b border-border bg-card shadow-sm flex-shrink-0">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
-                <BookOpen className="h-6 w-6 text-primary" />
+                <PenTool className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">SenpAI - Notebook</h1>
@@ -51,40 +57,51 @@ export const NotebookView = () => {
                 selectedPersonality={selectedPersonality}
                 onPersonalityChange={setSelectedPersonality}
               />
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" onClick={() => onSectionChange('chat')} className="border-2 border-success hover:bg-success-hover">
+                    <Brain className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Tutor Chat</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
-          {/* Left Column - Drawing Canvas (expanded) */}
-          <div className="lg:col-span-2">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
+      <div className="flex-1">
+        <div className="container mx-auto px-4 py-6 h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+            {/* Left Column - Drawing Canvas (expanded) */}
+            <div className="lg:col-span-2 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-4 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-foreground">Work Area</h2>
-                <p className="text-sm text-muted-foreground">Draw, write, and solve your exercise here</p>
+                <p className="text-sm text-muted-foreground">- Draw, write, and solve your exercise here</p>
               </div>
               
-              <DrawingCanvas 
-                ref={canvasRef}
-                className="bg-gradient-to-br from-canvas-bg to-notebook-paper shadow-notebook"
+              <div className="flex-1 min-h-[600px]">
+                <DrawingCanvas 
+                  ref={canvasRef}
+                  className="bg-gradient-to-br from-canvas-bg to-notebook-paper shadow-notebook h-full"
+                  selectedPersonality={selectedPersonality}
+                  onCanvasAnalysis={handleCanvasAnalysis}
+                />
+              </div>
+            </div>
+
+            {/* Right Column - AI Chat */}
+            <div className="lg:col-span-1 h-full">
+              <AIChat
+                ref={chatRef}
                 selectedPersonality={selectedPersonality}
-                onCanvasAnalysis={handleCanvasAnalysis}
+                onAnalyzeCanvas={triggerCanvasAnalysis}
+                className="h-full shadow-chat bg-gradient-to-br from-card to-background"
               />
             </div>
-          </div>
-
-          {/* Right Column - AI Chat */}
-          <div className="lg:col-span-1">
-            <AIChat
-              ref={chatRef}
-              selectedPersonality={selectedPersonality}
-              onAnalyzeCanvas={triggerCanvasAnalysis}
-              className="h-full shadow-chat bg-gradient-to-br from-card to-background"
-            />
           </div>
         </div>
       </div>

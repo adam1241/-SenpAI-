@@ -4,13 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, BookOpen, Calendar, TrendingUp, RefreshCw, Trash2, Pencil } from "lucide-react";
+import { Plus, CreditCard, Calendar, TrendingUp, RefreshCw, Trash2, Pencil, Brain, Download } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
 import { EditDeckModal } from "./EditDeckModal";
 import { AddFlashcardModal } from "./AddFlashcardModal"; // Import the new modal
 import { Input } from "@/components/ui/input";
 import { getDecks, getFlashcards, saveManualDeck, deleteDeck, updateDeck, importDeck } from "@/services/api"; // Import API functions
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+
 
 // Interface for data coming from the backend
 interface DeckFromAPI {
@@ -33,12 +36,17 @@ interface FlashcardFromAPI {
 // Enriched interface for local state
 interface Deck extends DeckFromAPI {
   cardCount: number;
-  newCards: number; 
-  reviewCards: number; 
-  lastStudied?: Date; 
+  newCards: number;
+  reviewCards: number;
+  lastStudied?: Date;
 }
 
-export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void }) => {
+interface FlashcardDecksViewProps {
+  onDataChange: () => void;
+  onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
+}
+
+export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardDecksViewProps) => {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [allFlashcards, setAllFlashcards] = useState<FlashcardFromAPI[]>([]);
   const [cardsForStudy, setCardsForStudy] = useState<FlashcardFromAPI[]>([]);
@@ -51,10 +59,27 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
   const [deckToEdit, setDeckToEdit] = useState<Deck | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || "";
+  const difficultyFilter = searchParams.get('difficulty') || "ALL";
   const importFileRef = useRef<HTMLInputElement>(null);
 
   const setSearchQuery = (value: string) => {
-    setSearchParams(value ? { q: value } : {}, { replace: true });
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set('q', value);
+    } else {
+      newParams.delete('q');
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const setDifficultyFilter = (value: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value && value !== "ALL") {
+      newParams.set('difficulty', value);
+    } else {
+      newParams.delete('difficulty');
+    }
+    setSearchParams(newParams, { replace: true });
   };
 
   const fetchData = useCallback(async () => {
@@ -68,13 +93,13 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
       const uniqueDecksData = decksData.filter((deck, index, self) =>
         index === self.findIndex((d) => d.id === deck.id)
       );
-      
-      setAllFlashcards(flashcardsData); 
+
+      setAllFlashcards(flashcardsData);
 
       const enrichedDecks: Deck[] = uniqueDecksData.map(deck => {
         const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
         const cardCount = cardsInDeck.length;
-        
+
         let newCards = 0;
         let reviewCards = 0;
         const now = new Date();
@@ -118,25 +143,27 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
   }, [onDataChange]);
 
   const filteredDecks = useMemo(() => {
-    if (!searchQuery) {
-      return decks;
-    }
-    const lowercasedQuery = searchQuery.toLowerCase();
     return decks.filter(deck => {
+      const lowercasedQuery = searchQuery.toLowerCase();
       const deckMatches =
         deck.name.toLowerCase().includes(lowercasedQuery) ||
         deck.description.toLowerCase().includes(lowercasedQuery);
 
-      const cardMatches = allFlashcards.some(
+      const cardsInDeck = allFlashcards.filter(card => card.deck_id === deck.id);
+
+      const cardContentMatches = cardsInDeck.some(
         card =>
-          card.deck_id === deck.id &&
-          (card.question.toLowerCase().includes(lowercasedQuery) ||
-            card.answer.toLowerCase().includes(lowercasedQuery))
+          card.question.toLowerCase().includes(lowercasedQuery) ||
+          card.answer.toLowerCase().includes(lowercasedQuery)
       );
 
-      return deckMatches || cardMatches;
+      const difficultyMatches =
+        difficultyFilter === "ALL" ||
+        cardsInDeck.some(card => card.difficulty === difficultyFilter);
+
+      return (deckMatches || cardContentMatches) && difficultyMatches;
     });
-  }, [searchQuery, decks, allFlashcards]);
+  }, [searchQuery, decks, allFlashcards, difficultyFilter]);
 
   useEffect(() => {
     fetchData();
@@ -160,7 +187,7 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
@@ -240,13 +267,51 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
     setStudyModalOpen(true);
   };
 
+  const handleExportDeck = (deck: Deck) => {
+    const cardsToExport = allFlashcards.filter(card => card.deck_id === deck.id);
+    const exportData = {
+      name: deck.name,
+      description: deck.description,
+      flashcards: cardsToExport.map(({ question, answer, difficulty }) => ({
+        question,
+        answer,
+        difficulty,
+      })),
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `${deck.name.replace(/\s+/g, '_')}_export.json`);
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    toast.success(`Deck "${deck.name}" exported successfully!`);
+  };
+
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="h-full overflow-auto relative">
+      <div className="absolute top-6 right-6 z-10">
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" onClick={() => onSectionChange('chat')} className="border-2 border-success hover:bg-success-hover">
+              <Brain className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Tutor Chat</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      <div className="container mx-auto p-6 max-w-6xl">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Flashcard Decks</h1>
-            <p className="text-muted-foreground">Organize and study your knowledge with spaced repetition</p>
+          <div className="flex items-center gap-3">
+            <CreditCard className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Flashcard Decks</h1>
+              <p className="text-muted-foreground">Organize and study your knowledge with spaced repetition</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={fetchData}>
@@ -271,24 +336,13 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-            <Input
-                type="text"
-                placeholder="Search decks or flashcards..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-            />
-        </div>
-
         {/* Study Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-warning/10 rounded-lg">
-                  <BookOpen className="w-5 h-5 text-warning" />
+                  <Plus className="w-5 h-5 text-warning" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">New Cards</p>
@@ -328,12 +382,34 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
             </CardContent>
           </Card>
         </div>
+
+        {/* Search Bar */}
+        <div className="mb-6 flex gap-4">
+            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Difficulties</SelectItem>
+                <SelectItem value="HARD">Hard</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="EASY">Easy</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+                type="text"
+                placeholder="Search decks or flashcards..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+            />
+        </div>
       </div>
 
       {/* Decks Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredDecks.map((deck) => (
-          <Link to={`/decks/${deck.id}?q=${searchQuery}`} key={deck.id} className="no-underline">
+          <Link to={`/decks/${deck.id}?q=${searchQuery}&difficulty=${difficultyFilter}`} key={deck.id} className="no-underline">
             <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -342,6 +418,18 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
                     <CardDescription className="mt-1">{deck.description}</CardDescription>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleExportDeck(deck);
+                      }}
+                    >
+                      <Download className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -386,10 +474,10 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
                         <span className="font-medium">{formatLastStudied(deck.lastStudied)}</span>
                     </div>
                 </div>
-                
+
                 <div className="pt-4 mt-auto">
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     disabled={deck.reviewCards === 0}
                     onClick={(e) => {
                         e.preventDefault();
@@ -414,7 +502,7 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
             fetchData(); // Refetch data when the modal is closed
         }}
         deckName={selectedDeck?.name || ""}
-        cards={cardsForStudy.map(card => ({ 
+        cards={cardsForStudy.map(card => ({
           id: card.id.toString(),
           question: card.question,
           answer: card.answer,
@@ -446,6 +534,7 @@ export const FlashcardDecksView = ({ onDataChange }: { onDataChange: () => void 
         decks={decks}
         onFlashcardAdded={fetchData} // Pass the fetchData function to refetch data
       />
+      </div>
     </div>
   );
 };

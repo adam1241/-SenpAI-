@@ -100,8 +100,10 @@
     "question": "What is a galaxy?",
     "answer": "A massive system of stars, gas, dust, and dark matter held together by gravity.",
     "deck_id": 3,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T16:05:17.982709"
+    "difficulty": "MEDIUM",
+    "last_reviewed": "2025-09-03T13:22:04.900000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 12,
@@ -124,8 +126,10 @@
     "question": "What is the name of the star at the center of our Solar System?",
     "answer": "The Sun.",
     "deck_id": 3,
-    "difficulty": "EASY",
-    "last_reviewed": "2025-08-31T16:05:17.982709"
+    "difficulty": "MEDIUM",
+    "last_reviewed": "2025-09-03T13:22:06.220000Z",
+    "question_image_url": null,
+    "answer_image_url": null
   },
   {
     "id": 15,

@@ -73,11 +73,17 @@ const getResponseTypeColor = (type?: string) => {
 export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId, sessionId, onActionProcessed }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isFilePanelOpen, setIsFilePanelOpen] = useState(false);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
+
+  // Auto scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -418,7 +424,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
             </div>
           ) : (
             /* Chat Messages */
-            messages.map((message) => (
+            <>
+              {messages.map((message) => (
               <div key={message.id}>
                 <div
                   className={`flex items-start gap-2 ${message.isUser ? "justify-end" : "justify-start"}`}
@@ -530,7 +537,9 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                   </div>
                 )}
               </div>
-            ))
+              ))}
+              <div ref={messagesEndRef} />
+            </>
           )}
           
         </div>

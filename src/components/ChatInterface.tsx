@@ -430,12 +430,12 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                       <Pencil className="h-4 w-4" />
                     </Button>
                   )}
-                  <Card className={`relative max-w-[80%] p-4 border-l-4 ${
+                  <Card className={`relative max-w-[80%] border-l-4 ${
                     message.isUser 
-                      ? "bg-user-message text-user-message-foreground border-l-primary" 
+                      ? "p-4 bg-user-message text-user-message-foreground border-l-primary" 
                       : message.isMastery
-                      ? "bg-success-light border-success animate-celebration border-l-success"
-                      : `bg-card ${getResponseTypeColor(message.responseType)}`
+                      ? "p-4 pb-8 bg-success-light border-success animate-celebration border-l-success"
+                      : `p-4 pb-8 bg-card ${getResponseTypeColor(message.responseType)}`
                   }`}>
                     {editingMessageId === message.id ? (
                       <Textarea 

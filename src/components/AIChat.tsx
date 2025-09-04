@@ -508,10 +508,10 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
                 )}
                 
                 <div
-                  className={`relative max-w-[80%] p-3 rounded-lg border-l-4 ${
+                  className={`relative max-w-[80%] rounded-lg border-l-4 ${
                     message.isUser
-                      ? 'bg-user-message text-user-message-foreground border-l-primary'
-                      : `bg-card text-card-foreground border shadow-sm ${getResponseTypeColor(message.responseType)}`
+                      ? 'p-3 bg-user-message text-user-message-foreground border-l-primary'
+                      : `p-3 pb-8 bg-card text-card-foreground border shadow-sm ${getResponseTypeColor(message.responseType)}`
                   }`}>
                   <div className="text-sm prose prose-sm max-w-none">
                     {editingMessageId === message.id ? (

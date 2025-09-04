@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star, BookOpen, FileText, Plus, Upload, Cloud, Files, File, FileImage, FileVideo, Music, Archive, X } from "lucide-react";
+import { Send, Lightbulb, HelpCircle, MessageSquare, Sparkles, Star, BookOpen, FileText, Plus, Upload, Cloud, Files, File, FileImage, FileVideo, Music, Archive, X, Pencil, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -15,6 +15,7 @@ import rehypeKatex from "rehype-katex";
 import senpaiLogo from "./logo/SenpAI2.png";
 import { ApiService, ChatMessage } from "@/services/api";
 import "katex/dist/katex.min.css";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Message {
   id: string;
@@ -74,6 +75,9 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isFilePanelOpen, setIsFilePanelOpen] = useState(false);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<string>("");
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -250,6 +254,48 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
     // TODO: Implement Google Drive integration
   };
 
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
+
+  const handleEditClick = (message: Message) => {
+    setEditingMessageId(message.id);
+    setEditingContent(message.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent("");
+  };
+
+  const handleUpdateMessage = async () => {
+    if (!editingMessageId) return;
+
+    const originalMessage = messages.find(m => m.id === editingMessageId);
+    if (!originalMessage || originalMessage.content === editingContent) {
+      handleCancelEdit();
+      return;
+    }
+
+    // Call API to update the message on the backend
+    try {
+      await ApiService.updateMessage(editingMessageId, editingContent);
+      
+      // Update the message in the local state
+      setMessages(messages.map(m => 
+        m.id === editingMessageId ? { ...m, content: editingContent } : m
+      ));
+
+      toast.success("Message updated!");
+    } catch (error) {
+      console.error("Failed to update message:", error);
+      toast.error("Failed to update message. Please try again.");
+    } finally {
+      handleCancelEdit();
+    }
+  };
+
   return (
     <div className="relative flex flex-col h-full">
       {/* Moved Files Button to a fixed position */}
@@ -376,78 +422,116 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
           ) : (
             /* Chat Messages */
             messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
-              >
-                <Card className={`max-w-[80%] p-4 border-l-4 ${
-                  message.isUser 
-                    ? "bg-user-message text-user-message-foreground border-l-primary" 
-                    : message.isMastery
-                    ? "bg-success-light border-success animate-celebration border-l-success"
-                    : `bg-card ${getResponseTypeColor(message.responseType)}`
-                }`}>
-                  {message.isMastery && (
-                    <div className="flex items-center gap-2 mb-2 text-success">
-                      <Star className="w-4 h-4 animate-sparkle" />
-                      <span className="text-sm font-semibold">Moment of Mastery!</span>
-                      <Sparkles className="w-4 h-4 animate-sparkle" />
-                    </div>
+              <div key={message.id}>
+                <div
+                  className={`flex items-start gap-2 ${message.isUser ? "justify-end" : "justify-start"}`}
+                  onMouseEnter={() => !editingMessageId && setHoveredMessageId(message.id)}
+                  onMouseLeave={() => !editingMessageId && setHoveredMessageId(null)}
+                >
+                  {message.isUser && hoveredMessageId === message.id && !editingMessageId && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClick(message)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   )}
-                  <div className="text-sm prose prose-sm max-w-none">
-                    {message.isUser ? (
-                      <p>{message.content}</p>
+                  <Card className={`relative max-w-[80%] p-4 border-l-4 ${
+                    message.isUser 
+                      ? "bg-user-message text-user-message-foreground border-l-primary" 
+                      : message.isMastery
+                      ? "bg-success-light border-success animate-celebration border-l-success"
+                      : `bg-card ${getResponseTypeColor(message.responseType)}`
+                  }`}>
+                    {editingMessageId === message.id ? (
+                      <Textarea 
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        className="w-full bg-background"
+                        autoFocus
+                      />
                     ) : (
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm, remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{
-                          p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
-                          code: ({children, className}) => {
-                            const isInline = !className;
-                            return isInline ? (
-                              <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</code>
-                            ) : (
-                              <code className="block bg-muted p-2 rounded text-xs font-mono whitespace-pre-wrap">{children}</code>
-                            );
-                          },
-                          pre: ({children}) => <pre className="bg-muted p-2 rounded overflow-x-auto mb-2">{children}</pre>,
-                          strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
-                          em: ({children}) => <em className="italic">{children}</em>,
-                          ul: ({children}) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-                          ol: ({children}) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
-                          li: ({children}) => <li className="mb-1">{children}</li>,
-                          // Style math elements
-                          span: ({children, className}) => {
-                            if (className?.includes('math')) {
-                              return <span className={`${className} inline-block`}>{children}</span>;
-                            }
-                            return <span className={className}>{children}</span>;
-                          },
-                          div: ({children, className}) => {
-                            if (className?.includes('math')) {
-                              return <div className={`${className} my-4 overflow-x-auto`}>{children}</div>;
-                            }
-                            return <div className={className}>{children}</div>;
-                          }
-                        }}
-                      >
-                        {message.content}
-                      </ReactMarkdown>
+                      <>
+                        {message.isMastery && (
+                          <div className="flex items-center gap-2 mb-2 text-success">
+                            <Star className="w-4 h-4 animate-sparkle" />
+                            <span className="text-sm font-semibold">Moment of Mastery!</span>
+                            <Sparkles className="w-4 h-4 animate-sparkle" />
+                          </div>
+                        )}
+                        <div className="text-sm prose prose-sm max-w-none">
+                          {message.isUser ? (
+                            <p>{message.content}</p>
+                          ) : (
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm, remarkMath]}
+                              rehypePlugins={[rehypeKatex]}
+                              components={{
+                                p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+                                code: ({children, className}) => {
+                                  const isInline = !className;
+                                  return isInline ? (
+                                    <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</code>
+                                  ) : (
+                                    <code className="block bg-muted p-2 rounded text-xs font-mono whitespace-pre-wrap">{children}</code>
+                                  );
+                                },
+                                pre: ({children}) => <pre className="bg-muted p-2 rounded overflow-x-auto mb-2">{children}</pre>,
+                                strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+                                em: ({children}) => <em className="italic">{children}</em>,
+                                ul: ({children}) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                                ol: ({children}) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                                li: ({children}) => <li className="mb-1">{children}</li>,
+                                // Style math elements
+                                span: ({children, className}) => {
+                                  if (className?.includes('math')) {
+                                    return <span className={`${className} inline-block`}>{children}</span>;
+                                  }
+                                  return <span className={className}>{children}</span>;
+                                },
+                                div: ({children, className}) => {
+                                  if (className?.includes('math')) {
+                                    return <div className={`${className} my-4 overflow-x-auto`}>{children}</div>;
+                                  }
+                                  return <div className={className}>{children}</div>;
+                                }
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                        {message.isMastery && (
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              variant="mastery"
+                              size="lifeline"
+                              onClick={handleCreateFlashcard}
+                            >
+                              Save as Flashcard
+                            </Button>
+                          </div>
+                        )}
+                        {!message.isUser && (
+                          <Button variant="ghost" size="icon" className="absolute bottom-1 right-1 h-7 w-7" onClick={() => handleCopyToClipboard(message.content)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
                     )}
+                  </Card>
+                </div>
+                {editingMessageId === message.id && (
+                  <div className="flex justify-end gap-2 mt-2">
+                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={handleUpdateMessage}
+                      disabled={editingContent === message.content}
+                    >
+                      Update
+                    </Button>
                   </div>
-                  {message.isMastery && (
-                    <div className="flex justify-end mt-2">
-                      <Button
-                        variant="mastery"
-                        size="lifeline"
-                        onClick={handleCreateFlashcard}
-                      >
-                        Save as Flashcard
-                      </Button>
-                    </div>
-                  )}
-                </Card>
+                )}
               </div>
             ))
           )}

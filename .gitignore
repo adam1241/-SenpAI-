@@ -35,3 +35,6 @@ uploads/
 
 # Vite
 .vite/
+
+# llm instruction files
+GEMINI.md

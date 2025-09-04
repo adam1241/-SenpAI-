@@ -95,6 +95,7 @@ const DeckViewPage = () => {
   const { deckId } = useParams<{ deckId: string }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || "";
+  const difficultyFilter = searchParams.get('difficulty') || "ALL";
   const [deck, setDeck] = useState<Deck | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,6 +133,7 @@ const DeckViewPage = () => {
       console.log("3. API calls successful. Received:", { deckData, flashcardsData });
       setDeck(deckData);
       setAllFlashcardsForDeck(flashcardsData);
+      setFlashcards(flashcardsData); // Ensure flashcards state is updated
       setError(null);
     } catch (error) {
       console.error("4. CATCH BLOCK: An error occurred during fetch.", error);
@@ -181,15 +183,18 @@ const DeckViewPage = () => {
 
   const filteredFlashcards = useMemo(() => {
     const query = searchParams.get('q') || '';
-    if (!query) {
-      return allFlashcardsForDeck;
-    }
-    return allFlashcardsForDeck.filter(
-      card =>
+    return allFlashcardsForDeck.filter(card => {
+      const searchMatch =
+        !query ||
         card.question.toLowerCase().includes(query.toLowerCase()) ||
-        card.answer.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [allFlashcardsForDeck, searchParams]);
+        card.answer.toLowerCase().includes(query.toLowerCase());
+      
+      const difficultyMatch =
+        difficultyFilter === "ALL" || card.difficulty === difficultyFilter;
+
+      return searchMatch && difficultyMatch;
+    });
+  }, [allFlashcardsForDeck, searchParams, difficultyFilter]);
 
   console.log(`Component rendering. Loading state: ${loading}, Deck state:`, deck);
 
@@ -304,7 +309,8 @@ const DeckViewPage = () => {
             <Button 
               onClick={() => handleStartStudySession(allFlashcardsForDeck, true)} 
               disabled={allFlashcardsForDeck.length === 0}
-              className="w-full sm:w-auto"
+              variant="secondary"
+              className="w-full sm:w-auto hover:bg-primary hover:text-primary-foreground"
             >
               <BookOpenCheck className="mr-2 h-4 w-4" />
               Study All ({allFlashcardsForDeck.length})

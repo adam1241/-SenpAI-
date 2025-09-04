@@ -298,7 +298,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
 
   // Convert messages to chat format for API
   const convertToChatMessages = (messages: Message[]): ChatMessage[] => {
-    return messages
+    const safe = Array.isArray(messages) ? messages : [];
+    return safe
       .filter(msg => msg.isUser || !msg.type || msg.type === 'feedback')
       .map(msg => ({
         role: msg.isUser ? 'user' as const : 'assistant' as const,

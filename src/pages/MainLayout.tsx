@@ -66,8 +66,9 @@ const MainLayout = () => {
       if (!userId || !sessionId) return;
       try {
         const history = await ApiService.getConversations(userId, sessionId);
-        if (history && history.length > 0) {
-          const formattedHistory = history.map((msg: any, index: number) => ({
+        const list = Array.isArray(history) ? history : [];
+        if (list.length > 0) {
+          const formattedHistory = list.map((msg: any, index: number) => ({
             id: `hist-${index}`,
             content: msg.content,
             isUser: msg.role === 'user',

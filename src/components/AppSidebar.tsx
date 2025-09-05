@@ -37,8 +37,9 @@ export const AppSidebar = ({
       setIsLoadingHistory(true);
       try {
         const data = await ApiService.getHistory(userId);
-        // Filter only conversations for the sidebar
-        const conversations = data.filter(item => item.type === 'conversation').slice(0, 10);
+        // Ensure we have an array before filtering
+        const list = Array.isArray(data) ? data : [];
+        const conversations = list.filter(item => item.type === 'conversation').slice(0, 10);
         setHistory(conversations);
       } catch (error) {
         console.error("Failed to fetch history:", error);
@@ -258,6 +259,6 @@ export const AppSidebar = ({
           </div>
           <UserProfile isCollapsed={isCollapsed} />
         </div>
-      </div>
+    </div>
   );
 };

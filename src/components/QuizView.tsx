@@ -338,7 +338,7 @@ export const QuizView = ({ onSectionChange }: QuizViewProps) => {
                     onClick={() => handleStartQuiz(quiz)}
                     variant="learning"
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 bg-gradient-to-r from-green-500 to-blue-500 text-white dark:from-teal-500 dark:to-blue-600 dark:hover:from-teal-600 dark:hover:to-blue-700"
                   >
                     <Play className="w-4 h-4" />
                     {quiz.completedCount > 0 ? "Retake" : "Start"}

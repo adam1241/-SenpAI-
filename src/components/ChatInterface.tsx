@@ -695,12 +695,18 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Input
+          <Textarea
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask me anything you'd like to learn about..."
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            className="flex-1 resize-none"
+            rows={1}
           />
           <Button onClick={handleSendMessage} disabled={!inputMessage.trim()}>
             <Send className="w-4 h-4" />

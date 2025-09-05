@@ -151,24 +151,77 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
     }
   };
 
-  const handleLifelineClick = (type: string) => {
-    const lifelines = {
-      hint: "Here's a hint: Think about the fundamental principles we discussed earlier.",
-      simpler: "Let me ask a simpler question: What's the most basic element of this concept?",
-      clarify: "What I mean is: Let's break this down into smaller, more manageable parts.",
-      lesson: "Let me create a structured lesson plan based on our conversation so far. Here's how we can organize this learning journey into clear steps with objectives and activities."
+  const handleLifelineClick = async (type: string) => {
+    const lifelineMessages: { [key: string]: string } = {
+      hint: "Give me a hint.",
+      simpler: "Ask me a simpler question.",
+      clarify: "What do you mean by that?",
+      lesson: "Make a lesson plan for me based on our conversation.",
     };
 
-    const aiMessage: Message = {
+    const messageContent = lifelineMessages[type as keyof typeof lifelineMessages];
+    if (!messageContent) return;
+
+    const userMessage: Message = {
       id: Date.now().toString(),
-      content: lifelines[type as keyof typeof lifelines],
-      isUser: false,
+      content: messageContent,
+      isUser: true,
       timestamp: new Date(),
-      responseType: type === 'lesson' ? 'explanation' : 'encouragement',
     };
 
-    setMessages(prev => [...prev, aiMessage]);
+    setMessages(prev => [...prev, userMessage]);
     toast.info("Lifeline used! 💡");
+
+    const apiHistory: ChatMessage[] = [...messages, userMessage].map(({ id, timestamp, isMastery, isUser, ...rest }) => ({
+      ...rest,
+      role: isUser ? 'user' : 'assistant'
+    }));
+
+    try {
+      const response = await ApiService.streamSocraticTutor(apiHistory, userId, sessionId);
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "",
+        isUser: false,
+        timestamp: new Date(),
+        responseType: 'explanation',
+      };
+      setMessages(prev => [...prev, aiMessage]);
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk) {
+          setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage && !lastMessage.isUser) {
+              lastMessage.content += chunk;
+              lastMessage.responseType = getResponseType(lastMessage.content);
+            }
+            return [...prev];
+          });
+        }
+      }
+      onActionProcessed();
+    } catch (error) {
+      console.error("Error fetching AI response for lifeline:", error);
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Sorry, I'm having trouble connecting to the AI. Please try again later.",
+        isUser: false,
+        timestamp: new Date(),
+        responseType: 'warning',
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    }
   };
 
   useEffect(() => {

@@ -73,11 +73,17 @@ const getResponseTypeColor = (type?: string) => {
 export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId, sessionId, onActionProcessed }: ChatInterfaceProps) => {
   const [inputMessage, setInputMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isFilePanelOpen, setIsFilePanelOpen] = useState(false);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
+
+  // Auto scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -278,11 +284,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
       return;
     }
 
-    // Call API to update the message on the backend
+    // Update the message locally (no backend endpoint yet)
     try {
-      await ApiService.updateMessage(editingMessageId, editingContent);
-      
-      // Update the message in the local state
       setMessages(messages.map(m => 
         m.id === editingMessageId ? { ...m, content: editingContent } : m
       ));
@@ -421,7 +424,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
             </div>
           ) : (
             /* Chat Messages */
-            messages.map((message) => (
+            <>
+              {messages.map((message) => (
               <div key={message.id}>
                 <div
                   className={`flex items-start gap-2 ${message.isUser ? "justify-end" : "justify-start"}`}
@@ -433,12 +437,12 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                       <Pencil className="h-4 w-4" />
                     </Button>
                   )}
-                  <Card className={`relative max-w-[80%] p-4 border-l-4 ${
+                  <Card className={`relative max-w-[80%] border-l-4 ${
                     message.isUser 
-                      ? "bg-user-message text-user-message-foreground border-l-primary" 
+                      ? "p-4 bg-user-message text-user-message-foreground border-l-primary" 
                       : message.isMastery
-                      ? "bg-success-light border-success animate-celebration border-l-success"
-                      : `bg-card ${getResponseTypeColor(message.responseType)}`
+                      ? "p-4 pb-8 bg-success-light border-success animate-celebration border-l-success"
+                      : `p-4 pb-8 bg-card ${getResponseTypeColor(message.responseType)}`
                   }`}>
                     {editingMessageId === message.id ? (
                       <Textarea 
@@ -533,7 +537,9 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                   </div>
                 )}
               </div>
-            ))
+              ))}
+              <div ref={messagesEndRef} />
+            </>
           )}
           
         </div>

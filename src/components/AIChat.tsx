@@ -266,9 +266,10 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
     }
   };
 
+  // Auto scroll to bottom when messages change
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   // Check backend connection on component mount
   useEffect(() => {
@@ -298,7 +299,8 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
 
   // Convert messages to chat format for API
   const convertToChatMessages = (messages: Message[]): ChatMessage[] => {
-    return messages
+    const safe = Array.isArray(messages) ? messages : [];
+    return safe
       .filter(msg => msg.isUser || !msg.type || msg.type === 'feedback')
       .map(msg => ({
         role: msg.isUser ? 'user' as const : 'assistant' as const,
@@ -507,10 +509,10 @@ export const AIChat = forwardRef<AIChatRef, AIChatProps>(({ className, selectedP
                 )}
                 
                 <div
-                  className={`relative max-w-[80%] p-3 rounded-lg border-l-4 ${
+                  className={`relative max-w-[80%] rounded-lg border-l-4 ${
                     message.isUser
-                      ? 'bg-user-message text-user-message-foreground border-l-primary'
-                      : `bg-card text-card-foreground border shadow-sm ${getResponseTypeColor(message.responseType)}`
+                      ? 'p-3 bg-user-message text-user-message-foreground border-l-primary'
+                      : `p-3 pb-8 bg-card text-card-foreground border shadow-sm ${getResponseTypeColor(message.responseType)}`
                   }`}>
                   <div className="text-sm prose prose-sm max-w-none">
                     {editingMessageId === message.id ? (

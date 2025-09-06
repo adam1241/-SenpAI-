@@ -22,7 +22,7 @@ const NOTEBOOK_API_URL = isLocalDevelopment
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
-  content: string;
+  content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
 // For Notebook feature (non-streaming JSON response)

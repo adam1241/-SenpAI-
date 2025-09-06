@@ -1,13 +1,15 @@
-from flask import Flask, request, Response, jsonify, send_from_directory
+from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 import os
 import re
 import json
 import uuid
+import requests
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from collections import defaultdict
 
+from openai import OpenAI
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from mem0 import Memory
@@ -16,6 +18,7 @@ from prompts.socratic_tutor import get_socratic_tutor_prompt
 from tools.flash_cards_tool import FlashCardsTool
 from tools.quizz_tool import QuizzTool
 from tools.decks_tool import DecksTool
+from tools.image_analysis_tool import analyze_image_with_openrouter
 from utils.database import Database
 
 load_dotenv()
@@ -46,26 +49,16 @@ config = {
     "llm": {
         "provider": "openai",
         "config": {
-            "api_key": os.environ.get("CEREBRAS_API_KEY"),
-            "openai_base_url": "https://api.cerebras.ai/v1",
-            "model": "qwen-3-235b-a22b-instruct-2507"
+            "api_key": os.environ.get("OPENROUTER_API_KEY"),
+            "openai_base_url": "https://openrouter.ai/api/v1",
+            "model": "openrouter/auto"
         }
     }
 }
 memory = Memory.from_config(config)
 # --- END: Corrected Mem0 Initialization ---
 
-# Define a robust, absolute path for the uploads folder
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-
-# --- Image Serving and Uploading ---
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
+# --- Image Uploading ---
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -73,16 +66,39 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
-    if file:
-        filename = secure_filename(file.filename)
-        ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-        unique_filename = f"{uuid.uuid4()}.{ext}"
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(filepath)
-        file_url = f'{request.host_url.rstrip("/")}/uploads/{unique_filename}'
-        print(f"--- [API UPLOAD] Generated file URL: {file_url} ---") # DEBUG
-        return jsonify({"filePath": file_url}), 201
-    return jsonify({"error": "File upload failed"}), 500
+
+    IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
+    if not IMGBB_API_KEY:
+        return jsonify({"error": "IMGBB_API_KEY environment variable is not set"}), 500
+
+    try:
+        url = "https://api.imgbb.com/1/upload"
+        payload = {
+            "key": IMGBB_API_KEY,
+        }
+        files = {
+            "image": (file.filename, file.read(), file.mimetype)
+        }
+
+        response = requests.post(url, params=payload, files=files)
+        response.raise_for_status()
+
+        result = response.json()
+        if result.get("success"):
+            image_url = result["data"]["url"]
+            print(f"--- [IMGBB UPLOAD] Generated file URL: {image_url} ---")
+            return jsonify({"filePath": image_url}), 201
+        else:
+            error_message = result.get("error", {}).get("message", "Unknown error from imgbb")
+            print(f"--- [IMGBB UPLOAD ERROR] {error_message} ---")
+            return jsonify({"error": f"Failed to upload to imgbb: {error_message}"}), 500
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error uploading to imgbb: {e}")
+        return jsonify({"error": "File upload failed due to a network issue."}, 500)
+    except Exception as e:
+        print(f"An unexpected error occurred during upload: {e}")
+        return jsonify({"error": "An unexpected server error occurred."}, 500)
 
 # --- Deck Import/Export ---
 @app.route('/api/import', methods=['POST'])
@@ -122,17 +138,13 @@ def get_deck(deck_id):
 @app.route('/api/decks/manual', methods=['POST'])
 def add_manual_deck():
     deck_data = request.get_json()
-    print(f"--- [API] Received data for new deck: {deck_data} ---") # DEBUG
     if not deck_data:
         return Response("No deck data provided", status=400)
     try:
         decks_tool = DecksTool()
         new_deck = decks_tool.add_deck(deck_data)
-        # Directly return the Pydantic model, Flask will handle serialization
-        print(f"--- [API] Deck created successfully. Returning: {new_deck.model_dump()} ---") # DEBUG
         return jsonify(new_deck.model_dump()), 201
     except Exception as e:
-        print(f"--- [API ERROR] Error adding manual deck: {e} ---") # DEBUG
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/decks/<int:deck_id>', methods=['PUT'])
@@ -147,20 +159,18 @@ def update_deck(deck_id):
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        print(f"Error updating deck: {e}")
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        return jsonify({"error": "An unexpected error occurred."}, 500)
 
 @app.route('/api/decks/<int:deck_id>', methods=['DELETE'])
 def delete_deck(deck_id):
     try:
         decks_tool = DecksTool()
         decks_tool.delete_deck(deck_id)
-        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."}), 200
+        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."} ), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        print(f"Error deleting deck: {e}")
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        return jsonify({"error": "An unexpected error occurred."}, 500)
 
 # --- Flashcards API ---
 @app.route('/api/flashcards', methods=['GET'])
@@ -186,7 +196,6 @@ def add_manual_flashcard():
         flash_card_tool.add_flash_cards(json.dumps(flashcard_data))
         return jsonify({"message": "Flashcard added successfully"}), 201
     except Exception as e:
-        print(f"Error adding manual flashcard: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/flashcards/<int:card_id>', methods=['PUT'])
@@ -230,7 +239,6 @@ def add_manual_quiz():
         quizz_tool.add_quiz(json.dumps(quiz_data))
         return jsonify({"message": "Quiz added successfully"}), 201
     except Exception as e:
-        print(f"Error adding manual quiz: {e}")
         return jsonify({"error": str(e)}), 500
 
 # --- History API ---
@@ -265,8 +273,23 @@ def get_history():
         if not messages:
             continue
         messages.sort(key=lambda x: x.get('timestamp', ''))
-        first_user_message = next((msg['content'] for msg in messages if msg['role'] == 'user'), 'Conversation')
-        preview_content = " ".join(msg['content'] for msg in messages)
+        
+        first_user_message_content = messages[0]['content']
+        if isinstance(first_user_message_content, list):
+            first_user_message = next((part['text'] for part in first_user_message_content if part['type'] == 'text'), 'Conversation')
+        else:
+            first_user_message = first_user_message_content
+
+        preview_parts = []
+        for msg in messages:
+            content = msg['content']
+            if isinstance(content, list):
+                text_part = next((part['text'] for part in content if part['type'] == 'text'), '')
+                preview_parts.append(text_part)
+            else:
+                preview_parts.append(content)
+        preview_content = " ".join(preview_parts)
+
         history_items.append({
             "id": session_id,
             "title": first_user_message[:50],
@@ -288,116 +311,100 @@ def chat():
     conversation_history = data.get('messages', [])
     if not conversation_history:
         return Response("No messages provided", status=400)
+    
     latest_user_message = conversation_history[-1]['content']
-    try:
-        search_results = memory.search(query=latest_user_message, user_id=user_id)
-        if search_results and search_results.get("results"):
-            relevant_memories = [entry['memory'] for entry in search_results["results"]]
-        else:
-            relevant_memories = []
-    except Exception as e:
-        print(f"Memory search failed: {e}")
-        relevant_memories = []
-    memory_context = "\n".join(relevant_memories)
-    print(memory_context)
 
     def generate():
         full_response_content = ""
-        client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
+        
+        # try:
+        #     search_results = memory.search(query=str(latest_user_message), user_id=user_id)
+        #     if search_results and search_results.get("results"):
+        #         relevant_memories = [entry['memory'] for entry in search_results["results"]]
+        #     else:
+        #         relevant_memories = []
+        # except Exception as e:
+        #     print(f"Memory search failed: {e}")
+        #     relevant_memories = []
+        # memory_context = "\n".join(relevant_memories)
+        # print(memory_context)
+
         decks = Database.load_table("decks")
         decks_json_string = json.dumps(decks, indent=2)
         system_prompt_content = get_socratic_tutor_prompt(
-            user_memory=memory_context,
-                flashcard_decks=decks_json_string
-            )
+            user_memory="", # Memory disabled for now
+            flashcard_decks=decks_json_string
+        )
         system_prompt = {"role": "system", "content": system_prompt_content}
         api_messages = [system_prompt] + conversation_history
-        stream = client.chat.completions.create(
-            messages=api_messages,
-            model="qwen-3-235b-a22b-instruct-2507",
-            stream=True, max_completion_tokens=40000, temperature=0.6, top_p=0.95
-        )
-        buffer = ""
-        in_think_block = False
-        flash_card_tool = FlashCardsTool()
-        quizz_tool = QuizzTool()
-        decks_tool = DecksTool()
-        flashcards_action_regex = re.compile(r"//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: (.*?)\\/")
-        quiz_action_regex = re.compile(r"//ACTION: CREATE_QUIZ// //QUIZ_JSON: (.*?)\\/")
-        deck_action_regex = re.compile(r"//ACTION: CREATE_DECK// //DECK_JSON: (.*?)\\/")
 
-        def process_buffer(buf):
-            nonlocal in_think_block
-            action_handlers = [
-                (flashcards_action_regex, lambda p: flash_card_tool.add_flash_cards(p)),
-                (quiz_action_regex, lambda p: quizz_tool.add_quiz(p)),
-                (deck_action_regex, lambda p: decks_tool.add_deck(json.loads(p)))
-            ]
-            while True:
-                match_found = False
-                for regex, handler in action_handlers:
-                    match = regex.search(buf)
-                    if match:
-                        json_payload = match.group(1)
-                        try:
-                            handler(json_payload)
-                        except Exception as e:
-                            print(f"Error processing action for {regex.pattern}: {e}")
-                        buf = regex.sub("", buf, 1)
-                        match_found = True
-                        break
-                if not match_found:
-                    break
-            processed_output = ""
-            while buf:
-                if in_think_block:
-                    end_tag = buf.find("</think>")
-                    if end_tag != -1:
-                        buf = buf[end_tag + len("</think>"):]
-                        in_think_block = False
-                    else:
-                        buf = ""
-                else:
-                    start_tag = buf.find("<think>")
-                    if start_tag != -1:
-                        processed_output += buf[:start_tag]
-                        buf = buf[start_tag + len("<think>"):]
-                        in_think_block = True
-                    else:
-                        processed_output += buf
-                        buf = ""
-            return processed_output
+        # Determine if we have an image to process
+        image_url = None
+        question = ""
+        is_multimodal = isinstance(latest_user_message, list)
+        if is_multimodal:
+            text_parts = []
+            for part in latest_user_message:
+                if part.get('type') == 'image_url' and part.get('image_url', {}).get('url'):
+                    image_url = part['image_url']['url']
+                elif part.get('type') == 'text':
+                    text_parts.append(part['text'])
+            question = " ".join(text_parts)
 
-        for chunk in stream:
-            content = chunk.choices[0].delta.content
-            if not content:
-                continue
-            full_response_content += content
-            buffer += content
-            with open("ai_output.log", "a", encoding="utf-8") as f:
-                f.write(content)
-            if '\n' in buffer:
-                parts = buffer.split('\n')
-                to_process = '\n'.join(parts[:-1]) + '\n'
-                buffer = parts[-1]
-                output = process_buffer(to_process)
-                if output:
-                    yield output
-        if buffer:
-            output = process_buffer(buffer)
-            if output:
-                yield output
-        try:
-            memory.add(
-                messages=[
-                    {"role": "user", "content": latest_user_message},
-                    {"role": "assistant", "content": full_response_content}
-                ],
-                user_id=user_id,
-                run_id=session_id
-            )
-        except Exception as e:
-            print(f"Adding memory failed: {e}")
+        if image_url:
+            try:
+                if not question:
+                    question = "What is in this image?"
+                full_response_content = analyze_image_with_openrouter(image_url=image_url, question=question)
+                yield full_response_content
+            except Exception as e:
+                print(f"Error analyzing image: {e}")
+                yield "Sorry, I was unable to analyze the image."
+        else:
+            try:
+                # --- START FIX: Convert message content to string for Cerebras ---
+                string_api_messages = []
+                for msg in api_messages:
+                    new_msg = msg.copy()
+                    if isinstance(new_msg['content'], list):
+                        text_content = " ".join(part['text'] for part in new_msg['content'] if part.get('type') == 'text' and part.get('text'))
+                        new_msg['content'] = text_content
+                    string_api_messages.append(new_msg)
+                # --- END FIX ---
+
+                client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
+                stream = client.chat.completions.create(
+                    messages=string_api_messages,
+                    model="qwen-3-235b-a22b-instruct-2507",
+                    stream=True,
+                    max_completion_tokens=20000,
+                    temperature=0.7,
+                    top_p=0.8
+                )
+
+                for chunk in stream:
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        full_response_content += content
+                        yield content
+
+            except Exception as e:
+                print(f"Error with Cerebras API: {e}")
+                yield "Sorry, I'm having trouble connecting to the text AI model."
+        
+        # --- Temporarily disable memory.add to avoid credit errors ---
+        # try:
+        #     memory.add(
+        #         messages=[
+        #             {"role": "user", "content": str(latest_user_message)},
+        #             {"role": "assistant", "content": full_response_content}
+        #         ],
+        #         user_id=user_id,
+        #         run_id=session_id
+        #     )
+        # except Exception as e:
+        #     print(f"Adding memory failed: {e}")
+        
         try:
             timestamp = datetime.utcnow().isoformat()
             user_message_entry = { "user_id": user_id, "session_id": session_id, "role": "user", "content": latest_user_message, "timestamp": timestamp }
@@ -406,6 +413,7 @@ def chat():
             Database.add_to_table("chat_history", ai_message_entry)
         except Exception as e:
             print(f"Saving chat history transcript failed: {e}")
+
     return Response(generate(), mimetype='text/plain')
 
 if __name__ == '__main__':

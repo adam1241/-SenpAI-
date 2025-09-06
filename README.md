@@ -4,98 +4,115 @@ SenpAI is a an AI teacher that can help you learn new things and improve your kn
 
 ## Features
 
-- Automatic Flashcard creation and management
-- Automatic and manual creation of quizzes
-- A canvas where you can write your exercise answers and the AI will analyze your work
+- Socratic method based chat for interactive learning.
+- Image analysis: Upload an image (photo, screenshot, diagram) and ask questions about it.
+- Automatic Flashcard creation and management.
+- Automatic and manual creation of quizzes.
 
-## Quick Start
+## Local Development Setup
 
-### Prerequisites
+Follow these steps to set up and run the project on your local machine.
+
+### 1. Prerequisites
 
 - Python 3.8+
 - Node.js 16+
-- npm or yarn
+- npm
 
-### Installation & Setup
+### 2. Clone the Repository
 
-1. **Clone and navigate to the project**
+```bash
+git clone <repository-url>
+cd SenpAI
+```
 
-   ```bash
-   git clone <repository-url>
-   cd SenpAI
-   ```
+### 3. Install Frontend Dependencies
 
-**Important Note:**
-You will need to provide `.env` files inside the backend and server folder.
-Check the `.env.example` files for more information.
-We provided these files for the judges so that they can run the project locally.
+This will install all the necessary packages for the React user interface.
 
-2. **Set up Python backend**
+```bash
+npm install
+```
 
-   ```bash
-   # Create virtual environment
-   python3 -m venv venv
+### 4. Set Up Python Backend
 
-   # Activate virtual environment
-   # Linux/Mac:
-   source venv/bin/activate
-   # Windows:
-   .\venv\Scripts\activate
+This will set up a virtual environment and install the Python packages for the backend server.
 
-   # Install Python dependencies
-   pip install -r requirements.txt
-   ```
+```bash
+# Navigate to the backend directory
+cd backend
 
-3. **Set up Node.js server (for doodle functionality)**
+# Create a virtual environment
+python3 -m venv venv
 
-   ```bash
-   cd server
-   npm install
-   cd ..
-   ```
+# Activate the virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+.\venv\Scripts\activate
 
-4. **Install frontend dependencies**
-   ```bash
-   npm install
-   ```
+# Install Python dependencies
+pip install -r requirements.txt
 
-### Running the Application
+# Return to the root directory
+cd ..
+```
 
-You need to run three services simultaneously:
+### 5. Configure Backend API Keys
 
-1. **Start the Python backend** (Terminal 1):
+The backend requires API keys for its AI and image hosting services. You will need to create a `.env` file to store these keys.
 
-   For linux and mac:
+1.  **Navigate to the `backend` directory.**
+2.  **Copy the example file:** Copy the `backend/.env.example` file to a new file named `backend/.env`.
+3.  **Edit `.env`** and add your API keys. You will need to get keys from the following services:
 
-   ```bash
-   python3 backend/main.py
-   ```
+    -   `CEREBRAS_API_KEY`: For text-only chat generation.
+        -   Get your key from: [Cerebras Model-as-a-Service](https://www.cerebras.net/model-as-a-service/)
 
-   For windows:
+    -   `OPENROUTER_API_KEY`: For the image analysis model.
+        -   Get your key from: [OpenRouter.ai](https://openrouter.ai/keys)
 
-   ```bash
-   python backend/main.py
-   ```
+    -   `IMGBB_API_KEY`: For hosting uploaded images to get a public URL.
+        -   Get your key from: [imgbb API](https://api.imgbb.com/)
 
-2. **Start the Node.js server** (Terminal 2):
+    Your `backend/.env` file should look like this:
 
-   ```bash
-   cd server/
-   npm run dev
+    ```
+    CEREBRAS_API_KEY="your_cerebras_key_here"
+    OPENROUTER_API_KEY="your_openrouter_key_here"
+    IMGBB_API_KEY="your_imgbb_key_here"
+    ```
 
-   ```
+### 6. Run the Application
 
-3. **Start the frontend** (Terminal 3):
-   ```bash
-   cd ..
-   npm run dev
-   ```
+You need to run two services simultaneously in two separate terminals.
 
-The application will be available at `http://localhost:8080/`
+**Terminal 1: Start the Backend**
+
+```bash
+# Navigate to the backend directory
+cd backend
+
+# Make sure your virtual environment is activated
+source venv/bin/activate
+
+# Run the Flask server
+python main.py
+```
+
+The backend will be running at `http://127.0.0.1:5001`.
+
+**Terminal 2: Start the Frontend**
+
+```bash
+# From the root directory
+npm run dev
+```
+
+The application will be available at `http://localhost:8080/`.
 
 ## Project Structure
 
 - `backend/` - Python Flask API for AI features
-- `server/` - Node.js server for doodle processing
 - `src/` - React frontend application
 - `database/` - JSON-based data storage

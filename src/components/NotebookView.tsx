@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { PenTool, Brain } from "lucide-react";
+import { PenTool, Brain, Search } from "lucide-react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { DrawingCanvas } from "@/components/DrawingCanvas";
 import { AIChat } from "@/components/AIChat";
 import { PersonalitySelector } from "@/components/PersonalitySelector";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { toast } from "sonner";
 
 interface NotebookViewProps {
   onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
@@ -14,6 +15,7 @@ interface NotebookViewProps {
 export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
   const [selectedPersonality, setSelectedPersonality] = useState<'calm' | 'angry' | 'cool' | 'lazy'>('calm');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [canvasAnalysis, setCanvasAnalysis] = useState<string | null>(null);
   const canvasRef = useRef<{ analyzeCanvas: () => void } | null>(null);
   const chatRef = useRef<{ addCanvasAnalysis: (analysis: string) => void } | null>(null);
@@ -35,6 +37,36 @@ export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
     }
   };
 
+  const handleAnalyzeImage = async () => {
+    if (!uploadedFile) {
+      toast.error("Please upload an image first.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    formData.append('question', 'Extract the text from this image.');
+
+    try {
+      const response = await fetch('http://localhost:5001/api/analyze-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (chatRef.current) {
+          chatRef.current.addCanvasAnalysis(`Extracted text from ${uploadedFile.name}:\n\n${data.text}`);
+        }
+      } else {
+        toast.error(`Failed to analyze image: ${uploadedFile.name}`);
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast.error(`Error analyzing image: ${uploadedFile.name}`);
+    }
+  };
+
   return (
     <div className="h-full bg-background flex flex-col overflow-y-auto">
       {/* Header */}
@@ -52,7 +84,13 @@ export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
             </div>
             
             <div className="flex items-center gap-4">
-              <ImageUpload onImageUpload={setUploadedImage} />
+              <ImageUpload onImageUpload={(file, imageUrl) => { setUploadedFile(file); setUploadedImage(imageUrl); }} />
+              {uploadedImage && (
+                <Button onClick={handleAnalyzeImage} size="sm" className="gap-2">
+                  <Search className="h-4 w-4" />
+                  Analyse Image
+                </Button>
+              )}
               <PersonalitySelector
                 selectedPersonality={selectedPersonality}
                 onPersonalityChange={setSelectedPersonality}
@@ -89,6 +127,7 @@ export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
                   className="bg-gradient-to-br from-canvas-bg to-notebook-paper shadow-notebook h-full"
                   selectedPersonality={selectedPersonality}
                   onCanvasAnalysis={handleCanvasAnalysis}
+                  backgroundImage={uploadedImage}
                 />
               </div>
             </div>
@@ -110,7 +149,7 @@ export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
       <div 
         className="fixed inset-0 pointer-events-none opacity-5" 
         style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000' fill-opacity='0.1'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+          backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23000\" fill-opacity=\"0.1\"%3E%3Ccircle cx=\"20\" cy=\"20\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"
         }}
       />
     </div>

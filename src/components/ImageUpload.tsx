@@ -6,11 +6,12 @@ import { toast } from "sonner";
 
 interface ImageUploadProps {
   className?: string;
-  onImageUpload?: (imageUrl: string) => void;
+  onImageUpload?: (file: File, imageUrl: string) => void;
 }
 
 export const ImageUpload = ({ className, onImageUpload }: ImageUploadProps) => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,7 +26,8 @@ export const ImageUpload = ({ className, onImageUpload }: ImageUploadProps) => {
     reader.onload = (e) => {
       const imageUrl = e.target?.result as string;
       setUploadedImage(imageUrl);
-      onImageUpload?.(imageUrl);
+      setUploadedFile(file);
+      onImageUpload?.(file, imageUrl);
       toast.success("Exercise image uploaded successfully!");
       setIsModalOpen(false);
     };
@@ -51,6 +53,7 @@ export const ImageUpload = ({ className, onImageUpload }: ImageUploadProps) => {
 
   const removeImage = () => {
     setUploadedImage(null);
+    setUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

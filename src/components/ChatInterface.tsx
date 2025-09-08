@@ -67,10 +67,32 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto'; // Reset height to recalculate
+      const scrollHeight = textarea.scrollHeight;
+      
+      // Calculate max height for 11 lines
+      const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+      const maxHeight = lineHeight * 11;
+
+      if (scrollHeight > maxHeight) {
+        textarea.style.height = `${maxHeight}px`;
+        textarea.style.overflowY = 'auto';
+      } else {
+        textarea.style.height = `${scrollHeight}px`;
+        textarea.style.overflowY = 'hidden';
+      }
+    }
+  }, [inputMessage]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !fileToSend) return;
@@ -559,6 +581,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
             </DropdownMenuContent>
           </DropdownMenu>
           <Textarea
+            ref={textareaRef}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask me anything you'd like to learn about..."
@@ -568,7 +591,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                 handleSendMessage();
               }
             }}
-            className="flex-1 resize-none"
+            className="flex-1 resize-none min-h-[40px] overflow-y-hidden custom-scrollbar"
             rows={1}
           />
           <Button onClick={handleSendMessage} disabled={!inputMessage.trim() && !fileToSend}>

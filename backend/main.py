@@ -112,67 +112,203 @@ def import_deck():
         return jsonify({"error": "No file selected."}), 400
 
     filename = secure_filename(file.filename)
-    deck_name, file_ext = os.path.splitext(filename)
+    deck_name_from_file, file_ext = os.path.splitext(filename)
     file_ext = file_ext.lower()
 
-    flashcards_to_add = []
-    description = ""
-
     try:
+        decks_tool = DecksTool()
+        flash_cards_tool = FlashCardsTool()
+
         if file_ext == '.json':
             file_content = file.read().decode('utf-8')
             data = json.loads(file_content)
             
-            if 'name' not in data or 'flashcards' not in data:
-                return jsonify({"error": "Invalid JSON format. 'name' and 'flashcards' keys are required."}), 400
+            # Case 1: Batch import (list of decks)
+            if isinstance(data, list):
+                imported_decks_count = 0
+                for deck_item in data:
+                    if 'name' not in deck_item or 'flashcards' not in deck_item:
+                        continue # Skip malformed entries in the list
+                    
+                    deck_name = deck_item.get('name')
+                    description = deck_item.get('description', '')
+                    flashcards_to_add = deck_item.get('flashcards', [])
+
+                    new_deck = decks_tool.add_deck({"name": deck_name, "description": description})
+                    
+                    if flashcards_to_add:
+                        for card in flashcards_to_add:
+                            card['deck_id'] = new_deck.id
+                        flash_cards_tool.add_flash_cards(json.dumps(flashcards_to_add))
+                    
+                    imported_decks_count += 1
+                
+                if imported_decks_count == 0:
+                    return jsonify({"error": "No valid decks found in the JSON array."}), 400
+                
+                return jsonify({"message": f"{imported_decks_count} decks imported successfully"}), 201
+
+            # Case 2: Single deck import (dict)
+            elif isinstance(data, dict):
+                if 'name' not in data or 'flashcards' not in data:
+                    return jsonify({"error": "Invalid JSON format for single deck. 'name' and 'flashcards' keys are required."}), 400
+                
+                deck_name = data.get('name', deck_name_from_file)
+                description = data.get('description', '')
+                flashcards_to_add = data.get('flashcards', [])
+
+                new_deck = decks_tool.add_deck({"name": deck_name, "description": description})
+                
+                if flashcards_to_add:
+                    for card in flashcards_to_add:
+                        card['deck_id'] = new_deck.id
+                    flash_cards_tool.add_flash_cards(json.dumps(flashcards_to_add))
+
+                return jsonify({"message": "Deck imported successfully", "deck_id": new_deck.id}), 201
             
-            deck_name = data.get('name', deck_name)
-            description = data.get('description', '')
-            flashcards_to_add = data['flashcards']
+            else:
+                return jsonify({"error": "Invalid JSON structure. Must be an object or a list of objects."}), 400
 
         elif file_ext == '.csv':
             file_content = file.read().decode('utf-8')
             csvfile = io.StringIO(file_content)
             reader = csv.DictReader(csvfile)
             
+            fieldnames = reader.fieldnames
+            if not fieldnames:
+                 return jsonify({"error": "CSV file is empty or headers are missing."}), 400
+
             expected_headers = ['question', 'answer']
-            if not reader.fieldnames or not all(h in reader.fieldnames for h in expected_headers):
+            if not all(h in fieldnames for h in expected_headers):
                  return jsonify({"error": f"Invalid CSV format. Required headers are: {', '.join(expected_headers)}."}), 400
 
-            for row in reader:
-                card = {
-                    "question": row.get("question"),
-                    "answer": row.get("answer"),
-                    "difficulty": row.get("difficulty", "MEDIUM"),
-                    "question_image_url": row.get("question_image_url"),
-                    "answer_image_url": row.get("answer_image_url"),
-                }
-                flashcards_to_add.append(card)
+            # Case 1: Batch import from CSV (deck_name column exists)
+            if 'deck_name' in fieldnames:
+                decks_with_cards = defaultdict(list)
+                for row in reader:
+                    deck_name = row.get("deck_name")
+                    if not deck_name:
+                        continue # Skip rows without a deck name
+                    decks_with_cards[deck_name].append({
+                        "question": row.get("question"), "answer": row.get("answer"),
+                        "difficulty": row.get("difficulty", "MEDIUM"),
+                        "question_image_url": row.get("question_image_url"), "answer_image_url": row.get("answer_image_url"),
+                    })
+
+                if not decks_with_cards:
+                    return jsonify({"error": "No valid deck entries found in CSV file."}), 400
+
+                imported_decks_count = 0
+                for deck_name, flashcards_to_add in decks_with_cards.items():
+                    new_deck = decks_tool.add_deck({"name": deck_name, "description": ""})
+                    if flashcards_to_add:
+                        for card in flashcards_to_add:
+                            card['deck_id'] = new_deck.id
+                        flash_cards_tool.add_flash_cards(json.dumps(flashcards_to_add))
+                    imported_decks_count += 1
+                
+                return jsonify({"message": f"{imported_decks_count} decks imported successfully from CSV"}), 201
+
+            # Case 2: Single deck import from CSV (no deck_name column)
+            else:
+                flashcards_to_add = []
+                for row in reader:
+                    flashcards_to_add.append({
+                        "question": row.get("question"), "answer": row.get("answer"),
+                        "difficulty": row.get("difficulty", "MEDIUM"),
+                        "question_image_url": row.get("question_image_url"), "answer_image_url": row.get("answer_image_url"),
+                    })
+                
+                if not flashcards_to_add:
+                    return jsonify({"error": "No flashcards found in the file."}), 400
+                
+                new_deck = decks_tool.add_deck({"name": deck_name_from_file, "description": ""})
+
+                for card in flashcards_to_add:
+                    card['deck_id'] = new_deck.id
+                flash_cards_tool.add_flash_cards(json.dumps(flashcards_to_add))
+                
+                return jsonify({"message": "Deck imported successfully from CSV", "deck_id": new_deck.id}), 201
 
         else:
             return jsonify({"error": "Unsupported file format. Please upload a .json or .csv file."}), 400
-
-        if not flashcards_to_add:
-            return jsonify({"error": "No flashcards found in the file."}), 400
-            
-        decks_tool = DecksTool()
-        flash_cards_tool = FlashCardsTool()
-        
-        deck_data = {"name": deck_name, "description": description}
-        new_deck = decks_tool.add_deck(deck_data)
-        
-        for card in flashcards_to_add:
-            card['deck_id'] = new_deck.id
-            
-        flash_cards_tool.add_flash_cards(json.dumps(flashcards_to_add))
-        
-        return jsonify({"message": "Deck imported successfully", "deck_id": new_deck.id}), 201
 
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON file content."}), 400
     except Exception as e:
         print(f"Error importing deck: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/decks/export/batch', methods=['POST'])
+def export_decks_batch():
+    try:
+        data = request.get_json()
+        deck_ids = data.get('deck_ids')
+        file_format = data.get('format', 'json').lower()
+
+        if not deck_ids or not isinstance(deck_ids, list):
+            return jsonify({"error": "A list of 'deck_ids' is required."}), 400
+
+        decks_tool = DecksTool()
+        flash_cards_tool = FlashCardsTool()
+        
+        all_decks_data = []
+        all_flashcards_data = []
+
+        for deck_id in deck_ids:
+            deck = decks_tool.get_deck_by_id(deck_id)
+            if deck:
+                flashcards = flash_cards_tool.get_flash_cards_by_deck(deck_id)
+                deck['flashcards'] = flashcards
+                all_decks_data.append(deck)
+                # For CSV, add deck_name to each card
+                for card in flashcards:
+                    card_copy = card.copy()
+                    card_copy['deck_name'] = deck.get('name')
+                    all_flashcards_data.append(card_copy)
+
+        if not all_decks_data:
+            return jsonify({"error": "None of the provided deck IDs were found."}), 404
+        
+        # Sanitize filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename_base = f"decks_export_{timestamp}"
+
+        if file_format == 'json':
+            json_buffer = io.BytesIO()
+            json_buffer.write(json.dumps(all_decks_data, indent=2).encode('utf-8'))
+            json_buffer.seek(0)
+            return send_file(
+                json_buffer,
+                as_attachment=True,
+                download_name=f"{filename_base}.json",
+                mimetype='application/json'
+            )
+
+        elif file_format == 'csv':
+            csv_output = io.StringIO()
+            headers = ['deck_name', 'question', 'answer', 'difficulty', 'question_image_url', 'answer_image_url']
+            writer = csv.DictWriter(csv_output, fieldnames=headers, extrasaction='ignore')
+            writer.writeheader()
+            writer.writerows(all_flashcards_data)
+            
+            csv_buffer = io.BytesIO()
+            csv_buffer.write(csv_output.getvalue().encode('utf-8'))
+            csv_buffer.seek(0)
+            return send_file(
+                csv_buffer,
+                as_attachment=True,
+                download_name=f"{filename_base}.csv",
+                mimetype='text/csv'
+            )
+
+        else:
+            return jsonify({"error": "Unsupported file format"}), 400
+
+    except Exception as e:
+        print(f"Error during batch export: {e}")
+        return jsonify({"error": "An internal error occurred during batch export."}), 500
+
 
 @app.route('/api/decks/<int:deck_id>/export/<string:file_format>', methods=['GET'])
 def export_deck(deck_id, file_format):

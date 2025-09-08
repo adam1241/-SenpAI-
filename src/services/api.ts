@@ -337,4 +337,43 @@ export const exportDeck = async (deckId: number, format: 'json' | 'csv') => {
   return Promise.resolve();
 };
 
+export const exportDecksBatch = async (deckIds: number[], format: 'json' | 'csv') => {
+  const response = await fetch(`${SOCRATIC_TUTOR_API_URL}/decks/export/batch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ deck_ids: deckIds, format: format }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || `Failed to export decks`);
+  }
+  
+  // Handle the file download
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  
+  // Extract filename from Content-Disposition header
+  const disposition = response.headers.get('Content-Disposition');
+  let filename = `decks_export.${format}`;
+  if (disposition && disposition.indexOf('attachment') !== -1) {
+    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+    const matches = filenameRegex.exec(disposition);
+    if (matches != null && matches[1]) {
+      filename = matches[1].replace(/['"]/g, '');
+    }
+  }
+  
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  a.remove();
+};
+
 export default ApiService;

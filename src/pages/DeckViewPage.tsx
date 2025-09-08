@@ -24,6 +24,7 @@ import { AddFlashcardModal } from '@/components/AddFlashcardModal';
 import { EditFlashcardModal } from '@/components/EditFlashcardModal';
 import { StudyModal } from '@/components/StudyModal';
 import { toast } from 'sonner';
+import { Badge } from "@/components/ui/badge";
 
 
 interface Flashcard {
@@ -444,26 +445,38 @@ const DeckViewPage = () => {
                             )}
                         </div>
                     </CardContent>
-                    <div className="p-3 bg-muted/50 border-t flex justify-end gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                                setFlashcardToEdit(card);
-                                setEditFlashcardModalOpen(true);
-                            }}
+                    <div className="p-3 bg-muted/50 border-t flex justify-between items-center">
+                        <Badge 
+                            variant="outline"
+                            className={
+                                card.difficulty === 'EASY' ? 'border-green-500 text-green-500' :
+                                card.difficulty === 'MEDIUM' ? 'border-yellow-500 text-yellow-500' :
+                                'border-red-500 text-red-500'
+                            }
                         >
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteFlashcard(card.id)}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
+                            {card.difficulty}
+                        </Badge>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                    setFlashcardToEdit(card);
+                                    setEditFlashcardModalOpen(true);
+                                }}
+                            >
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteFlashcard(card.id)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
                 </Card>
             ))

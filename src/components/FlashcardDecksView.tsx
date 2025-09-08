@@ -2,20 +2,24 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, CreditCard, Calendar, TrendingUp, RefreshCw, Trash2, Pencil, Brain, Download } from "lucide-react";
+import { Plus, Upload, RefreshCw, Pencil, Trash2, Download, CreditCard, Calendar, TrendingUp } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
 import { EditDeckModal } from "./EditDeckModal";
-import { AddFlashcardModal } from "./AddFlashcardModal"; // Import the new modal
+import { AddFlashcardModal } from "./AddFlashcardModal";
 import { Input } from "@/components/ui/input";
-import { getDecks, getFlashcards, saveManualDeck, deleteDeck, updateDeck, importDeck } from "@/services/api"; // Import API functions
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getDecks, getFlashcards, saveManualDeck, deleteDeck, updateDeck, importDeck, exportDecksBatch, exportDeck } from "@/services/api";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-
-// Interface for data coming from the backend
 interface DeckFromAPI {
   id: number;
   name: string;
@@ -33,7 +37,6 @@ interface FlashcardFromAPI {
   answer_image_url?: string;
 }
 
-// Enriched interface for local state
 interface Deck extends DeckFromAPI {
   cardCount: number;
   newCards: number;
@@ -42,18 +45,17 @@ interface Deck extends DeckFromAPI {
 }
 
 interface FlashcardDecksViewProps {
-  onDataChange: () => void;
-  onSectionChange: (section: "chat" | "notebook" | "quiz" | "history" | "flashcards") => void;
+  onDataChange: (counts: { newCount: number; reviewCount: number }) => void;
+  onSectionChange: (section: string) => void;
 }
 
 export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardDecksViewProps) => {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [allFlashcards, setAllFlashcards] = useState<FlashcardFromAPI[]>([]);
   const [cardsForStudy, setCardsForStudy] = useState<FlashcardFromAPI[]>([]);
-
   const [studyModalOpen, setStudyModalOpen] = useState(false);
   const [newDeckModalOpen, setNewDeckModalOpen] = useState(false);
-  const [addFlashcardModalOpen, setAddFlashcardModalOpen] = useState(false); // State for the new modal
+  const [addFlashcardModalOpen, setAddFlashcardModalOpen] = useState(false);
   const [editDeckModalOpen, setEditDeckModalOpen] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
   const [deckToEdit, setDeckToEdit] = useState<Deck | null>(null);
@@ -61,53 +63,36 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
   const searchQuery = searchParams.get('q') || "";
   const difficultyFilter = searchParams.get('difficulty') || "ALL";
   const importFileRef = useRef<HTMLInputElement>(null);
+  const [selectedDeckIds, setSelectedDeckIds] = useState<number[]>([]);
 
   const setSearchQuery = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (value) {
-      newParams.set('q', value);
-    } else {
-      newParams.delete('q');
-    }
+    if (value) newParams.set('q', value);
+    else newParams.delete('q');
     setSearchParams(newParams, { replace: true });
   };
 
   const setDifficultyFilter = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (value && value !== "ALL") {
-      newParams.set('difficulty', value);
-    } else {
-      newParams.delete('difficulty');
-    }
+    if (value && value !== "ALL") newParams.set('difficulty', value);
+    else newParams.delete('difficulty');
     setSearchParams(newParams, { replace: true });
   };
 
   const fetchData = useCallback(async () => {
     try {
-      const [decksData, flashcardsData] = await Promise.all([
-        getDecks(),
-        getFlashcards(),
-      ]);
-
-      // Filter out decks with duplicate IDs to prevent React key errors
-      const uniqueDecksData = decksData.filter((deck, index, self) =>
-        index === self.findIndex((d) => d.id === deck.id)
-      );
-
+      const [decksData, flashcardsData] = await Promise.all([getDecks(), getFlashcards()]);
+      const uniqueDecksData = decksData.filter((deck, index, self) => index === self.findIndex((d) => d.id === deck.id));
       setAllFlashcards(flashcardsData);
-
       const enrichedDecks: Deck[] = uniqueDecksData.map(deck => {
         const cardsInDeck = flashcardsData.filter(card => card.deck_id === deck.id);
         const cardCount = cardsInDeck.length;
-
         let newCards = 0;
         let reviewCards = 0;
         const now = new Date();
-
         cardsInDeck.forEach(card => {
             const lastReviewed = new Date(card.last_reviewed);
             let dueDate = new Date(lastReviewed);
-
             switch (card.difficulty) {
                 case "HARD":
                     newCards++;
@@ -120,47 +105,26 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
                     dueDate.setDate(lastReviewed.getDate() + 7);
                     break;
             }
-
             if (now >= dueDate) {
                 reviewCards++;
             }
         });
-
-        return {
-          ...deck,
-          cardCount: cardCount,
-          newCards: newCards,
-          reviewCards: reviewCards,
-        };
+        return { ...deck, cardCount, newCards, reviewCards };
       });
-
       setDecks(enrichedDecks);
-      onDataChange(); // Notify parent that data has changed
-
+      // onDataChange();
     } catch (error) {
       console.error("Failed to fetch flashcard data:", error);
     }
-  }, [onDataChange]);
+  }, []);
 
   const filteredDecks = useMemo(() => {
     return decks.filter(deck => {
       const lowercasedQuery = searchQuery.toLowerCase();
-      const deckMatches =
-        deck.name.toLowerCase().includes(lowercasedQuery) ||
-        deck.description.toLowerCase().includes(lowercasedQuery);
-
+      const deckMatches = deck.name.toLowerCase().includes(lowercasedQuery) || deck.description.toLowerCase().includes(lowercasedQuery);
       const cardsInDeck = allFlashcards.filter(card => card.deck_id === deck.id);
-
-      const cardContentMatches = cardsInDeck.some(
-        card =>
-          card.question.toLowerCase().includes(lowercasedQuery) ||
-          card.answer.toLowerCase().includes(lowercasedQuery)
-      );
-
-      const difficultyMatches =
-        difficultyFilter === "ALL" ||
-        cardsInDeck.some(card => card.difficulty === difficultyFilter);
-
+      const cardContentMatches = cardsInDeck.some(card => card.question.toLowerCase().includes(lowercasedQuery) || card.answer.toLowerCase().includes(lowercasedQuery));
+      const difficultyMatches = difficultyFilter === "ALL" || cardsInDeck.some(card => card.difficulty === difficultyFilter);
       return (deckMatches || cardContentMatches) && difficultyMatches;
     });
   }, [searchQuery, decks, allFlashcards, difficultyFilter]);
@@ -174,7 +138,8 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
       try {
         await deleteDeck(deckId);
         toast.success("Deck deleted successfully!");
-        fetchData(); // Refetch data to update the UI
+        fetchData();
+        setSelectedDeckIds(prev => prev.filter(id => id !== deckId)); // <-- Add this line
       } catch (error) {
         console.error("Failed to delete deck:", error);
         toast.error("Failed to delete deck. Please try again.");
@@ -187,26 +152,20 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
     return `${Math.ceil(diffDays / 30)} months ago`;
   };
 
-  const getTotalNewCards = () => {
-    return decks.reduce((total, deck) => total + deck.newCards, 0);
-  };
-
-  const getTotalReviewCards = () => {
-    return decks.reduce((total, deck) => total + deck.reviewCards, 0);
-  };
+  const getTotalNewCards = () => decks.reduce((total, deck) => total + deck.newCards, 0);
+  const getTotalReviewCards = () => decks.reduce((total, deck) => total + deck.reviewCards, 0);
 
   const handleCreateDeck = async (name: string, description: string) => {
     try {
       await saveManualDeck({ name, description });
       toast.success("Deck created successfully!");
-      fetchData(); // Refetch all data
+      fetchData();
     } catch (error) {
       console.error("Failed to create deck:", error);
       toast.error("Failed to create deck. Please try again.");
@@ -217,7 +176,7 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
     try {
       await updateDeck(deckId, { name, description });
       toast.success("Deck updated successfully!");
-      fetchData(); // Refetch all data
+      fetchData();
     } catch (error) {
       console.error("Failed to update deck:", error);
       toast.error("Failed to update deck. Please try again.");
@@ -227,30 +186,22 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
   const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Client-side validation for allowed file types
     const allowedExtensions = ['.json', '.csv'];
     const fileExtension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-
     if (!allowedExtensions.includes(fileExtension)) {
       toast.error("Invalid file type. Please select a JSON or CSV file.");
-      // Reset file input
       if (event.target) event.target.value = "";
       return;
     }
-
     try {
-      await importDeck(file); // Pass the File object directly to the API service
+      await importDeck(file);
       toast.success("Deck imported successfully!");
-      fetchData(); // Refresh the list of decks
+      fetchData();
     } catch (error: any) {
       console.error("Failed to import deck:", error);
       toast.error(`Import failed: ${error.message || "An unknown error occurred"}`);
     } finally {
-      // Reset file input to allow re-uploading the same file after an error
-      if (event.target) {
-        event.target.value = "";
-      }
+      if (event.target) event.target.value = "";
     }
   };
 
@@ -261,106 +212,118 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
     setStudyModalOpen(true);
   };
 
+  const handleEditDeck = (deck: Deck) => {
+    setDeckToEdit(deck);
+    setEditDeckModalOpen(true);
+  };
+
+  const handleSingleDeckExport = async (deckId: number, format: 'json' | 'csv') => {
+    try {
+      await exportDeck(deckId, format);
+      toast.success(`Deck successfully exported as ${format.toUpperCase()}!`);
+    } catch (error) {
+      console.error(`Failed to export deck as ${format}:`, error);
+      toast.error(`Failed to export deck. Please try again.`);
+    }
+  };
+
+  const handleToggleDeckSelection = (deckId: number, isSelected: boolean) => {
+    setSelectedDeckIds(prev =>
+      isSelected ? [...prev, deckId] : prev.filter(id => id !== deckId)
+    );
+  };
+  
+  const handleSelectAllDecks = (isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedDeckIds(filteredDecks.map(deck => deck.id));
+    } else {
+      setSelectedDeckIds([]);
+    }
+  };
+
+  const handleBatchExport = async (format: 'json' | 'csv') => {
+    if (selectedDeckIds.length === 0) {
+      toast.error("No decks selected for export.");
+      return;
+    }
+    try {
+      await exportDecksBatch(selectedDeckIds, format);
+      toast.success(`${selectedDeckIds.length} deck(s) are being exported as ${format.toUpperCase()}.`);
+    } catch (error: any) {
+      console.error(`Failed to export decks as ${format}:`, error);
+      toast.error(`Export failed: ${error.message || "An unknown error occurred"}`);
+    }
+  };
+
   return (
     <div className="h-full overflow-auto relative">
-      <div className="absolute top-6 right-6 z-10">
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" onClick={() => onSectionChange('chat')} className="border-2 border-success hover:bg-success-hover">
-              <Brain className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Tutor Chat</p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
       <div className="container mx-auto p-6 max-w-6xl">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <CreditCard className="w-8 h-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Flashcard Decks</h1>
-              <p className="text-muted-foreground">Organize and study your knowledge with spaced repetition</p>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <CreditCard className="w-8 h-8 text-primary" />
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Flashcard Decks</h1>
+                <p className="text-muted-foreground">Organize and study your knowledge with spaced repetition</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="w-4 h-4" /></Button>
+              <Button onClick={() => importFileRef.current?.click()}>Import Deck</Button>
+              <Input type="file" ref={importFileRef} className="hidden" accept=".json,.csv" onChange={handleFileImport} />
+              <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}><Plus className="w-4 h-4" /> Add Flashcard</Button>
+              <Button className="gap-2" onClick={() => setNewDeckModalOpen(true)}><Plus className="w-4 h-4" /> New Deck</Button>
+              {selectedDeckIds.length > 0 && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                            Export Selected ({selectedDeckIds.length})
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleBatchExport('json')}>
+                            As JSON
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleBatchExport('csv')}>
+                            As CSV
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={fetchData}>
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            <Button onClick={() => importFileRef.current?.click()}>Import Deck</Button>
-            <Input
-                type="file"
-                ref={importFileRef}
-                className="hidden"
-                accept=".json,.csv"
-                onChange={handleFileImport}
-            />
-            <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}>
-              <Plus className="w-4 h-4" />
-              Add Flashcard
-            </Button>
-            <Button className="gap-2" onClick={() => setNewDeckModalOpen(true)}>
-              <Plus className="w-4 h-4" />
-              New Deck
-            </Button>
-          </div>
-        </div>
-
-        {/* Study Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-warning/10 rounded-lg">
-                  <Plus className="w-5 h-5 text-warning" />
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 bg-warning/10 rounded-lg"><Plus className="w-5 h-5 text-warning" /></div>
                 <div>
                   <p className="text-sm text-muted-foreground">New Cards</p>
                   <p className="text-2xl font-bold text-warning">{getTotalNewCards()}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Calendar className="w-5 h-5 text-primary" />
-                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg"><Calendar className="w-5 h-5 text-primary" /></div>
                 <div>
                   <p className="text-sm text-muted-foreground">Due for Review</p>
                   <p className="text-2xl font-bold text-primary">{getTotalReviewCards()}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-success" />
-                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 bg-success/10 rounded-lg"><TrendingUp className="w-5 h-5 text-success" /></div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Cards</p>
-                  <p className="text-2xl font-bold text-success">
-                    {allFlashcards.length}
-                  </p>
+                  <p className="text-2xl font-bold text-success">{allFlashcards.length}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6 flex gap-4">
+              </CardContent>
+            </Card>
+          </div>
+          <div className="mb-6 flex gap-4">
             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Difficulty" />
-              </SelectTrigger>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Difficulty" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Difficulties</SelectItem>
                 <SelectItem value="HARD">Hard</SelectItem>
@@ -368,144 +331,83 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
                 <SelectItem value="EASY">Easy</SelectItem>
               </SelectContent>
             </Select>
-            <Input
-                type="text"
-                placeholder="Search decks or flashcards..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-            />
+            <Input type="text" placeholder="Search decks or flashcards..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full" />
+          </div>
         </div>
-      </div>
 
-      {/* Decks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDecks.map((deck) => (
-          <Link to={`/decks/${deck.id}?q=${searchQuery}&difficulty=${difficultyFilter}`} key={deck.id} className="no-underline">
-            <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{deck.name}</CardTitle>
-                    <CardDescription className="mt-1">{deck.description}</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // handleExportDeck(deck); // This function is no longer used
-                      }}
-                    >
-                      <Download className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDeckToEdit(deck);
-                        setEditDeckModalOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDeleteDeck(deck.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
+        <div className="mb-4 flex items-center gap-2">
+            <Checkbox
+                id="select-all"
+                checked={filteredDecks.length > 0 && selectedDeckIds.length === filteredDecks.length}
+                onCheckedChange={(checked) => handleSelectAllDecks(!!checked)}
+                aria-label="Select all decks"
+                disabled={filteredDecks.length === 0}
+            />
+            <label htmlFor="select-all" className="text-sm font-medium">Select All</label>
+        </div>
 
-              <CardContent className="flex-grow flex flex-col justify-between">
-                <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Total Cards:</span>
-                        <span className="font-medium">{deck.cardCount}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDecks.map((deck) => (
+            <div key={deck.id} className="relative">
+              <div className="absolute top-3 left-3 z-20">
+                  <Checkbox
+                      checked={selectedDeckIds.includes(deck.id)}
+                      onCheckedChange={(isSelected) => handleToggleDeckSelection(deck.id, !!isSelected)}
+                      aria-label={`Select deck ${deck.name}`}
+                      onClick={(e) => e.stopPropagation()}
+                  />
+              </div>
+              <Link to={`/decks/${deck.id}?q=${searchQuery}&difficulty=${difficultyFilter}`} className="no-underline">
+                <Card className={`hover:shadow-lg transition-shadow h-full flex flex-col ${selectedDeckIds.includes(deck.id) ? 'border-primary' : ''}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="pl-6">
+                        <CardTitle className="text-lg">{deck.name}</CardTitle>
+                        <CardDescription className="mt-1">{deck.description}</CardDescription>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                    <Download className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                <DropdownMenuItem onClick={() => handleSingleDeckExport(deck.id, 'json')}>
+                                    Export as JSON
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSingleDeckExport(deck.id, 'csv')}>
+                                    Export as CSV
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEditDeck(deck); }}><Pencil className="h-4 w-4 text-muted-foreground" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteDeck(deck.id); }}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Due for Review:</span>
-                        <span className="font-medium text-primary">{deck.reviewCards}</span>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col justify-between">
+                    <div className="space-y-3">
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Total Cards:</span><span className="font-medium">{deck.cardCount}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Due for Review:</span><span className="font-medium text-primary">{deck.reviewCards}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Last Studied:</span><span className="font-medium">{formatLastStudied(deck.lastStudied)}</span></div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Last Studied:</span>
-                        <span className="font-medium">{formatLastStudied(deck.lastStudied)}</span>
+                    <div className="pt-4 mt-auto">
+                      <Button className="w-full" disabled={deck.reviewCards === 0} onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStudyDeck(deck); }}>
+                        {deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
+                      </Button>
                     </div>
-                </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+          ))}
+        </div>
 
-                <div className="pt-4 mt-auto">
-                  <Button
-                    className="w-full"
-                    disabled={deck.reviewCards === 0}
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleStudyDeck(deck);
-                    }}
-                  >
-                    {deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      {/* Modals */}
-      <StudyModal
-        isOpen={studyModalOpen}
-        onClose={() => {
-            setStudyModalOpen(false);
-            fetchData(); // Refetch data when the modal is closed
-        }}
-        deckName={selectedDeck?.name || ""}
-        cards={cardsForStudy.map(card => ({
-          id: card.id.toString(),
-          question: card.question,
-          answer: card.answer,
-          concept: selectedDeck?.name || "Concept",
-          question_image_url: card.question_image_url,
-          answer_image_url: card.answer_image_url,
-        }))}
-      />
-
-      <NewDeckModal
-        isOpen={newDeckModalOpen}
-        onClose={() => setNewDeckModalOpen(false)}
-        onCreateDeck={handleCreateDeck}
-      />
-
-      <EditDeckModal
-        isOpen={editDeckModalOpen}
-        onClose={() => {
-          setEditDeckModalOpen(false);
-          setDeckToEdit(null);
-        }}
-        onUpdateDeck={handleUpdateDeck}
-        deck={deckToEdit}
-      />
-
-      <AddFlashcardModal
-        isOpen={addFlashcardModalOpen}
-        onClose={() => setAddFlashcardModalOpen(false)}
-        decks={decks}
-        onFlashcardAdded={fetchData} // Pass the fetchData function to refetch data
-      />
+        <StudyModal isOpen={studyModalOpen} onClose={() => { setStudyModalOpen(false); fetchData(); }} deckName={selectedDeck?.name || ""} cards={cardsForStudy.map(card => ({ id: card.id.toString(), question: card.question, answer: card.answer, concept: selectedDeck?.name || "Concept", question_image_url: card.question_image_url, answer_image_url: card.answer_image_url, }))} />
+        <NewDeckModal isOpen={newDeckModalOpen} onClose={() => setNewDeckModalOpen(false)} onCreateDeck={handleCreateDeck} />
+        <EditDeckModal isOpen={editDeckModalOpen} onClose={() => { setEditDeckModalOpen(false); setDeckToEdit(null); }} onUpdateDeck={handleUpdateDeck} deck={deckToEdit} />
+        <AddFlashcardModal isOpen={addFlashcardModalOpen} onClose={() => setAddFlashcardModalOpen(false)} decks={decks} onFlashcardAdded={fetchData} />
       </div>
     </div>
   );

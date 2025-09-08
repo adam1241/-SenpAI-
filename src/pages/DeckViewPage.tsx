@@ -1,12 +1,18 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { getDeck, getFlashcardsForDeck, deleteFlashcard } from '@/services/api';
+import { getDeck, getFlashcardsForDeck, deleteFlashcard, exportDeck } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
 } from 'recharts';
@@ -207,31 +213,18 @@ const DeckViewPage = () => {
     setStudyModalOpen(true);
   };
   
-  const handleExport = () => {
-    if (!deck) return;
-    const exportData = {
-      name: deck.name,
-      description: deck.description,
-      flashcards: flashcards.map(({ question, answer, difficulty, question_image_url, answer_image_url }) => ({
-        question,
-        answer,
-        difficulty,
-        question_image_url,
-        answer_image_url,
-      })),
-    };
-
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${deck.name.replace(/\s+/g, '-')}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Deck exported successfully!");
+  const handleExport = async (format: 'json' | 'csv') => {
+    if (!deck) {
+      toast.error("Deck data is not available for export.");
+      return;
+    }
+    try {
+      await exportDeck(deck.id, format);
+      toast.success(`Deck successfully exported as ${format.toUpperCase()}!`);
+    } catch (error) {
+      console.error(`Failed to export deck as ${format}:`, error);
+      toast.error(`Failed to export deck. Please try again.`);
+    }
   };
 
   const difficultyStats = useMemo(() => {
@@ -327,10 +320,22 @@ const DeckViewPage = () => {
                 <p className="text-muted-foreground mt-1">{deck?.description}</p>
             </div>
             <div className="flex gap-2">
-                 <Button variant="outline" onClick={handleExport} disabled={flashcards.length === 0}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" disabled={flashcards.length === 0}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Export
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleExport('json')}>
+                            Export as JSON
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport('csv')}>
+                            Export as CSV
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
       </div>

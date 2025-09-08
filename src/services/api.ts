@@ -274,13 +274,13 @@ export const uploadImage = async (file: File) => {
     return response.json();
 };
 
-export const importDeck = async (deckData: any) => {
+export const importDeck = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
     const response = await fetch(`${SOCRATIC_TUTOR_API_URL}/import`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(deckData),
+        body: formData, // The browser will automatically set Content-Type to multipart/form-data
     });
     if (!response.ok) {
         const errorData = await response.json();
@@ -323,6 +323,18 @@ export const deleteDeck = async (deckId: number) => {
   });
   if (!response.ok) throw new Error('Failed to delete deck');
   return response.json();
+};
+
+export const exportDeck = async (deckId: number, format: 'json' | 'csv') => {
+  const url = `${SOCRATIC_TUTOR_API_URL}/decks/${deckId}/export/${format}`;
+  
+  // Use window.open for GET requests to trigger browser download
+  window.open(url, '_blank');
+  
+  // No response to return, as the browser handles the download.
+  // You could return a promise that resolves on success if you implement
+  // a more complex fetch-based download with blob creation.
+  return Promise.resolve();
 };
 
 export default ApiService;

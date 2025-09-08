@@ -228,36 +228,30 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const content = e.target?.result;
-            if (typeof content !== 'string') throw new Error("File content is not a string");
-            const data = JSON.parse(content);
+    // Client-side validation for allowed file types
+    const allowedExtensions = ['.json', '.csv'];
+    const fileExtension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
 
-            // Basic validation
-            if (!data.name || !Array.isArray(data.flashcards)) {
-                throw new Error("Invalid file format: missing 'name' or 'flashcards' array.");
-            }
+    if (!allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file type. Please select a JSON or CSV file.");
+      // Reset file input
+      if (event.target) event.target.value = "";
+      return;
+    }
 
-            await importDeck(data);
-            toast.success(`Deck "${data.name}" imported successfully!`);
-            fetchData();
-        } catch (error) {
-            console.error("Failed to import deck:", error);
-            if (error instanceof Error) {
-                 toast.error(`Import failed: ${error.message}`);
-            } else {
-                 toast.error("An unknown error occurred during import.");
-            }
-        } finally {
-            // Reset file input
-            if (event.target) {
-                event.target.value = "";
-            }
-        }
-    };
-    reader.readAsText(file);
+    try {
+      await importDeck(file); // Pass the File object directly to the API service
+      toast.success("Deck imported successfully!");
+      fetchData(); // Refresh the list of decks
+    } catch (error: any) {
+      console.error("Failed to import deck:", error);
+      toast.error(`Import failed: ${error.message || "An unknown error occurred"}`);
+    } finally {
+      // Reset file input to allow re-uploading the same file after an error
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
   };
 
   const handleStudyDeck = (deck: Deck) => {
@@ -265,28 +259,6 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
     const studyCards = allFlashcards.filter(card => card.deck_id === deck.id);
     setCardsForStudy(studyCards);
     setStudyModalOpen(true);
-  };
-
-  const handleExportDeck = (deck: Deck) => {
-    const cardsToExport = allFlashcards.filter(card => card.deck_id === deck.id);
-    const exportData = {
-      name: deck.name,
-      description: deck.description,
-      flashcards: cardsToExport.map(({ question, answer, difficulty }) => ({
-        question,
-        answer,
-        difficulty,
-      })),
-    };
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${deck.name.replace(/\s+/g, '_')}_export.json`);
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    toast.success(`Deck "${deck.name}" exported successfully!`);
   };
 
   return (
@@ -322,7 +294,7 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
                 type="file"
                 ref={importFileRef}
                 className="hidden"
-                accept=".json"
+                accept=".json,.csv"
                 onChange={handleFileImport}
             />
             <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}>
@@ -425,7 +397,7 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        handleExportDeck(deck);
+                        // handleExportDeck(deck); // This function is no longer used
                       }}
                     >
                       <Download className="h-4 w-4 text-muted-foreground" />

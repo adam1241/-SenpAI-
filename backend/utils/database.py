@@ -31,14 +31,20 @@ class Database:
         return []
 
     @staticmethod
-    def add_to_table(table_name, data):
+    def add_to_table(table_name, data, batch=False):
         """
         Adds data to a table.
+        If batch is True, data is expected to be a list of items to append.
         """
         # Load existing data
         existing_data = Database.load_table(table_name)
+        
         # Append new data
-        existing_data.append(data)
+        if batch:
+            existing_data.extend(data)
+        else:
+            existing_data.append(data)
+
         # Write back the complete list
         with open(Database.tables[table_name], "w") as f:
             json.dump(existing_data, f, indent=2)

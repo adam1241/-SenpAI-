@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Upload, RefreshCw, Pencil, Trash2, Download, CreditCard, Calendar, TrendingUp } from "lucide-react";
+import { Plus, Upload, RefreshCw, Pencil, Trash2, Download, CreditCard, Calendar, TrendingUp, Sparkles } from "lucide-react";
 import { StudyModal } from "./StudyModal";
 import { NewDeckModal } from "./NewDeckModal";
 import { EditDeckModal } from "./EditDeckModal";
@@ -19,6 +19,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { GenerateDeckPromptModal } from "./GenerateDeckPromptModal";
+import ApiService from '@/services/api';
 
 interface DeckFromAPI {
   id: number;
@@ -283,6 +285,27 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
     }
   };
 
+  const handleGenerateDeck = async (prompt: string) => {
+    try {
+      // We use the chat service, as the backend will detect the action
+      const response = await ApiService.streamSocraticTutor(
+        [{ role: 'user', content: `Please create a flashcard deck about: ${prompt}` }],
+        'user-id', // Replace with actual user ID in a real app
+        'session-id' // Replace with actual session ID in a real app
+      );
+      
+      // We must consume the stream to ensure the server-side action is complete
+      // before we refresh the data.
+      await response.text();
+
+      toast.success('Deck generated successfully! Your new deck is now available.');
+      fetchData(); // Refreshes the deck list
+    } catch (error) {
+      console.error('Failed to generate deck:', error);
+      toast.error('Failed to generate deck. Please check the console for details.');
+    }
+  };
+
   return (
     <div className="h-full overflow-auto relative">
       <div className="container mx-auto p-6 max-w-6xl">
@@ -297,9 +320,17 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="w-4 h-4" /></Button>
-              <Button onClick={() => importFileRef.current?.click()}>Import Deck</Button>
+              <GenerateDeckPromptModal onGenerate={handleGenerateDeck}>
+                <Button>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate with AI
+                </Button>
+              </GenerateDeckPromptModal>
+              <Button onClick={() => importFileRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import Deck
+              </Button>
               <Input type="file" ref={importFileRef} className="hidden" accept=".json,.csv" onChange={handleFileImport} />
-              <Button className="gap-2" onClick={() => setAddFlashcardModalOpen(true)}><Plus className="w-4 h-4" /> Add Flashcard</Button>
               <Button className="gap-2" onClick={() => setNewDeckModalOpen(true)}><Plus className="w-4 h-4" /> New Deck</Button>
               {selectedDeckIds.length > 0 && (
                 <DropdownMenu>

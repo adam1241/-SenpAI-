@@ -95,3 +95,24 @@ class DecksTool:
         flash_cards = Database.load_table("flash_cards")
         updated_flash_cards = [card for card in flash_cards if card['deck_id'] != deck_id]
         Database.save_table("flash_cards", updated_flash_cards)
+
+    def find_or_create_deck(self, deck_name: str, all_decks: list, description: str = None):
+        """
+        Finds a deck by name or creates it if it doesn't exist.
+        Returns the deck object and the updated list of all decks.
+        """
+        found_deck = next((deck for deck in all_decks if deck['name'].lower() == deck_name.lower()), None)
+        if found_deck:
+            return found_deck, all_decks
+        
+        print(f"--- [TOOL] Deck '{deck_name}' not found. Creating it. ---")
+        
+        deck_description = description if description else f"A deck about {deck_name}."
+
+        new_deck_obj = self.add_deck({
+            "name": deck_name,
+            "description": deck_description
+        })
+        # Add the new deck to our cached list to avoid re-creating it in the same batch
+        all_decks.append(new_deck_obj.model_dump())
+        return new_deck_obj.model_dump(), all_decks

@@ -657,6 +657,17 @@ def chat():
         # --- START: Action Processing ---
         # After the full response is generated, check for and execute actions.
         try:
+            # Handler for CREATE_FLASHCARDS
+            if "//ACTION: CREATE_FLASHCARDS//" in full_response_content:
+                print("--- [ACTION] Detected CREATE_FLASHCARDS ---")
+                flashcards_json_match = re.search(r'//FLASHCARDS_JSON:\s*(\[.*?\]|\{.*?\})//', full_response_content, re.DOTALL)
+                if flashcards_json_match:
+                    flashcards_json_str = flashcards_json_match.group(1)
+                    FlashCardsTool().add_flash_cards(flashcards_json_str)
+                    print(f"--- [ACTION] Flashcards processed successfully ---")
+                else:
+                    print("--- [ACTION ERROR] CREATE_FLASHCARDS detected, but no valid FLASHCARDS_JSON found ---")
+
             if "//ACTION: CREATE_QUIZ//" in full_response_content:
                 print("--- [ACTION] Detected CREATE_QUIZ ---")
                 # Extract the JSON part of the quiz
@@ -668,8 +679,6 @@ def chat():
                     print("--- [ACTION] Quiz created successfully ---")
                 else:
                     print("--- [ACTION ERROR] CREATE_QUIZ detected, but no valid QUIZ_JSON found ---")
-            
-            # Note: Add handlers for CREATE_FLASHCARDS etc. here in the future
             
         except Exception as e:
             print(f"--- [ACTION ERROR] Failed to process AI action: {e} ---")

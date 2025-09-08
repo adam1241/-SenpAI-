@@ -25,45 +25,43 @@ class FlashCardsTool:
             all_decks = decks_tool.get_decks()
             existing_cards = Database.load_table("flash_cards")
             next_card_id = (max(card['id'] for card in existing_cards) + 1) if existing_cards else 1
+            
+            cards_to_add = []
 
             for card_data in flash_cards_data:
-                deck_id = card_data.get("deck_id")
                 deck_name = card_data.get("deck_name")
+                if not deck_name:
+                    print(f"Skipping flashcard due to missing 'deck_name': {card_data}")
+                    continue
 
-                if not deck_id and deck_name:
-                    found_deck = next((deck for deck in all_decks if deck['name'].lower() == deck_name.lower()), None)
-                    
-                    if found_deck:
-                        deck_id = found_deck['id']
-                    else:
-                        # Create a new deck
-                        print(f"Creating new deck named: {deck_name}")
-                        new_deck_data = {"name": deck_name, "description": f"A deck for {deck_name}"}
-                        new_deck = decks_tool.add_deck(new_deck_data)
-                        deck_id = new_deck.id
-                        # Add the new deck to our cached list to avoid re-creating it in the same batch
-                        all_decks.append(new_deck.model_dump())
+                deck_description = card_data.get("deck_description")
 
-                if not deck_id:
-                    raise ValueError("Flashcard must have a deck_id or a valid deck_name.")
+                # Find or create the deck
+                deck, all_decks = decks_tool.find_or_create_deck(deck_name, all_decks, description=deck_description)
+                deck_id = deck['id']
+                
+                # Prepare the new flashcard data
+                new_card = card_data.copy()
+                new_card['id'] = next_card_id
+                new_card['deck_id'] = deck_id
+                new_card.setdefault('difficulty', "EASY")
+                new_card.setdefault('last_reviewed', "1970-01-01T00:00:00Z")
 
-                card_data['deck_id'] = deck_id
-                card_data['id'] = next_card_id
-                next_card_id += 1
-                card_data['difficulty'] = card_data.get('difficulty', "EASY")
-                card_data['question_image_url'] = card_data.get('question_image_url')
-                card_data['answer_image_url'] = card_data.get('answer_image_url')
+                try:
+                    # Validate and store the card for batch adding
+                    validated_card = FlashCard.model_validate(new_card)
+                    cards_to_add.append(validated_card.model_dump(mode="json"))
+                    next_card_id += 1
+                except ValidationError as e:
+                    print(f"Pydantic validation error for flashcard: {e}")
+                    print(f"Invalid flashcard data: {new_card}")
+                    # Optionally skip this card and continue with others
+                    continue
+            
+            # Batch add all validated cards to the database
+            if cards_to_add:
+                Database.add_to_table("flash_cards", cards_to_add, batch=True)
 
-
-                validated_card = FlashCard.model_validate(card_data)
-                Database.add_to_table(
-                    "flash_cards", validated_card.model_dump(mode="json")
-                )
-
-        except ValidationError as e:
-            print(f"Pydantic validation error for flashcard: {e}")
-            print(f"Invalid flashcard data: {card_data}")
-            raise ValueError(f"Pydantic validation error: {e}")
         except json.JSONDecodeError as e:
             print(f"Invalid JSON format for flashcard: {e}")
             print(f"Received JSON string: {flash_cards_json_str}")

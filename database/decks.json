@@ -28,5 +28,25 @@
     "id": 7,
     "name": "physics",
     "description": ""
+  },
+  {
+    "id": 8,
+    "name": "European Capitals - Beginner",
+    "description": "A deck to learn the capital cities of European countries. Starts with basic pairings and can be expanded to include flags, languages, or geography later."
+  },
+  {
+    "id": 9,
+    "name": "North African Capitals - Beginner",
+    "description": "A deck to learn the capital cities of North African countries. Focuses on country-capital pairings."
+  },
+  {
+    "id": 10,
+    "name": "Eastern European Capitals - Beginner",
+    "description": "A deck to learn the capital cities of Eastern European countries. Focuses on country-capital pairings."
+  },
+  {
+    "id": 11,
+    "name": "Southern European Capitals - Beginner",
+    "description": "A deck to learn the capital cities of Southern European countries. Focuses on country-capital pairings."
   }
 ]

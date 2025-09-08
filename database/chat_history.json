@@ -1667,5 +1667,75 @@
     "role": "assistant",
     "content": "Great! I'll create a quiz about the Sun, tailored for a beginner to intermediate level, covering key facts about its structure, function, and role in the solar system. Here's the quiz:\n\n//ACTION: CREATE_QUIZ// //QUIZ_JSON: {\"title\": \"The Sun - Basic Knowledge Quiz\", \"description\": \"Test your understanding of the Sun's structure, function, and role in the solar system.\", \"difficulty\": \"MEDIUM\", \"time\": 10, \"questions\": [{\"question_text\": \"What is the Sun primarily made of?\", \"options\": [\"Oxygen and nitrogen\", \"Hydrogen and helium\", \"Carbon and iron\", \"Silicon and sulfur\"], \"correct_answer\": \"Hydrogen and helium\"}, {\"question_text\": \"Which layer of the Sun is visible to us from Earth?\", \"options\": [\"Core\", \"Radiative zone\", \"Convective zone\", \"Photosphere\"], \"correct_answer\": \"Photosphere\"}, {\"question_text\": \"What process powers the Sun?\", \"options\": [\"Chemical combustion\", \"Nuclear fission\", \"Nuclear fusion\", \"Electrical discharge\"], \"correct_answer\": \"Nuclear fusion\"}, {\"question_text\": \"How long does it take for light from the Sun to reach Earth?\", \"options\": [\"About 8 seconds\", \"About 8 minutes\", \"About 8 hours\", \"About 8 days\"], \"correct_answer\": \"About 8 minutes\"}, {\"question_text\": \"What is the outermost layer of the Sun's atmosphere called?\", \"options\": [\"Lithosphere\", \"Hydrosphere\", \"Chromosphere\", \"Corona\"], \"correct_answer\": \"Corona\"}, {\"question_text\": \"Which of the following is NOT a feature of the Sun's surface?\", \"options\": [\"Sunspots\", \"Solar flares\", \"Prominences\", \"Craters\"], \"correct_answer\": \"Craters\"}, {\"question_text\": \"What force holds the Sun together?\", \"options\": [\"Electromagnetic force\", \"Strong nuclear force\", \"Gravity\", \"Centrifugal force\"], \"correct_answer\": \"Gravity\"}, {\"question_text\": \"The Sun's energy is generated in which layer?\", \"options\": [\"Photosphere\", \"Chromosphere\", \"Core\", \"Corona\"], \"correct_answer\": \"Core\"}, {\"question_text\": \"What do we call a sudden release of energy from the Sun's surface?\", \"options\": [\"Sunquake\", \"Solar flare\", \"Solar wind\", \"Sunburst\"], \"correct_answer\": \"Solar flare\"}, {\"question_text\": \"How long is the Sun expected to continue burning hydrogen?\", \"options\": [\"About 1 billion years\", \"About 5 billion years\", \"About 10 billion years\", \"Forever\"], \"correct_answer\": \"About 5 billion years\"}]}//  \n\nI've created a quiz for you on this topic. You can find it in the Quizzes section. Let me know how you did or if you'd like to review any of the concepts!",
     "timestamp": "2025-09-08T22:19:15.070053"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "user",
+    "content": "Please create a flashcard deck about: capitals of europe",
+    "timestamp": "2025-09-08T22:42:06.406159"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "assistant",
+    "content": "//ACTION: CREATE_DECK// //DECK_JSON: {\"name\": \"European Capitals - Beginner\", \"description\": \"A beginner-friendly deck covering the capital cities of European countries for geography learning and retention.\"}//\n\nI've created a new flashcard deck for you called **\"European Capitals - Beginner\"**. We can start building cards one by one, or I can populate a set of initial flashcards with all 44 European countries and their capitals. Would you like me to add them all now, or would you prefer to learn them interactively\u2014say, 5 at a time with spaced repetition?",
+    "timestamp": "2025-09-08T22:42:06.406159"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "user",
+    "content": "Please create a flashcard deck about: capitals of europe",
+    "timestamp": "2025-09-08T22:52:46.144852"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "assistant",
+    "content": "//ACTION: CREATE_DECK// //DECK_JSON: {\"name\": \"European Capitals - Beginner\", \"description\": \"A deck to learn the capital cities of European countries. Starts with basic pairings and can be expanded to include flags, languages, or geography later.\"}//\n\nGreat! I've created a new flashcard deck for you called **\"European Capitals - Beginner\"**. We can start adding flashcards to it now.  \n\nWould you like to begin with the most well-known countries (e.g., France, Germany, Italy) or go region by region (Western Europe, Eastern Europe, etc.)?  \n\nAlternatively, I can generate a full set of 40+ capitals \u2014 just let me know your preferred pace and depth.",
+    "timestamp": "2025-09-08T22:52:46.144852"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "user",
+    "content": "Please create a flashcard deck about: capitals of north africa ",
+    "timestamp": "2025-09-08T22:57:13.176871"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "assistant",
+    "content": "Great idea! Let's create a beginner-friendly flashcard deck to learn the capitals of North African countries. This will help build a strong foundation for geography knowledge.\n\n//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: [\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"deck_description\": \"A deck to learn the capital cities of North African countries. Focuses on country-capital pairings.\",\n    \"question\": \"What is the capital city of Egypt?\",\n    \"answer\": \"Cairo\"\n  },\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"question\": \"What is the capital city of Libya?\",\n    \"answer\": \"Tripoli\"\n  },\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"question\": \"What is the capital city of Tunisia?\",\n    \"answer\": \"Tunis\"\n  },\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"question\": \"What is the capital city of Algeria?\",\n    \"answer\": \"Algiers\"\n  },\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"question\": \"What is the capital city of Morocco?\",\n    \"answer\": \"Rabat\"\n  },\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"question\": \"Which North African country has the capital Tripoli?\",\n    \"answer\": \"Libya\"\n  },\n  {\n    \"deck_name\": \"North African Capitals - Beginner\",\n    \"question\": \"Which North African country has the capital Rabat?\",\n    \"answer\": \"Morocco\"\n  }\n]//\n\nGreat, I've created a new deck and saved those flashcards for you! You can review them anytime. Would you like to test your knowledge with a quick quiz next?",
+    "timestamp": "2025-09-08T22:57:13.176871"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "user",
+    "content": "Please create a flashcard deck about: capitals of eatern europe ",
+    "timestamp": "2025-09-08T22:58:14.556345"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "assistant",
+    "content": "Great! I'll create a new flashcard deck to help you learn the capitals of Eastern European countries. Here's the first set of flashcards to get us started.\n\n//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: [\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"deck_description\": \"A deck to learn the capital cities of Eastern European countries. Focuses on country-capital pairings.\",\n    \"question\": \"What is the capital city of Poland?\",\n    \"answer\": \"Warsaw\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Czechia?\",\n    \"answer\": \"Prague\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Hungary?\",\n    \"answer\": \"Budapest\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Slovakia?\",\n    \"answer\": \"Bratislava\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Romania?\",\n    \"answer\": \"Bucharest\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Bulgaria?\",\n    \"answer\": \"Sofia\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Ukraine?\",\n    \"answer\": \"Kyiv\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Belarus?\",\n    \"answer\": \"Minsk\"\n  },\n  {\n    \"deck_name\": \"Eastern European Capitals - Beginner\",\n    \"question\": \"What is the capital city of Moldova?\",\n    \"answer\": \"Chi\u0219in\u0103u\"\n  }\n]//\n\nGreat, I've created a new deck called **\"Eastern European Capitals - Beginner\"** and saved 9 flashcards for you! Let me know when you'd like to review them, take a quiz, or expand to include more countries (like the Baltic states or the Balkans).",
+    "timestamp": "2025-09-08T22:58:14.556345"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "user",
+    "content": "Please create a flashcard deck about: capitals of southern europe",
+    "timestamp": "2025-09-08T23:01:06.083259"
+  },
+  {
+    "user_id": "user-id",
+    "session_id": "session-id",
+    "role": "assistant",
+    "content": "Great idea! Learning the capitals of Southern Europe is a solid step toward mastering European geography. I'll create a new flashcard deck for you focused on country-capital pairings in Southern Europe.\n\n//ACTION: CREATE_FLASHCARDS// //FLASHCARDS_JSON: [\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"deck_description\": \"A deck to learn the capital cities of Southern European countries. Focuses on country-capital pairings.\",\n    \"question\": \"What is the capital of Italy?\",\n    \"answer\": \"Rome\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Spain?\",\n    \"answer\": \"Madrid\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Portugal?\",\n    \"answer\": \"Lisbon\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Greece?\",\n    \"answer\": \"Athens\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Croatia?\",\n    \"answer\": \"Zagreb\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Slovenia?\",\n    \"answer\": \"Ljubljana\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Malta?\",\n    \"answer\": \"Valletta\"\n  },\n  {\n    \"deck_name\": \"Southern European Capitals - Beginner\",\n    \"question\": \"What is the capital of Cyprus?\",\n    \"answer\": \"Nicosia\"\n  }\n]//\n\nGreat, I've created a new deck called **\"Southern European Capitals - Beginner\"** and saved 8 flashcards for you! Let me know when you'd like to review them or take a quiz.",
+    "timestamp": "2025-09-08T23:01:06.083259"
   }
 ]

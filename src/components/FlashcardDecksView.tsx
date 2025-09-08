@@ -207,8 +207,36 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
 
   const handleStudyDeck = (deck: Deck) => {
     setSelectedDeck(deck);
-    const studyCards = allFlashcards.filter(card => card.deck_id === deck.id);
-    setCardsForStudy(studyCards);
+    
+    const now = new Date();
+    const cardsToReview = allFlashcards.filter(card => {
+        if (card.deck_id !== deck.id) return false;
+
+        const lastReviewed = new Date(card.last_reviewed);
+        let dueDate = new Date(lastReviewed);
+
+        switch (card.difficulty) {
+            case "HARD":
+                dueDate.setDate(lastReviewed.getDate() + 1);
+                break;
+            case "MEDIUM":
+                dueDate.setDate(lastReviewed.getDate() + 3);
+                break;
+            case "EASY":
+                dueDate.setDate(lastReviewed.getDate() + 7);
+                break;
+            default:
+                return true; // If no difficulty, always include for review
+        }
+        return now >= dueDate;
+    });
+
+    if (cardsToReview.length === 0) {
+        toast.info(`No cards are currently due for review in "${deck.name}".`);
+        return;
+    }
+
+    setCardsForStudy(cardsToReview);
     setStudyModalOpen(true);
   };
 
@@ -394,7 +422,7 @@ export const FlashcardDecksView = ({ onDataChange, onSectionChange }: FlashcardD
                     </div>
                     <div className="pt-4 mt-auto">
                       <Button className="w-full" disabled={deck.reviewCards === 0} onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStudyDeck(deck); }}>
-                        {deck.reviewCards > 0 ? "Study Now" : "No Cards Due"}
+                        {deck.reviewCards > 0 ? `Study ${deck.reviewCards} card(s) now` : "No Cards Due"}
                       </Button>
                     </div>
                   </CardContent>

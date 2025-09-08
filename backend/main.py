@@ -421,18 +421,18 @@ def update_deck(deck_id):
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"error": "An unexpected error occurred."}, 500)
+        return jsonify({"error": "An unexpected error occurred."}), 500
 
 @app.route('/api/decks/<int:deck_id>', methods=['DELETE'])
 def delete_deck(deck_id):
     try:
         decks_tool = DecksTool()
         decks_tool.delete_deck(deck_id)
-        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."} ), 200
+        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."}), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"error": "An unexpected error occurred."}, 500)
+        return jsonify({"error": "An unexpected error occurred."}), 500
 
 # --- Flashcards API ---
 @app.route('/api/flashcards', methods=['GET'])
@@ -653,7 +653,28 @@ def chat():
             except Exception as e:
                 print(f"Error with Cerebras API: {e}")
                 yield "Sorry, I'm having trouble connecting to the text AI model."
-        
+
+        # --- START: Action Processing ---
+        # After the full response is generated, check for and execute actions.
+        try:
+            if "//ACTION: CREATE_QUIZ//" in full_response_content:
+                print("--- [ACTION] Detected CREATE_QUIZ ---")
+                # Extract the JSON part of the quiz
+                quiz_json_match = re.search(r'//QUIZ_JSON:\s*({.*?})//', full_response_content, re.DOTALL)
+                if quiz_json_match:
+                    quiz_json_str = quiz_json_match.group(1)
+                    quizz_tool = QuizzTool()
+                    quizz_tool.add_quiz(quiz_json_str)
+                    print("--- [ACTION] Quiz created successfully ---")
+                else:
+                    print("--- [ACTION ERROR] CREATE_QUIZ detected, but no valid QUIZ_JSON found ---")
+            
+            # Note: Add handlers for CREATE_FLASHCARDS etc. here in the future
+            
+        except Exception as e:
+            print(f"--- [ACTION ERROR] Failed to process AI action: {e} ---")
+        # --- END: Action Processing ---
+
         # --- Temporarily disable memory.add to avoid credit errors ---
         # try:
         #     memory.add(

@@ -645,5 +645,227 @@
     "time": 10,
     "completed_times": 0,
     "best_score": 0
+  },
+  {
+    "id": 11,
+    "title": "The Sun - Basic Knowledge Quiz",
+    "questions": [
+      {
+        "question_text": "What is the Sun primarily made of?",
+        "options": [
+          "Oxygen and nitrogen",
+          "Hydrogen and helium",
+          "Carbon and iron",
+          "Silicon and sulfur"
+        ],
+        "correct_answer": "Hydrogen and helium"
+      },
+      {
+        "question_text": "Which layer of the Sun is visible to us from Earth?",
+        "options": [
+          "Core",
+          "Radiative zone",
+          "Convective zone",
+          "Photosphere"
+        ],
+        "correct_answer": "Photosphere"
+      },
+      {
+        "question_text": "What process powers the Sun?",
+        "options": [
+          "Chemical combustion",
+          "Nuclear fission",
+          "Nuclear fusion",
+          "Electrical discharge"
+        ],
+        "correct_answer": "Nuclear fusion"
+      },
+      {
+        "question_text": "How long does it take for light from the Sun to reach Earth?",
+        "options": [
+          "About 8 seconds",
+          "About 8 minutes",
+          "About 8 hours",
+          "About 8 days"
+        ],
+        "correct_answer": "About 8 minutes"
+      },
+      {
+        "question_text": "What is the outermost layer of the Sun's atmosphere called?",
+        "options": [
+          "Lithosphere",
+          "Hydrosphere",
+          "Chromosphere",
+          "Corona"
+        ],
+        "correct_answer": "Corona"
+      },
+      {
+        "question_text": "Which of the following is NOT a feature of the Sun's surface?",
+        "options": [
+          "Sunspots",
+          "Solar flares",
+          "Prominences",
+          "Craters"
+        ],
+        "correct_answer": "Craters"
+      },
+      {
+        "question_text": "What force holds the Sun together?",
+        "options": [
+          "Electromagnetic force",
+          "Strong nuclear force",
+          "Gravity",
+          "Centrifugal force"
+        ],
+        "correct_answer": "Gravity"
+      },
+      {
+        "question_text": "The Sun's energy is generated in which layer?",
+        "options": [
+          "Photosphere",
+          "Chromosphere",
+          "Core",
+          "Corona"
+        ],
+        "correct_answer": "Core"
+      },
+      {
+        "question_text": "What do we call a sudden release of energy from the Sun's surface?",
+        "options": [
+          "Sunquake",
+          "Solar flare",
+          "Solar wind",
+          "Sunburst"
+        ],
+        "correct_answer": "Solar flare"
+      },
+      {
+        "question_text": "How long is the Sun expected to continue burning hydrogen?",
+        "options": [
+          "About 1 billion years",
+          "About 5 billion years",
+          "About 10 billion years",
+          "Forever"
+        ],
+        "correct_answer": "About 5 billion years"
+      }
+    ],
+    "difficulty": "MEDIUM",
+    "description": "Test your understanding of the Sun's structure, function, and role in the solar system.",
+    "time": 10,
+    "completed_times": 0,
+    "best_score": 0
+  },
+  {
+    "id": 12,
+    "title": "The Moon: Basics and Beyond",
+    "description": "Test your knowledge on Earth's natural satellite – the Moon. Covers phases, features, formation, and more.",
+    "difficulty": "MEDIUM",
+    "time": 8,
+    "questions": [
+      {
+        "question_text": "What is the Moon's primary source of light as seen from Earth?",
+        "options": [
+          "Nuclear fusion",
+          "Reflected sunlight",
+          "Volcanic glow",
+          "Bioluminescence"
+        ],
+        "correct_answer": "Reflected sunlight"
+      },
+      {
+        "question_text": "Which phase of the Moon occurs when it is located between the Earth and the Sun?",
+        "options": [
+          "Full Moon",
+          "First Quarter",
+          "New Moon",
+          "Last Quarter"
+        ],
+        "correct_answer": "New Moon"
+      },
+      {
+        "question_text": "What are the large, dark, flat areas on the Moon's surface called?",
+        "options": [
+          "Mountains",
+          "Craters",
+          "Maria",
+          "Trenches"
+        ],
+        "correct_answer": "Maria"
+      },
+      {
+        "question_text": "How long does it take the Moon to complete one orbit around Earth?",
+        "options": [
+          "About 24 hours",
+          "About 7 days",
+          "About 27.3 days",
+          "About 365 days"
+        ],
+        "correct_answer": "About 27.3 days"
+      },
+      {
+        "question_text": "Which theory is most widely accepted for the Moon's formation?",
+        "options": [
+          "Capture Theory",
+          "Fission Theory",
+          "Co-formation Theory",
+          "Giant Impact Hypothesis"
+        ],
+        "correct_answer": "Giant Impact Hypothesis"
+      },
+      {
+        "question_text": "What causes tides on Earth?",
+        "options": [
+          "Earth's rotation",
+          "Wind patterns",
+          "The Moon's gravitational pull",
+          "Ocean currents"
+        ],
+        "correct_answer": "The Moon's gravitational pull"
+      },
+      {
+        "question_text": "Why do we always see the same side of the Moon from Earth?",
+        "options": [
+          "The Moon doesn't rotate",
+          "The Moon's rotation and orbital period are synchronized",
+          "The Moon orbits Earth too quickly",
+          "Earth's gravity blocks the other side"
+        ],
+        "correct_answer": "The Moon's rotation and orbital period are synchronized"
+      },
+      {
+        "question_text": "What is the Moon's atmosphere called?",
+        "options": [
+          "Thick troposphere",
+          "Ionosphere",
+          "Exosphere",
+          "Stratosphere"
+        ],
+        "correct_answer": "Exosphere"
+      },
+      {
+        "question_text": "Which of these is NOT a phase of the Moon?",
+        "options": [
+          "Waxing Crescent",
+          "Full Moon",
+          "Waning Eclipse",
+          "Last Quarter"
+        ],
+        "correct_answer": "Waning Eclipse"
+      },
+      {
+        "question_text": "Who was the first human to walk on the Moon?",
+        "options": [
+          "Yuri Gagarin",
+          "Buzz Aldrin",
+          "Neil Armstrong",
+          "Michael Collins"
+        ],
+        "correct_answer": "Neil Armstrong"
+      }
+    ],
+    "completed_times": 0,
+    "best_score": 0
   }
 ]

@@ -53,7 +53,7 @@ config = {
         "config": {
             "api_key": os.environ.get("OPENROUTER_API_KEY"),
             "openai_base_url": "https://openrouter.ai/api/v1",
-            "model": "openrouter/auto"
+            "model": "google/gemma-3-27b-it:free"
         }
     }
 }
@@ -144,10 +144,10 @@ def upload_file():
 @app.route('/api/import', methods=['POST'])
 def import_deck():
     if 'file' not in request.files:
-        return jsonify({"error": "No file part in the request."}), 400
+        return jsonify({"error": "No file part in the request."}, 400)
     file = request.files['file']
     if file.filename == '':
-        return jsonify({"error": "No file selected."}), 400
+        return jsonify({"error": "No file selected."}, 400)
 
     filename = secure_filename(file.filename)
     deck_name_from_file, file_ext = os.path.splitext(filename)
@@ -182,14 +182,14 @@ def import_deck():
                     imported_decks_count += 1
                 
                 if imported_decks_count == 0:
-                    return jsonify({"error": "No valid decks found in the JSON array."}), 400
+                    return jsonify({"error": "No valid decks found in the JSON array."}, 400)
                 
                 return jsonify({"message": f"{imported_decks_count} decks imported successfully"}), 201
 
             # Case 2: Single deck import (dict)
             elif isinstance(data, dict):
                 if 'name' not in data or 'flashcards' not in data:
-                    return jsonify({"error": "Invalid JSON format for single deck. 'name' and 'flashcards' keys are required."}), 400
+                    return jsonify({"error": "Invalid JSON format for single deck. 'name' and 'flashcards' keys are required."}, 400)
                 
                 deck_name = data.get('name', deck_name_from_file)
                 description = data.get('description', '')
@@ -205,7 +205,7 @@ def import_deck():
                 return jsonify({"message": "Deck imported successfully", "deck_id": new_deck.id}), 201
             
             else:
-                return jsonify({"error": "Invalid JSON structure. Must be an object or a list of objects."}), 400
+                return jsonify({"error": "Invalid JSON structure. Must be an object or a list of objects."}, 400)
 
         elif file_ext == '.csv':
             file_content = file.read().decode('utf-8')
@@ -214,11 +214,11 @@ def import_deck():
             
             fieldnames = reader.fieldnames
             if not fieldnames:
-                 return jsonify({"error": "CSV file is empty or headers are missing."}), 400
+                 return jsonify({"error": "CSV file is empty or headers are missing."}, 400)
 
             expected_headers = ['question', 'answer']
             if not all(h in fieldnames for h in expected_headers):
-                 return jsonify({"error": f"Invalid CSV format. Required headers are: {', '.join(expected_headers)}."}), 400
+                 return jsonify({"error": f"Invalid CSV format. Required headers are: {', '.join(expected_headers)}."}, 400)
 
             # Case 1: Batch import from CSV (deck_name column exists)
             if 'deck_name' in fieldnames:
@@ -234,7 +234,7 @@ def import_deck():
                     })
 
                 if not decks_with_cards:
-                    return jsonify({"error": "No valid deck entries found in CSV file."}), 400
+                    return jsonify({"error": "No valid deck entries found in CSV file."}, 400)
 
                 imported_decks_count = 0
                 for deck_name, flashcards_to_add in decks_with_cards.items():
@@ -258,7 +258,7 @@ def import_deck():
                     })
                 
                 if not flashcards_to_add:
-                    return jsonify({"error": "No flashcards found in the file."}), 400
+                    return jsonify({"error": "No flashcards found in the file."}, 400)
                 
                 new_deck = decks_tool.add_deck({"name": deck_name_from_file, "description": ""})
 
@@ -269,10 +269,10 @@ def import_deck():
                 return jsonify({"message": "Deck imported successfully from CSV", "deck_id": new_deck.id}), 201
 
         else:
-            return jsonify({"error": "Unsupported file format. Please upload a .json or .csv file."}), 400
+            return jsonify({"error": "Unsupported file format. Please upload a .json or .csv file."}, 400)
 
     except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON file content."}), 400
+        return jsonify({"error": "Invalid JSON file content."}, 400)
     except Exception as e:
         print(f"Error importing deck: {e}")
         return jsonify({"error": str(e)}), 500
@@ -285,7 +285,7 @@ def export_decks_batch():
         file_format = data.get('format', 'json').lower()
 
         if not deck_ids or not isinstance(deck_ids, list):
-            return jsonify({"error": "A list of 'deck_ids' is required."}), 400
+            return jsonify({"error": "A list of 'deck_ids' is required."}, 400)
 
         decks_tool = DecksTool()
         flash_cards_tool = FlashCardsTool()
@@ -306,7 +306,7 @@ def export_decks_batch():
                     all_flashcards_data.append(card_copy)
 
         if not all_decks_data:
-            return jsonify({"error": "None of the provided deck IDs were found."}), 404
+            return jsonify({"error": "None of the provided deck IDs were found."}, 404)
         
         # Sanitize filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -345,7 +345,7 @@ def export_decks_batch():
 
     except Exception as e:
         print(f"Error during batch export: {e}")
-        return jsonify({"error": "An internal error occurred during batch export."}), 500
+        return jsonify({"error": "An internal error occurred during batch export."}, 500)
 
 
 @app.route('/api/decks/<int:deck_id>/export/<string:file_format>', methods=['GET'])
@@ -459,18 +459,18 @@ def update_deck(deck_id):
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        return jsonify({"error": "An unexpected error occurred."}, 500)
 
 @app.route('/api/decks/<int:deck_id>', methods=['DELETE'])
 def delete_deck(deck_id):
     try:
         decks_tool = DecksTool()
         decks_tool.delete_deck(deck_id)
-        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."}), 200
+        return jsonify({"message": f"Deck with ID {deck_id} and its flashcards have been deleted."}, 200)
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        return jsonify({"error": "An unexpected error occurred."}, 500)
 
 # --- Flashcards API ---
 @app.route('/api/flashcards', methods=['GET'])
@@ -617,18 +617,6 @@ def chat():
     def generate():
         full_response_content = ""
         
-        # try:
-        #     search_results = memory.search(query=str(latest_user_message), user_id=user_id)
-        #     if search_results and search_results.get("results"):
-        #         relevant_memories = [entry['memory'] for entry in search_results["results"]]
-        #     else:
-        #         relevant_memories = []
-        # except Exception as e:
-        #     print(f"Memory search failed: {e}")
-        #     relevant_memories = []
-        # memory_context = "\n".join(relevant_memories)
-        # print(memory_context)
-
         decks = get_decks_from_cache()
         decks_json_string = json.dumps(decks, indent=2)
         system_prompt_content = get_socratic_tutor_prompt(
@@ -636,8 +624,7 @@ def chat():
             flashcard_decks=decks_json_string
         )
         system_prompt = {"role": "system", "content": system_prompt_content}
-        api_messages = [system_prompt] + conversation_history
-
+        
         # Determine if we have an image to process
         image_url = None
         question = ""
@@ -650,76 +637,67 @@ def chat():
                 elif part.get('type') == 'text':
                     text_parts.append(part['text'])
             question = " ".join(text_parts)
-
+        
         if image_url:
-            try:
-                if not question:
-                    question = "What is in this image?"
-                full_response_content = analyze_image_with_openrouter(image_url=image_url, question=question)
-                yield full_response_content
-            except Exception as e:
-                print(f"Error analyzing image: {e}")
-                yield "Sorry, I was unable to analyze the image."
+            # Directly use the multimodal capabilities of the model
+            api_messages = [system_prompt] + conversation_history
         else:
-            try:
-                # --- START FIX: Convert message content to string for Cerebras ---
-                string_api_messages = []
-                for msg in api_messages:
-                    new_msg = msg.copy()
-                    if isinstance(new_msg['content'], list):
-                        text_content = " ".join(part['text'] for part in new_msg['content'] if part.get('type') == 'text' and part.get('text'))
-                        new_msg['content'] = text_content
-                    string_api_messages.append(new_msg)
-                # --- END FIX ---
+            api_messages = [system_prompt] + conversation_history
 
-                client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
-                stream = client.chat.completions.create(
-                    messages=string_api_messages,
-                    model="qwen-3-235b-a22b-instruct-2507",
-                    stream=True,
-                    max_completion_tokens=20000,
-                    temperature=0.7,
-                    top_p=0.8
-                )
+        try:
+            client = OpenAI(
+                api_key=os.environ.get("OPENROUTER_API_KEY"),
+                base_url="https://openrouter.ai/api/v1"
+            )
+            
+            # Use a model that supports multimodal inputs directly
+            stream = client.chat.completions.create(
+                messages=api_messages,
+                model="google/gemma-3-27b-it:free", # Or another capable multimodal model
+                stream=True,
+                max_tokens=4096,
+                temperature=0.7,
+                top_p=0.8
+            )
 
-                for chunk in stream:
-                    content = chunk.choices[0].delta.content
-                    if content:
-                        full_response_content += content
-                        yield content
+            for chunk in stream:
+                content = chunk.choices[0].delta.content
+                if content:
+                    full_response_content += content
+                    yield content
 
-            except Exception as e:
-                print(f"Error with Cerebras API: {e}")
-                yield "Sorry, I'm having trouble connecting to the text AI model."
+        except Exception as e:
+            print(f"Error with OpenRouter API: {e}")
+            yield "Sorry, I'm having trouble connecting to the AI model."
 
         # --- START: Action Processing ---
         # After the full response is generated, check for and execute actions.
         try:
             # Handler for CREATE_FLASHCARDS
             if "//ACTION: CREATE_FLASHCARDS//" in full_response_content:
-                print("--- [ACTION] Detected CREATE_FLASHCARDS ---")
+                print("---" + "[ACTION] Detected CREATE_FLASHCARDS" + "---")
                 flashcards_json_match = re.search(r'//FLASHCARDS_JSON:\s*(\[.*?\]|\{.*?\})//', full_response_content, re.DOTALL)
                 if flashcards_json_match:
                     flashcards_json_str = flashcards_json_match.group(1)
                     FlashCardsTool().add_flash_cards(flashcards_json_str)
-                    print(f"--- [ACTION] Flashcards processed successfully ---")
+                    print(f"---" + "[ACTION] Flashcards processed successfully" + "---")
                 else:
-                    print("--- [ACTION ERROR] CREATE_FLASHCARDS detected, but no valid FLASHCARDS_JSON found ---")
+                    print("---" + "[ACTION ERROR] CREATE_FLASHCARDS detected, but no valid FLASHCARDS_JSON found" + "---")
 
             if "//ACTION: CREATE_QUIZ//" in full_response_content:
-                print("--- [ACTION] Detected CREATE_QUIZ ---")
+                print("---" + "[ACTION] Detected CREATE_QUIZ" + "---")
                 # Extract the JSON part of the quiz
-                quiz_json_match = re.search(r'//QUIZ_JSON:\s*({.*?})//', full_response_content, re.DOTALL)
+                quiz_json_match = re.search(r'//QUIZ_JSON:\s*(\{.*?\})//', full_response_content, re.DOTALL)
                 if quiz_json_match:
                     quiz_json_str = quiz_json_match.group(1)
                     quizz_tool = QuizzTool()
                     quizz_tool.add_quiz(quiz_json_str)
-                    print("--- [ACTION] Quiz created successfully ---")
+                    print("---" + "[ACTION] Quiz created successfully" + "---")
                 else:
-                    print("--- [ACTION ERROR] CREATE_QUIZ detected, but no valid QUIZ_JSON found ---")
+                    print("---" + "[ACTION ERROR] CREATE_QUIZ detected, but no valid QUIZ_JSON found" + "---")
             
         except Exception as e:
-            print(f"--- [ACTION ERROR] Failed to process AI action: {e} ---")
+            print(f"---" + "[ACTION ERROR] Failed to process AI action: {e}" + "---")
         # --- END: Action Processing ---
 
         # --- Temporarily disable memory.add to avoid credit errors ---
@@ -745,6 +723,7 @@ def chat():
             print(f"Saving chat history transcript failed: {e}")
 
     return Response(generate(), mimetype='text/plain')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

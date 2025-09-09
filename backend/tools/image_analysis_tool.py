@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def analyze_image_with_openrouter(image_url: str, question: str = "What is in this image?") -> str:
+def analyze_image_with_openrouter(image_url: str, question: str = None) -> str:
     """
     Analyzes an image using the Qwen 2.5 VL model from OpenRouter.
 
@@ -16,6 +16,9 @@ def analyze_image_with_openrouter(image_url: str, question: str = "What is in th
     Returns:
         The text extracted from the image.
     """
+    if not question:
+        question = "What is in this image?"
+        
     payload = {
         "model": "google/gemma-3-27b-it:free",
         "messages": [

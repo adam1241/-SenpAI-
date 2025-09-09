@@ -6,6 +6,7 @@ import multer from 'multer';
 import OpenAI from "openai";
 import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
+import FormData from 'form-data';
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // Configure multer for file uploads
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
@@ -26,7 +27,7 @@ const upload = multer({
 const personalityConfigs = {
   calm: {
     name: 'Winie',
-    systemPrompt: 'You are Winie, a direct and supportive tutor. Give specific, actionable advice immediately. Skip explanations, get straight to the solution. Ask one clear follow-up question to check understanding. When including mathematical expressions, formulas, or equations, use $$ $$ for display mode (e.g., $$x^2 + y^2 = z^2$$) and $ $ for inline mode (e.g., The variable $x$ represents the unknown).',
+    systemPrompt: 'You are Winie, a direct and supportive tutor. Give specific, actionable advice immediately. Skip explanations, get straight to the solution. Ask one clear follow-up question to check understanding. When including mathematical expressions, formulas, or equations, use $ $ for display mode (e.g., $x^2 + y^2 = z^2$) and $ $ for inline mode (e.g., The variable $x$ represents the unknown).',
     voiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella - natural, warm female voice (non-robotic)
     voiceSettings: {
       stability: 0.65,
@@ -37,7 +38,7 @@ const personalityConfigs = {
   },
   angry: {
     name: 'Machinegun',
-    systemPrompt: 'You are Machinegun, an intense drill instructor. Give rapid-fire commands with zero fluff. Be brutally direct, demand immediate action. Use caps for emphasis when needed. When including mathematical expressions, formulas, or equations, use $$ $$ for display mode (e.g., $$\frac{dy}{dx} = 2x$$) and $ $ for inline mode (e.g., Solve for $x$ NOW!).',
+    systemPrompt: 'You are Machinegun, an intense drill instructor. Give rapid-fire commands with zero fluff. Be brutally direct, demand immediate action. Use caps for emphasis when needed. When including mathematical expressions, formulas, or equations, use $ $ for display mode (e.g., $\frac{dy}{dx} = 2x$) and $ $ for inline mode (e.g., Solve for $x$ NOW!).',
     voiceId: 'OoML9dLqnpgIRHTDbYtV', // Your custom angry voice
     voiceSettings: {
       stability: 0.5,
@@ -48,7 +49,7 @@ const personalityConfigs = {
   },
   cool: {
     name: 'Blabla Teacher',
-    systemPrompt: 'You are Blabla Teacher, a fact-focused educator. Lead with interesting facts, then give direct instructions. Be enthusiastic but concise. Focus on delivering knowledge, not small talk. When including mathematical expressions, formulas, or equations, use $$ $$ for display mode (e.g., $$E = mc^2$$) and $ $ for inline mode (e.g., Einstein\'s famous equation relates energy $E$ to mass $m$).',
+    systemPrompt: 'You are Blabla Teacher, a fact-focused educator. Lead with interesting facts, then give direct instructions. Be enthusiastic but concise. Focus on delivering knowledge, not small talk. When including mathematical expressions, formulas, or equations, use $ $ for display mode (e.g., $E = mc^2$) and $ $ for inline mode (e.g., Einstein\'s famous equation relates energy $E$ to mass $m$).',
     voiceId: 'cOaTizLZVRcqrsAePZzS', // Your custom cool voice
     voiceSettings: {
       stability: 0.6,
@@ -59,7 +60,7 @@ const personalityConfigs = {
   },
   lazy: {
     name: 'Sad Fish',
-    systemPrompt: 'You are Sad Fish, a melancholic but insightful tutor. Start with a sigh, then give direct observations and suggestions. Be contemplative but get to the point quickly. When including mathematical expressions, formulas, or equations, use $$ $$ for display mode (e.g., $$\int_0^\infty e^{-x} dx = 1$$) and $ $ for inline mode (e.g., *sigh* The integral $\int f(x)dx$ represents the area under the curve).',
+    systemPrompt: 'You are Sad Fish, a melancholic but insightful tutor. Start with a sigh, then give direct observations and suggestions. Be contemplative but get to the point quickly. When including mathematical expressions, formulas, or equations, use $ $ for display mode (e.g., $\int_0^\infty e^{-x} dx = 1$) and $ $ for inline mode (e.g., *sigh* The integral $\int f(x)dx$ represents the area under the curve).',
     voiceId: 'NIKgtLkviZtZa2AazMVa', // Your custom sad voice
     voiceSettings: {
       stability: 0.8,
@@ -70,114 +71,15 @@ const personalityConfigs = {
   }
 };
 
-// OpenAI API client
-class OpenAICanvasAnalysisClient{
-
+// OpenRouter API client
+class OpenRouterClient {
   constructor() {
-    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here') {
-      this.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-    } else {
-      console.warn('⚠️  OpenAI API key not configured. Canvas analysis will use fallback OCR only.');
-      this.openai = null;
-    }
-  }
-
-  async analyzeCanvasImage(imageBuffer) {
-    if (!this.openai) {
-      console.log('OpenAI not available, skipping vision analysis');
-      return {
-        analysis: '',
-        hasContent: false,
-        confidence: 0,
-        error: 'OpenAI API key not configured'
-      };
-    }
-
-    try {
-      // Convert buffer to base64 data URL
-      const base64Image = imageBuffer.toString('base64');
-      const imageDataUrl = `data:image/png;base64,${base64Image}`;
-
-      const prompt =  `You are analyzing a student's mathematical work on a digital canvas. Your job is to interpret what the student has written/drawn as mathematical expressions.
-
-      **CRITICAL: Always assume the student is writing mathematics. Interpret all marks, lines, and symbols as mathematical notation.**
-      IMPORTANT: If this looks like mathematical notation (equations, derivatives like dV/dt, integrals, etc.), interpret it as advanced mathematics including differential equations, calculus, or algebra.
-      
-      **OUTPUT FORMAT: Use LaTeX notation for all mathematical expressions enclosed in \\( \\) for inline math.**
-      
-      Look at this image and tell me exactly what mathematical expression or equation the student has written. Consider:
-      
-      - Intersecting lines = "×" (multiplication) or variable "X" 
-      - Horizontal lines = "=" (equals) or "-" (minus/subtraction)
-      - Single letters = variables (a, b, c, x, y, z, etc.)
-      - Curved lines = parentheses, fractions, or other math symbols
-      - Positioning = mathematical relationships (like "x = " or "2 + 3")
-      - Derivatives should be written as \\(\\frac{dV}{dt}\\) or \\(V'(t)\\)
-      - Integrals should be written as \\(\\int f(x) dx\\)
-      - Fractions should be written as \\(\\frac{a}{b}\\)
-      
-      **Respond in this format:**
-      "The student has written: \\([LaTeX mathematical expression]\\)"
-      
-      If you see multiple expressions or steps, list them as:
-      "The student has written: \\([expression 1]\\), \\([expression 2]\\)"
-      
-      If the expression appears incomplete, say:
-      "The student appears to be writing: \\([partial LaTeX expression]\\) (incomplete)"
-      
-      Do NOT describe it as drawings or abstract shapes. Always interpret it as mathematics that the student is trying to express, even if roughly drawn.`;
-
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { 
-              type: "image_url", 
-              image_url: {
-                url: imageDataUrl,
-                detail: "high"
-              }
-            }
-          ]
-        }],
-        max_tokens: 800,
-        temperature: 0.1
-      });
-
-      return {
-        analysis: response.choices[0].message.content,
-        hasContent: true,
-        confidence: 95 // GPT-4o vision is generally very reliable
-      };
-
-    } catch(error) {
-      console.error("OpenAI Vision Error:", error);
-      return {
-        analysis: '',
-        hasContent: false,
-        confidence: 0,
-        error: error.message
-      };
-    }
-  }
-  
-}
-
-
-
-// Cerebras API client
-class CerebrasClient {
-  constructor() {
-    this.apiKey = process.env.CEREBRAS_API_KEY;
-    this.baseUrl = process.env.CEREBRAS_BASE_URL || 'https://api.cerebras.ai/v1';
-    this.isConfigured = this.apiKey && this.apiKey !== 'your_cerebras_api_key_here';
+    this.apiKey = process.env.OPENROUTER_API_KEY;
+    this.baseUrl = 'https://openrouter.ai/api/v1';
+    this.isConfigured = this.apiKey && this.apiKey !== 'your_openrouter_api_key_here';
     
     if (!this.isConfigured) {
-      console.warn('⚠️  Cerebras API key not configured. AI responses will use fallback mode.');
+      console.warn('⚠️  OpenRouter API key not configured. AI responses will use fallback mode.');
     }
   }
 
@@ -185,7 +87,7 @@ class CerebrasClient {
     if (!this.isConfigured) {
       // Fallback response when API key is not configured
       const fallbackResponses = [
-        "I'd love to help you learn! However, my AI brain needs to be connected with an API key. Please configure the CEREBRAS_API_KEY in your .env file to unlock my full potential!",
+        "I'd love to help you learn! However, my AI brain needs to be connected with an API key. Please configure the OPENROUTER_API_KEY in your .env file to unlock my full potential!",
         "I see you're working hard! To give you personalized tutoring, please add your API keys to the server/.env file.",
         "Great question! I need my API connection configured to provide detailed help. Check the setup instructions for API keys."
       ];
@@ -208,7 +110,7 @@ class CerebrasClient {
       }
 
       const response = await axios.post(`${this.baseUrl}/chat/completions`, {
-        model: 'llama3.1-8b',
+        model: 'openrouter/sonoma-dusk-alpha',
         messages: finalMessages,
         max_tokens: 500,
         temperature: 0.7,
@@ -222,11 +124,110 @@ class CerebrasClient {
 
       return response.data.choices[0].message.content;
     } catch (error) {
-      console.error('Cerebras API Error:', error.response?.data || error.message);
+      console.error('OpenRouter API Error:', error.response?.data || error.message);
       throw new Error('Failed to generate AI response');
     }
   }
+
+  async analyzeCanvasImage(imageBuffer) {
+    if (!this.isConfigured) {
+      console.log('OpenRouter not available, skipping vision analysis');
+      return {
+        analysis: '',
+        hasContent: false,
+        confidence: 0,
+        error: 'OpenRouter API key not configured'
+      };
+    }
+
+    try {
+      const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
+      if (!IMGBB_API_KEY) {
+        throw new Error('IMGBB_API_KEY environment variable is not set');
+      }
+
+      const form = new FormData();
+      form.append('image', imageBuffer, {
+        filename: 'canvas.png',
+        contentType: 'image/png',
+      });
+
+      const response = await axios.post(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, form, {
+        headers: form.getHeaders(),
+      });
+
+      const result = response.data;
+      if (result.success) {
+          const imageUrl = result.data.url;
+          console.log(`--- [IMGBB UPLOAD] Generated file URL: ${imageUrl} ---`);
+          
+          const analysisResponse = await this.generateResponse([
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `You are analyzing a student's mathematical work on a digital canvas. Your job is to interpret what the student has written/drawn as mathematical expressions.
+
+                  **CRITICAL: Always assume the student is writing mathematics. Interpret all marks, lines, and symbols as mathematical notation.**
+                  IMPORTANT: If this looks like mathematical notation (equations, derivatives like dV/dt, integrals, etc.), interpret it as advanced mathematics including differential equations, calculus, or algebra.
+                  
+                  **OUTPUT FORMAT: Use LaTeX notation for all mathematical expressions enclosed in \( \) for inline math.**
+                  
+                  Look at this image and tell me exactly what mathematical expression or equation the student has written. Consider:
+                  
+                  - Intersecting lines = "×" (multiplication) or variable "X"
+                  - Horizontal lines = "=" (equals) or "-" (minus/subtraction)
+                  - Single letters = variables (a, b, c, x, y, z, etc.)
+                  - Curved lines = parentheses, fractions, or other math symbols
+                  - Positioning = mathematical relationships (like "x = " or "2 + 3")
+                  - Derivatives should be written as \(\frac{dV}{dt}\) or \(V'(t)\)
+                  - Integrals should be written as \(\int f(x) dx\)
+                  - Fractions should be written as \(\frac{a}{b}\)
+                  
+                  **Respond in this format:**
+                  "The student has written: \([LaTeX mathematical expression]\)"
+                  
+                  If you see multiple expressions or steps, list them as:
+                  "The student has written: \([expression 1]\), \([expression 2]\)"
+                  
+                  If the expression appears incomplete, say:
+                  "The student appears to be writing: \([partial LaTeX expression]\) (incomplete)"
+                  
+                  Do NOT describe it as drawings or abstract shapes. Always interpret it as mathematics that the student is trying to express, even if roughly drawn.`
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: imageUrl,
+                  },
+                },
+              ],
+            },
+          ]);
+
+          return {
+            analysis: analysisResponse,
+            hasContent: true,
+            confidence: 95
+          };
+      } else {
+          const errorMessage = result.error.message;
+          console.log(`--- [IMGBB UPLOAD ERROR] ${errorMessage} ---`);
+          throw new Error(`Failed to upload to imgbb: ${errorMessage}`);
+      }
+    } catch(error) {
+      console.error("Imgbb or Vision Error:", error);
+      return {
+        analysis: '',
+        hasContent: false,
+        confidence: 0,
+        error: error.message
+      };
+    }
+  }
 }
+
 
 // ElevenLabs API client
 class ElevenLabsClient {
@@ -344,7 +345,7 @@ class OCRService {
     let cleaned = rawText
       .replace(/\n+/g, ' ')  // Replace multiple newlines with space
       .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
-      .replace(/[^\w\s\+\-\=\(\)\[\]\{\}\/\*\^\√\∫\∑\∏\π\θ\α\β\γ\δ\ε\ζ\η\λ\μ\ν\ξ\ρ\σ\τ\φ\χ\ψ\ω\.,!?:;]/g, '') // Remove OCR artifacts
+      .replace(/[^ -]/g, '') // Remove non-ASCII characters
       .trim();
     
     // Remove repetitive patterns (common OCR issue)
@@ -413,9 +414,9 @@ class OCRService {
 }
 
 // Initialize clients
-const cerebrasClient = new CerebrasClient();
+const openRouterClient = new OpenRouterClient();
 const elevenLabsClient = new ElevenLabsClient();
-const openAICanvasClient = new OpenAICanvasAnalysisClient();
+
 
 // Routes
 
@@ -444,8 +445,8 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    // Generate text response using Cerebras
-    const textResponse = await cerebrasClient.generateResponse(messages, personality);
+    // Generate text response using OpenRouter
+    const textResponse = await openRouterClient.generateResponse(messages, personality);
 
     const response = {
       message: textResponse,
@@ -469,7 +470,7 @@ app.post('/api/chat', async (req, res) => {
     res.json(response);
   } catch (error) {
     console.error('Chat endpoint error:', error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process chat request',
       details: error.message 
     });
@@ -495,7 +496,7 @@ app.post('/api/voice', async (req, res) => {
     res.send(audioBuffer);
   } catch (error) {
     console.error('Voice endpoint error:', error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to generate voice',
       details: error.message 
     });
@@ -513,160 +514,70 @@ app.post('/api/analyze-canvas', upload.single('canvas'), async (req, res) => {
 
     let analysisPrompt = '';
     let ocrResult = null;
+    let messages;
 
     if (req.file) {
-      // Canvas image was uploaded - use OpenAI Vision with OCR fallback
+      // Canvas image was uploaded - use OpenRouter Vision with OCR fallback
       console.log('Canvas image received:', {
         filename: req.file.filename,
         size: req.file.size,
         mimetype: req.file.mimetype,
-        analysisMethod: 'OpenAI Vision (with OCR fallback)'
+        analysisMethod: 'OpenRouter Vision (with OCR fallback)'
       });
       
-      // Try OpenAI GPT-4o vision first
-      console.log('🤖 Using OpenAI Vision for canvas analysis...');
-      const visionResult = await openAICanvasClient.analyzeCanvasImage(req.file.buffer);
+      // Try OpenRouter gemma3 vision first
+      console.log('🤖 Using OpenRouter Vision for canvas analysis...');
+      const visionResult = await openRouterClient.analyzeCanvasImage(req.file.buffer);
       
       if (visionResult.hasContent) {
-        console.log('✅ OpenAI Vision analysis completed');
+        console.log('✅ OpenRouter Vision analysis completed');
         console.log('📝 Vision analysis:', visionResult.analysis);
         
-        // Create Socratic analysis prompt
-        const socraticPrompt = `You are a Socratic tutor. Your goal is to help a student learn by asking guiding questions. You must not give direct answers.
+        // Use the system prompt based on the selected personality
+        const config = personalityConfigs[personality];
+        analysisPrompt = config.systemPrompt;
 
-A student has been working on a canvas. Below is an analysis of what the student has drawn/written, provided by OpenAI Vision to help you understand their work:
-
-OpenAI Vision Analysis of Student's Canvas Work:
+        // Add vision analysis or OCR extracted text to the user message
+        let userContent = `A student has been working on a canvas. Here is an analysis of what the student has drawn/written:
 ---
 ${visionResult.analysis}
 ---
-
-Your task is to respond to the student based on what they've actually created on the canvas. Follow these rules strictly:
-1. **NEVER give the final answer or a direct solution.**
-2. **ALWAYS respond with a question.** Your question should guide the student to think for themselves.
-3. If the student's work is correct, ask a question that prompts them to explain their reasoning or consider the next step (e.g., "That looks right. Can you explain why you did it that way?" or "Great start. What do you think the next step is?").
-4. If the student's work is incorrect, ask a question that helps them spot their own error (e.g., "Are you sure about that step? What happens if you try to verify it?" or "I see what you did there. What was your thinking for that part?").
-5. If the student's work is a question, guide them to find the answer themselves (e.g., "That's a good question. What have you tried so far?" or "How could you break that problem down into smaller pieces?").
-6. Keep your response concise and focused on a single guiding question.`;
-        analysisPrompt = socraticPrompt;
+`;
 
         if (description) {
-          analysisPrompt += `\n\nAdditional context from student: ${description}`;
+          userContent += `
+
+Additional context from student: ${description}`;
         }
         
         ocrResult = {
           text: visionResult.analysis,
           confidence: visionResult.confidence,
           hasContent: true,
-          method: 'openai-vision'
+          method: 'openrouter-vision'
         };
         
-      } else {
-        // Fallback to OCR if OpenAI Vision fails
-        console.log('⚠️ OpenAI Vision failed, falling back to OCR...');
-        console.log('🔍 Using OCR for text extraction...');
-        ocrResult = await OCRService.extractTextFromImage(req.file.buffer);
-        
-        if (ocrResult.hasContent) {
-        console.log(`📝 OCR extracted text: "${ocrResult.text}"`);
-        console.log(`🎯 OCR confidence: ${ocrResult.confidence}%`);
-        
-        const contentType = OCRService.detectContentType(ocrResult.text);
-        console.log(`🔍 Content type detected: ${contentType}`);
-        
-        // Create Socratic analysis prompt
-        const socraticPrompt = `You are a Socratic tutor. Your goal is to help a student learn by asking guiding questions. You must not give direct answers.
-
-A student has been working on a canvas, and an analysis of their work is below.
-
-Student's work:
----
-${ocrResult.text}
----
-
-Your task is to respond to the student based on their work. Follow these rules strictly:
-1. **NEVER give the final answer or a direct solution.**
-2. **ALWAYS respond with a question.** Your question should guide the student to think for themselves.
-3. If the student's work is correct, ask a question that prompts them to explain their reasoning or consider the next step (e.g., "That looks right. Can you explain why you did it that way?" or "Great start. What do you think the next step is?").
-4. If the student's work is incorrect, ask a question that helps them spot their own error (e.g., "Are you sure about that step? What happens if you try to verify it?" or "I see what you did there. What was your thinking for that part?").
-5. If the student's work is a question, guide them to find the answer themselves (e.g., "That's a good question. What have you tried so far?" or "How could you break that problem down into smaller pieces?").
-6. Keep your response concise (1-3 sentences) and focused on a single guiding question.`;
-        analysisPrompt = socraticPrompt;
-        
-        if (description) {
-          analysisPrompt += `\n\nAdditional context: ${description}`;
-        }
-        
-      } else {
-        // No text extracted - check if canvas is actually empty or just no readable text
-        console.log('⚠️ No text extracted from canvas');
-        
-        // Instead of trying to analyze non-existent visual content, ask for clarification
-        analysisPrompt = `I notice you've asked me to analyze your canvas work, but I'm not able to detect any clear text or recognizable content that I can provide meaningful feedback on.
-
-This could mean:
-- The canvas might be empty or contain very light/unclear markings
-- You might have drawn something that's difficult for me to interpret
-- There might be technical issues with the image processing
-
-Could you try:
-1. Drawing or writing something more clearly on the canvas
-2. Using darker strokes or larger text
-3. Writing a specific question or problem you'd like help with
-
-I'm here to help with math problems, questions, notes, or any learning content you'd like to work on together!`;
-        
-        if (description) {
-          analysisPrompt += `\n\nYou mentioned: ${description}. Can you elaborate on what you're trying to work on?`;
-        }
-        }
+        messages = [
+          {
+            role: 'system',
+            content: analysisPrompt
+          },
+          {
+            role: 'user',
+            content: userContent
+          }
+        ];
       }
-    } else if (triggerReason) {
-      // This is a live commentary request - act like a real teacher
-      analysisPrompt = `You are a teacher standing next to a student. `;
-      switch (triggerReason) {
-        case 'math_content_detected':
-          analysisPrompt += `The student wrote: "${extractedText}". Act like a real math teacher: Check if this is correct, point out any errors you see, ask what their next step should be, or guide them to think deeper about the problem. If it's wrong, tell them specifically what's wrong and ask a question to help them figure out the right approach.`;
-          break;
-        case 'question_detected':
-          analysisPrompt += `The student wrote a question: "${extractedText}". Don't answer directly. Instead, ask them what they think, what they've tried so far, or guide them to break down the question into smaller parts they can solve.`;
-          break;
-        case 'learning_content_detected':
-          analysisPrompt += `Student wrote learning content: "${extractedText}". Act like a teacher checking understanding: Ask them to explain what this means in their own words, give an example, or connect it to something they already know. If it's incomplete or unclear, guide them to think deeper.`;
-          break;
-        case 'text_written':
-          analysisPrompt += `Student wrote: "${extractedText}". Check for understanding by asking what they mean, if they can explain it back, or what the next logical step would be. Point out if anything seems unclear or incorrect.`;
-          break;
-        case 'drawing_activity':
-          analysisPrompt += `The student is drawing/sketching. If it looks like a diagram, graph, or visual problem-solving, ask them to explain what they're showing, check if it's accurate, or guide them to add missing elements. Don't just praise - teach!`;
-          break;
-        default:
-          analysisPrompt += `The student is working. Ask them what they're thinking about, what they're trying to solve, or guide them to the next step in their learning process.`;
-      }
-      analysisPrompt += ' Be direct, specific, and pedagogical like a real teacher. Keep it short (1-2 sentences) and always end with a teaching question that makes them think deeper.';
-    } else if (extractedText) {
-      // OCR-based analysis
-      analysisPrompt = `The student has written/drawn the following content: "${extractedText}". 
-        Analysis type: ${analysisType || 'mixed'}. 
-        Please provide helpful feedback or guidance based on what they've created. 
-        If it contains math problems, help them solve it step by step using the Socratic method. 
-        If it's text or notes, provide encouraging feedback and suggestions.`;
-    } else if (description) {
-      // Description-based analysis
-      analysisPrompt = `Please analyze this student's work: ${description}`;
-    } else {
-      // Generic canvas analysis
-      analysisPrompt = 'Please analyze the student\'s canvas work and provide feedback.';
     }
 
-    const messages = [
-      {
-        role: 'user',
-        content: analysisPrompt
-      }
-    ];
+    if (!messages) {
+      // Fallback or handling when no image is processed or visionResult is empty
+      // You might want to create a different set of messages or return an error
+      // For now, let's assume we can't proceed without a message
+      return res.status(400).json({ error: 'Could not generate a response from the provided input.' });
+    }
 
-    const analysisResponse = await cerebrasClient.generateResponse(messages, personality);
+    const analysisResponse = await openRouterClient.generateResponse(messages, personality);
 
     const response = {
       analysis: analysisResponse,
@@ -685,9 +596,9 @@ I'm here to help with math problems, questions, notes, or any learning content y
     res.json(response);
   } catch (error) {
     console.error('Canvas analysis error:', error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to analyze canvas',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -695,7 +606,7 @@ I'm here to help with math problems, questions, notes, or any learning content y
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.error('Server Error:', error);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Internal server error',
     message: error.message 
   });
@@ -707,8 +618,8 @@ app.listen(PORT, () => {
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
   
   // Check if API keys are configured
-  if (!process.env.CEREBRAS_API_KEY) {
-    console.warn('⚠️  CEREBRAS_API_KEY not found in environment variables');
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn('⚠️  OPENROUTER_API_KEY not found in environment variables');
   }
   if (!process.env.ELEVENLABS_API_KEY) {
     console.warn('⚠️  ELEVENLABS_API_KEY not found in environment variables');

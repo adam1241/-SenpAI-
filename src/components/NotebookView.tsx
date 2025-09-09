@@ -15,7 +15,6 @@ interface NotebookViewProps {
 export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
   const [selectedPersonality, setSelectedPersonality] = useState<'calm' | 'angry' | 'cool' | 'lazy'>('calm');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [canvasAnalysis, setCanvasAnalysis] = useState<string | null>(null);
   const canvasRef = useRef<{ analyzeCanvas: () => void } | null>(null);
   const chatRef = useRef<{ addCanvasAnalysis: (analysis: string) => void } | null>(null);
@@ -37,36 +36,6 @@ export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
     }
   };
 
-  const handleAnalyzeImage = async () => {
-    if (!uploadedFile) {
-      toast.error("Please upload an image first.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', uploadedFile);
-    formData.append('question', 'Extract the text from this image.');
-
-    try {
-      const response = await fetch('http://localhost:5001/api/analyze-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (chatRef.current) {
-          chatRef.current.addCanvasAnalysis(`Extracted text from ${uploadedFile.name}:\n\n${data.text}`);
-        }
-      } else {
-        toast.error(`Failed to analyze image: ${uploadedFile.name}`);
-      }
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      toast.error(`Error analyzing image: ${uploadedFile.name}`);
-    }
-  };
-
   return (
     <div className="h-full bg-background flex flex-col overflow-y-auto">
       {/* Header */}
@@ -84,13 +53,7 @@ export const NotebookView = ({ onSectionChange }: NotebookViewProps) => {
             </div>
             
             <div className="flex items-center gap-4">
-              <ImageUpload onImageUpload={(file, imageUrl) => { setUploadedFile(file); setUploadedImage(imageUrl); }} />
-              {uploadedImage && (
-                <Button onClick={handleAnalyzeImage} size="sm" className="gap-2">
-                  <Search className="h-4 w-4" />
-                  Analyse Image
-                </Button>
-              )}
+              <ImageUpload onImageUpload={(file, imageUrl) => { setUploadedImage(imageUrl); }} />
               <PersonalitySelector
                 selectedPersonality={selectedPersonality}
                 onPersonalityChange={setSelectedPersonality}

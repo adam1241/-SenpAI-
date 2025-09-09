@@ -58,7 +58,13 @@ We provided these files for the judges so that they can run the project locally.
    ```bash
    npm install
    ```
-
+ ### 5. Configure Backend API Keys
+  
+  The backend requires API keys for its AI and image hosting services...
+  
+      -   IMGBB_API_KEY: For hosting uploaded images to get a public URL.
+          -   Get your key from: imgbb API (https://api.imgbb.com/)
+   
 ### Running the Application
 
 You need to run three services simultaneously:

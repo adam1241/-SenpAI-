@@ -7,3 +7,4 @@ mem0ai
 chromadb
 sentence_transformers
 ngrok
+requests

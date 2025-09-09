@@ -23,6 +23,9 @@ interface Message {
   timestamp: Date;
   isMastery?: boolean;
   responseType?: 'question' | 'explanation' | 'encouragement' | 'code' | 'warning' | 'success';
+  isEdited?: boolean;
+  originalContent?: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+  editedMessageId?: string;
 }
 
 interface ChatInterfaceProps {
@@ -68,6 +71,47 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const currentAiMessageId = useRef<string | null>(null); // New ref for current AI message ID
+
+  // Load conversation history on component mount
+  useEffect(() => {
+    const loadConversation = async () => {
+      try {
+        const fetchedMessages = await ApiService.getConversations(userId, sessionId);
+        // Convert ApiChatMessage to Message interface, ensuring content is correctly typed
+        const formattedMessages: Message[] = fetchedMessages.map(apiMsg => ({
+          id: apiMsg.id || Date.now().toString(), // Assuming apiMsg also has an ID or generate one
+          content: apiMsg.content, 
+          isUser: apiMsg.role === 'user',
+          timestamp: new Date(), // Assuming timestamp is handled or can be omitted if not critical for display
+        }));
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error("Failed to load conversation history:", error);
+        // Optionally, display a toast error to the user
+        toast.error("Failed to load conversation history.");
+      }
+    };
+    loadConversation();
+  }, [userId, sessionId, setMessages]);
+
+  // Save conversation history whenever messages change
+  useEffect(() => {
+    if (messages.length === 0) return; // Don't save empty chat
+
+    const handler = setTimeout(() => {
+      ApiService.saveConversation(messages.map(msg => ({ // Convert to ApiChatMessage type for saving
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.content,
+        id: msg.id, // Ensure ID is passed for tracking
+        // Add other fields from ApiChatMessage if necessary for persistence
+      })) as ApiChatMessage[], userId, sessionId);
+    }, 1000); // Debounce saving to once per second
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [messages, userId, sessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -92,10 +136,142 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
         textarea.style.overflowY = 'hidden';
       }
     }
-  }, [inputMessage]);
+  }, [inputMessage, editingContent]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() && !fileToSend) return;
+  const handleEditClick = (message: Message) => {
+    setEditingMessageId(message.id);
+    setEditingContent(Array.isArray(message.content) ? message.content.filter(part => part.type === 'text').map(part => part.text).join('') : message.content as string);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent("");
+  };
+
+  const _processAndSendToApi = async (historyToProcess: Message[], currentUserId: string, currentSessionId: string, originalMessageId?: string) => {
+    let processedHistory = historyToProcess;
+
+    if (originalMessageId) {
+      const originalMessageIndex = processedHistory.findIndex(msg => msg.id === originalMessageId);
+      if (originalMessageIndex !== -1) {
+        // When a message is edited, we should clear all subsequent messages and their responses
+        // from the `processedHistory` to ensure a clean slate for the regenerated conversation branch.
+        processedHistory = processedHistory.slice(0, originalMessageIndex + 1);
+      }
+    }
+
+    const apiHistory: ApiChatMessage[] = processedHistory.map(msg => {
+        let contentForApi: any;
+        if (Array.isArray(msg.content)) {
+            contentForApi = msg.content;
+        } else {
+            contentForApi = [{ type: 'text', text: msg.content }];
+        }
+        
+        return {
+            role: msg.isUser ? 'user' : 'assistant',
+            content: contentForApi,
+        };
+    });
+
+    console.log("API History sent to backend:", apiHistory); // Debug log
+    console.log("Original message ID for API call:", originalMessageId); // Debug log
+
+    // Remove initial setMessages for adding blank AI message. This is now handled by caller.
+    // const newAiMessageId = (Date.now() + 1).toString();
+
+    // setMessages(prev => {
+    //   let newMessages = [...prev];
+    //   let targetAiMessageIndex: number = -1;
+    //   const originalUserMessageIndex = newMessages.findIndex(m => m.id === originalMessageId);
+
+    //   if (originalMessageId && originalUserMessageIndex !== -1) {
+    //     newMessages = newMessages.slice(0, originalUserMessageIndex + 1);
+    //     const newAiMessage: Message = {
+    //       id: newAiMessageId,
+    //       content: "",
+    //       isUser: false,
+    //       timestamp: new Date(),
+    //       responseType: 'explanation',
+    //     };
+    //     newMessages.splice(originalUserMessageIndex + 1, 0, newAiMessage);
+    //     targetAiMessageIndex = originalUserMessageIndex + 1;
+    //   } else {
+    //     const newAiMessage: Message = {
+    //       id: newAiMessageId,
+    //       content: "",
+    //       isUser: false,
+    //       timestamp: new Date(),
+    //       responseType: 'explanation',
+    //     };
+    //     newMessages.push(newAiMessage);
+    //     targetAiMessageIndex = newMessages.length - 1;
+    //   }
+    //   currentAiMessageId.current = newAiMessageId; 
+    //   console.log("Messages after adding blank AI message:", newMessages); 
+    //   return newMessages;
+    // });
+
+    try {
+      const response = await ApiService.streamSocraticTutor(apiHistory, currentUserId, currentSessionId, originalMessageId);
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        const chunk = decoder.decode(value, { stream: true });
+        console.log("Streaming - Chunk received:", chunk); // Debug log
+        if (chunk) {
+          setMessages(prev => {
+            const messagesCopy = [...prev];
+            const messageIndexToUpdate = messagesCopy.findIndex(m => m.id === currentAiMessageId.current);
+
+            if (messageIndexToUpdate !== -1 && !messagesCopy[messageIndexToUpdate].isUser) {
+              console.log("Streaming - Updating message ID:", currentAiMessageId.current, "at index:", messageIndexToUpdate); // Debug log
+              const messageToUpdate = { ...messagesCopy[messageIndexToUpdate] };
+              console.log("Streaming - Content before update:", messageToUpdate.content); // Debug log
+              messageToUpdate.content = (messageToUpdate.content as string) + chunk;
+              messageToUpdate.responseType = getResponseType(messageToUpdate.content as string);
+              console.log("Streaming - Content after update:", messageToUpdate.content); // Debug log
+              messagesCopy[messageIndexToUpdate] = messageToUpdate;
+            }
+            console.log("Messages during streaming update:", messagesCopy); // Debug log
+            return messagesCopy;
+          });
+        }
+      }
+      console.log("AI response streaming finished."); // Debug log
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      setMessages(prev => {
+        const messagesCopy = [...prev];
+        const messageToUpdate = messagesCopy.find(m => m.id === currentAiMessageId.current);
+        if (messageToUpdate && !messageToUpdate.isUser) {
+          messageToUpdate.content = "Sorry, I'm having trouble connecting to the AI. Please try again later.";
+          messageToUpdate.responseType = 'warning';
+        } else {
+            messagesCopy.push({
+                id: (Date.now() + 1).toString(),
+                content: "Sorry, I'm having trouble connecting to the AI. Please try again later.",
+                isUser: false,
+                timestamp: new Date(),
+                responseType: 'warning',
+            });
+        }
+        return messagesCopy;
+      });
+    }
+  };
+
+  const handleSendMessage = async (messageContentOverride?: string, originalMessageId?: string) => {
+    const messageToSend = messageContentOverride !== undefined ? messageContentOverride : inputMessage;
+
+    if (!messageToSend.trim() && !fileToSend) return;
 
     let imageUrl: string | undefined = undefined;
     if (fileToSend) {
@@ -110,84 +286,64 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
     }
 
     const userMessageContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
-    if (inputMessage) {
-        userMessageContent.push({ type: "text", text: inputMessage });
+    if (messageToSend) {
+        userMessageContent.push({ type: "text", text: messageToSend });
     }
     if (imageUrl) {
         userMessageContent.push({ type: "image_url", image_url: { url: imageUrl } });
     }
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: originalMessageId || Date.now().toString(),
       content: userMessageContent,
       isUser: true,
       timestamp: new Date(),
+      // If it's an edited message, mark it as such and link to the original
+      isEdited: messageContentOverride !== undefined && !!originalMessageId,
+      editedMessageId: originalMessageId,
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage("");
-    setFileToSend(null);
-    setPreviewUrl(null);
+    // Create a new unique ID for the AI response that will be streamed.
+    const newAiMessageId = (Date.now() + 1).toString();
 
-    const apiHistory: ApiChatMessage[] = [...messages, userMessage].map(msg => {
-        let contentForApi: any;
-        if (Array.isArray(msg.content)) {
-            contentForApi = msg.content;
-        } else {
-            contentForApi = [{ type: 'text', text: msg.content }];
+    // Use functional update to ensure we have the latest `messages` state
+    setMessages(prevMessages => {
+      let newMessages = [...prevMessages];
+      
+      if (originalMessageId) {
+        // If we are editing an existing message, we need to find the user message
+        // and then remove all subsequent AI messages in the UI from that point forward.
+        const originalUserMessageIndex = newMessages.findIndex(msg => msg.id === originalMessageId);
+        if (originalUserMessageIndex !== -1) {
+          newMessages = newMessages.slice(0, originalUserMessageIndex + 1);
         }
-        
-        return {
-            role: msg.isUser ? 'user' : 'assistant',
-            content: contentForApi,
-        };
-    });
+      }
+      
+      // For a new message, or after clearing subsequent messages for an edit, add the user message
+      // if it's not an edited message (as edited messages are updated in place by handleSendMessage).
+      if (!originalMessageId) {
+        newMessages.push(userMessage);
+      }
 
-    try {
-      const response = await ApiService.streamSocraticTutor(apiHistory, userId, sessionId);
-
-      if (!response.body) return;
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      // Add a blank AI message for streaming after the user message (or edited user message)
+      const newAiMessage: Message = {
+        id: newAiMessageId,
         content: "",
         isUser: false,
         timestamp: new Date(),
         responseType: 'explanation',
       };
-      setMessages(prev => [...prev, aiMessage]);
+      newMessages.push(newAiMessage);
+      currentAiMessageId.current = newAiMessageId; // Set the current AI message ID
+      
+      // Now call _processAndSendToApi with the fully updated messages array
+      _processAndSendToApi(newMessages, userId, sessionId, originalMessageId);
+      return newMessages; // Return the updated messages for React to render
+    });
 
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        const chunk = decoder.decode(value, { stream: true });
-        if (chunk) {
-          setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage && !lastMessage.isUser) {
-              lastMessage.content += chunk;
-              lastMessage.responseType = getResponseType(lastMessage.content as string);
-            }
-            return [...prev];
-          });
-        }
-      }
-      onActionProcessed();
-    } catch (error) {
-      console.error("Error fetching AI response:", error);
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Sorry, I'm having trouble connecting to the AI. Please try again later.",
-        isUser: false,
-        timestamp: new Date(),
-        responseType: 'warning',
-      };
-      setMessages(prev => [...prev, aiMessage]);
-    }
+    setInputMessage("");
+    setFileToSend(null);
+    setPreviewUrl(null);
   };
 
   const handleLifelineClick = async (type: string) => {
@@ -208,68 +364,26 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    toast.info("Lifeline used! 💡");
-
-    const apiHistory: ApiChatMessage[] = [...messages, userMessage].map(msg => {
-        let contentForApi: any;
-        if (Array.isArray(msg.content)) {
-            contentForApi = msg.content;
-        } else {
-            contentForApi = [{ type: 'text', text: msg.content }];
-        }
-        
-        return {
-            role: msg.isUser ? 'user' : 'assistant',
-            content: contentForApi,
-        };
-    });
-
-    try {
-      const response = await ApiService.streamSocraticTutor(apiHistory, userId, sessionId);
-
-      if (!response.body) return;
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+    setMessages(prev => {
+      const newMessages = [...prev, userMessage];
+      
+      // Add a blank AI message for streaming after the user message
+      const newAiMessageIdForLifeline = (Date.now() + 1).toString();
+      const newAiMessage: Message = {
+        id: newAiMessageIdForLifeline,
         content: "",
         isUser: false,
         timestamp: new Date(),
         responseType: 'explanation',
       };
-      setMessages(prev => [...prev, aiMessage]);
+      newMessages.push(newAiMessage);
+      currentAiMessageId.current = newAiMessageIdForLifeline; // Set the current AI message ID for lifeline
 
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        const chunk = decoder.decode(value, { stream: true });
-        if (chunk) {
-          setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage && !lastMessage.isUser) {
-              lastMessage.content += chunk;
-              lastMessage.responseType = getResponseType(lastMessage.content as string);
-            }
-            return [...prev];
-          });
-        }
-      }
-      onActionProcessed();
-    } catch (error) {
-      console.error("Error fetching AI response for lifeline:", error);
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Sorry, I'm having trouble connecting to the AI. Please try again later.",
-        isUser: false,
-        timestamp: new Date(),
-        responseType: 'warning',
-      };
-      setMessages(prev => [...prev, aiMessage]);
-    }
+      _processAndSendToApi(newMessages, userId, sessionId);
+      return newMessages;
+    });
+    toast.info("Lifeline used! 💡");
+
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -307,35 +421,47 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
     toast.success("Copied to clipboard!");
   };
 
-  const handleEditClick = (message: Message) => {
-    setEditingMessageId(message.id);
-    setEditingContent(message.content as string);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingMessageId(null);
-    setEditingContent("");
-  };
-
-  const handleUpdateMessage = async () => {
-    if (!editingMessageId) return;
-
-    const originalMessage = messages.find(m => m.id === editingMessageId);
-    if (!originalMessage || originalMessage.content === editingContent) {
+  const handleResendEditedMessage = async () => {
+    if (!editingMessageId || !editingContent.trim()) {
       handleCancelEdit();
       return;
     }
 
-    try {
-      setMessages(messages.map(m => 
-        m.id === editingMessageId ? { ...m, content: editingContent } : m
-      ));
-
-      toast.success("Message updated!");
-    } catch (error) {
-      console.error("Failed to update message:", error);
-      toast.error("Failed to update message. Please try again.");
+    const originalMessageIndex = messages.findIndex(m => m.id === editingMessageId);
+    if (originalMessageIndex === -1) {
+      handleCancelEdit();
+      return;
     }
+
+    const originalMessage = messages[originalMessageIndex];
+    const oldContent = Array.isArray(originalMessage.content) ? originalMessage.content.filter(part => part.type === 'text').map(part => part.text).join('') : originalMessage.content as string;
+
+    if (oldContent === editingContent) {
+      handleCancelEdit();
+      return;
+    }
+
+    // Update the original message content and mark it as edited in the state
+    setMessages(prevMessages => {
+      const newMessages = [...prevMessages];
+      const messageToUpdate = newMessages.find(m => m.id === editingMessageId);
+
+      if (messageToUpdate) {
+        if (!messageToUpdate.originalContent) {
+          messageToUpdate.originalContent = messageToUpdate.content;
+        }
+        messageToUpdate.content = editingContent;
+        messageToUpdate.isEdited = true;
+      }
+      return newMessages;
+    });
+
+    setInputMessage("");
+    setEditingMessageId(null);
+    setEditingContent("");
+
+    // Call handleSendMessage to update the UI state and trigger API call
+    handleSendMessage(editingContent, editingMessageId);
   };
 
   return (
@@ -431,6 +557,14 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                           </div>
                         )}
                         <div className="text-sm prose prose-sm max-w-none">
+                          {message.isEdited && message.isUser && (
+                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                              <span>Message modifié</span>
+                              <Button variant="ghost" size="sm" className="h-auto px-1 py-0 text-xs">
+                                Afficher les versions
+                              </Button>
+                            </p>
+                          )}
                           {Array.isArray(message.content) && message.content.some(part => part.type === 'image_url') && (
                             message.content.map((part, index) => (
                               part.type === 'image_url' && (
@@ -488,15 +622,15 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
                 </div>
                 {editingMessageId === message.id && (
                   <div className="flex justify-end gap-2 mt-2">
-                    <Button variant="outline" size="sm" onClick={() => handleCancelEdit(message)}>
-                      Cancel
+                    <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                      Annuler
                     </Button>
                     <Button 
                       size="sm" 
-                      onClick={() => handleUpdateMessage(message)}
-                      disabled={editingContent === message.content}
+                      onClick={handleResendEditedMessage}
+                      disabled={editingContent === (Array.isArray(messages.find(m => m.id === editingMessageId)?.content) ? (messages.find(m => m.id === editingMessageId)?.content as Array<{ type: string; text?: string; image_url?: { url: string } }>).filter(part => part.type === 'text').map(part => part.text).join('') : messages.find(m => m.id === editingMessageId)?.content as string)}
                     >
-                      Update
+                      Renvoyer
                     </Button>
                   </div>
                 )}
@@ -594,7 +728,7 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
             className="flex-1 resize-none min-h-[40px] overflow-y-hidden custom-scrollbar"
             rows={1}
           />
-          <Button onClick={handleSendMessage} disabled={!inputMessage.trim() && !fileToSend}>
+          <Button onClick={() => handleSendMessage()} disabled={!inputMessage.trim() && !fileToSend}>
             <Send className="w-4 h-4" />
           </Button>
         </div>

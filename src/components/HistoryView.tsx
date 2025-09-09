@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, MessageSquare, Star, BookOpen, Filter, Loader } from "lucide-react";
+import { Search, Calendar, MessageSquare, Star, BookOpen, Filter, Loader, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService, HistoryItem } from "@/services/api";
 
@@ -19,21 +19,21 @@ export const HistoryView = ({ userId, onSelectSession }: HistoryViewProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      if (!userId) return;
-      setIsLoading(true);
-      try {
-        const data = await ApiService.getHistory(userId);
-        setHistory(data);
-      } catch (error) {
-        console.error("Failed to fetch history:", error);
-        toast.error("Could not load learning history.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchHistory = async () => {
+    if (!userId) return;
+    setIsLoading(true);
+    try {
+      const data = await ApiService.getHistory(userId);
+      setHistory(data);
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+      toast.error("Could not load learning history.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchHistory();
   }, [userId]);
 
@@ -73,6 +73,25 @@ export const HistoryView = ({ userId, onSelectSession }: HistoryViewProps) => {
       onSelectSession(item.id);
     } else {
       toast.info(`This item type (${item.type}) cannot be loaded yet.`);
+    }
+  };
+
+  const handleDeleteConversation = async (sessionIdToDelete: string) => {
+    if (!userId) {
+      toast.error("User ID is not available. Cannot delete conversation.");
+      return;
+    }
+    if (!confirm("Are you sure you want to delete this conversation? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await ApiService.deleteConversation(userId, sessionIdToDelete);
+      setHistory(prevHistory => prevHistory.filter(item => item.id !== sessionIdToDelete));
+      toast.success("Conversation deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+      toast.error("Failed to delete conversation. Please try again.");
     }
   };
 
@@ -126,6 +145,19 @@ export const HistoryView = ({ userId, onSelectSession }: HistoryViewProps) => {
                 <Badge className={getTypeColor(item.type)}>
                   {item.type}
                 </Badge>
+                {item.type === "conversation" && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-red-500 hover:bg-red-100"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card onClick from firing
+                      handleDeleteConversation(item.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
             

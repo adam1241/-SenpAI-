@@ -62,13 +62,14 @@ export class ApiService {
   static async streamSocraticTutor(
     messages: ChatMessage[],
     userId: string,
-    sessionId: string
+    sessionId: string,
+    originalMessageId?: string
   ): Promise<Response> {
     try {
       const response = await fetch(`${SOCRATIC_TUTOR_API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, user_id: userId, session_id: sessionId }),
+        body: JSON.stringify({ messages, user_id: userId, session_id: sessionId, original_message_id: originalMessageId }),
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       return response;

@@ -1775,5 +1775,214 @@
     "role": "assistant",
     "content": "Excellent follow-up question \u2014 you're thinking geographically! Let\u2019s look at **the most visited cities in Spain**, much like we did for Italy.\n\nThe most visited cities in Spain attract millions of tourists each year thanks to their vibrant culture, historic architecture, beaches, and world-class cuisine.\n\nHere are the **top 5 most visited cities in Spain** (by annual tourist numbers, including international and domestic visitors):\n\n1. **Barcelona** \u2013 The second-largest city in Spain and a top tourist destination.  \n   Famous for Antoni Gaud\u00ed\u2019s works (Sagrada Fam\u00edlia, Park G\u00fcell), Las Ramblas, and its beaches.\n\n2. **Madrid** \u2013 The capital and largest city of Spain.  \n   Known for the Prado Museum, Royal Palace, Retiro Park, and lively nightlife.\n\n3. **Valencia** \u2013 A modern city with a rich history.  \n   Home to the City of Arts and Sciences, beautiful beaches, and the birthplace of paella.\n\n4. **Seville (Sevilla)** \u2013 The heart of Andalusian culture.  \n   Famous for its grand Alc\u00e1zar palace, Seville Cathedral (largest Gothic cathedral in the world), and flamenco dancing.\n\n5. **M\u00e1laga** \u2013 Located on the Costa del Sol, this city has grown rapidly in popularity.  \n   Birthplace of Picasso, with a well-preserved old town, great weather, and access to beaches and nearby towns like Marbella.\n\nWould you like to:\n- Compare these with the Italian cities?\n- Focus on one city in detail (e.g., history, things to do)?\n- Or take a quick quiz to reinforce your memory?\n\nLet me know your preference!",
     "timestamp": "2025-09-09T09:45:08.006168"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Explain the quadratic formula"
+      }
+    ],
+    "timestamp": "2025-09-09T12:11:41.644269"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "assistant",
+    "content": "Great! Let's go step by step.\n\nFirst, I'd like to understand how you'd like to learn this:\n\n- Are you in high school, college, or studying on your own?\n- Is your goal to understand the derivation, memorize it for use, or apply it to solve problems?\n- Do you prefer an explanation through intuition/analogy, step-by-step derivation, or practice with examples?\n\nJust a quick sentence helps me tailor this perfectly for you.\n\nIn the meantime, here's a quick fact:  \nThe quadratic formula is used to find the solutions (roots) of a quadratic equation in the form:\n\n$$\nax^2 + bx + c = 0\n$$\n\nThe formula is:\n\n$$\nx = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\n$$\n\nNow, would you like to:\n1. **Derive it** from completing the square?\n2. **Understand what each part means** (like the discriminant)?\n3. **Practice using it** with an example?\n4. Or something else?\n\nLet me know your preference!",
+    "timestamp": "2025-09-09T12:11:41.644269"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Explain the  relativity"
+      }
+    ],
+    "timestamp": "2025-09-09T12:12:27.297608"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "assistant",
+    "content": "Thanks for asking about relativity! To help me guide you effectively:\n\nCould you let me know:\n- Your background level? (e.g., high school, undergrad, casual learner)\n- Are you interested in **special relativity**, **general relativity**, or both?\n- Do you prefer a conceptual explanation (with analogies), a mathematical one, or a historical/story-based approach?\n\nJust a quick answer helps me tailor this right for you.\n\nIn the meantime, here's a quick overview:\n\n---\n\n### **Relativity \u2013 Two Key Theories**\n\n1. **Special Relativity (1905)**  \n   Einstein\u2019s theory about how space and time behave for objects moving at constant speeds, especially near the speed of light.\n\n   Two postulates:\n   - The laws of physics are the same for all observers in uniform motion.\n   - The speed of light in a vacuum is constant for all observers, regardless of their motion.\n\n   **Key consequences:**\n   - Time dilation: Moving clocks run slow.\n   - Length contraction: Objects shorten in the direction of motion.\n   - $ E = mc^2 $: Energy and mass are interchangeable.\n\n2. **General Relativity (1915)**  \n   A theory of gravity. Instead of thinking of gravity as a force, Einstein described it as the **curvature of spacetime** caused by mass and energy.\n\n   - Massive objects (like stars and planets) warp the fabric of spacetime.\n   - Objects move along straight paths (geodesics) in this curved spacetime \u2014 which looks like curved motion to us.\n\n   **Key consequences:**\n   - Gravitational time dilation: Clocks run slower in stronger gravitational fields.\n   - Light bends near massive objects (gravitational lensing).\n   - Predicts black holes and the expansion of the universe.\n\n---\n\nWould you like to:\n- **Derive** a key result (like time dilation)?\n- **Explore a thought experiment** (like the twin paradox)?\n- **See how it applies in real life** (e.g., GPS satellites)?\n- Or **review key concepts with flashcards**?\n\nLet me know your preference and we\u2019ll go from there!",
+    "timestamp": "2025-09-09T12:12:27.297608"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "more detail please"
+      }
+    ],
+    "timestamp": "2025-09-09T12:15:54.881217"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "assistant",
+    "content": "Absolutely \u2014 let's dive deeper into **both special and general relativity**, step by step. I'll keep the explanation clear, build intuition, and highlight key ideas. We\u2019ll start with **Special Relativity**, then move to **General Relativity**.\n\n---\n\n### \ud83c\udf1f 1. **Special Relativity (1905)**\n\n#### **Core Idea:**\nWhen objects move very fast \u2014 close to the speed of light (~3\u00d710\u2078 m/s) \u2014 our everyday ideas about time and space break down. Einstein showed that **time and space are relative**, depending on the observer\u2019s motion.\n\nBut the **speed of light (c)** is absolute \u2014 it's the same for everyone, no matter how fast they\u2019re moving.\n\n---\n\n#### **Two Postulates (Foundations):**\n\n1. **Principle of Relativity:**  \n   The laws of physics are identical in all inertial (non-accelerating) reference frames.\n\n2. **Constancy of the Speed of Light:**  \n   Light always travels at $ c = 3 \\times 10^8 \\, \\text{m/s} $ in a vacuum, regardless of the motion of the source or observer.\n\n> \ud83d\udd0d **Thought Experiment:**  \n> Imagine you're on a train moving at 90% the speed of light and turn on a flashlight.  \n> You see the light beam race ahead at $ c $.  \n> Someone standing outside also measures that same beam at $ c $ \u2014 not $ c + $ train speed!  \n> This defies classical intuition \u2014 but experiments confirm it.\n\n---\n\n#### **Key Consequences:**\n\n##### \u2705 Time Dilation\nTime passes slower for moving objects.\n\n$$\n\\Delta t' = \\frac{\\Delta t}{\\sqrt{1 - \\frac{v^2}{c^2}}}\n$$\n\n- $ \\Delta t $: time measured by a stationary observer (\"lab frame\")\n- $ \\Delta t' $: time measured by someone moving with the clock (\"proper time\")\n- $ v $: relative velocity\n- $ c $: speed of light\n\n> \ud83e\uddea Real example: Muons (subatomic particles) created in the upper atmosphere should decay before reaching Earth \u2014 but because they move so fast, their clocks slow down (from our view), so they survive the trip.\n\n##### \u2705 Length Contraction\nObjects shorten in the direction of motion.\n\n$$\nL = L_0 \\sqrt{1 - \\frac{v^2}{c^2}}\n$$\n\n- $ L_0 $: proper length (at rest)\n- $ L $: length observed when moving\n\n> So a 10-meter-long spaceship flying near $ c $ might appear only 1 meter long to a stationary observer.\n\n##### \u2705 Relativity of Simultaneity\nTwo events that appear simultaneous to one observer may not be to another.\n\n> Example: Lightning strikes both ends of a moving train.  \n> A person on the platform sees them happen at the same time.  \n> A passenger in the middle of the train sees one strike first \u2014 because light from each end takes different times to reach them due to motion.\n\n##### \u2705 Mass-Energy Equivalence: $ E = mc^2 $\nMass contains energy \u2014 even when at rest.\n\n- A small amount of mass can release enormous energy (e.g., nuclear reactions).\n- This equation comes from special relativity, not Newtonian physics.\n\n---\n\n### \ud83c\udf0c 2. **General Relativity (1915)**\n\n#### **Core Idea:**\nGravity is not a force \u2014 it's the **curvature of spacetime** caused by mass and energy.\n\n> Think of spacetime as a stretchy fabric.  \n> Place a heavy ball (like the Sun) on it \u2014 it creates a dent.  \n> A smaller ball (like Earth) rolls around the dent \u2014 not because of a \"force,\" but because it's following the curve.\n\nThis is the **geometric theory of gravity**.\n\n---\n\n#### **Key Principles:**\n\n1. **Equivalence Principle**  \n   Acceleration feels the same as gravity.\n\n   > Imagine being in a windowless elevator in space accelerating upward at 9.8 m/s\u00b2 \u2014 you'd feel just like you do on Earth.  \n   > There's no local experiment to tell the difference.\n\n2. **Spacetime Curvature**  \n   Massive objects warp the 4D fabric of **spacetime** (3 space + 1 time).  \n   Objects follow the straightest possible paths (called **geodesics**) in this curved geometry.\n\n3. **Field Equations (Einstein\u2019s Equation)**  \n   $$\n   G_{\\mu\\nu} + \\Lambda g_{\\mu\\nu} = \\frac{8\\pi G}{c^4} T_{\\mu\\nu}\n   $$\n\n   - Left side: Geometry of spacetime (curvature)\n   - Right side: Distribution of mass/energy\n   - $ G $: gravitational constant\n   - $ c $: speed of light\n   - $ \\Lambda $: cosmological constant (related to dark energy)\n\n   This is the core equation \u2014 it tells you how matter curves spacetime, and how spacetime tells matter to move.\n\n---\n\n#### **Key Predictions & Observations:**\n\n\u2705 **Gravitational Time Dilation**  \nTime runs slower in stronger gravity.\n\n> GPS satellites must correct for this: their clocks run faster in orbit (weaker gravity) than on Earth. Without relativity, GPS would be off by kilometers per day.\n\n\u2705 **Bending of Light (Gravitational Lensing)**  \nLight rays curve when passing near massive objects.\n\n> First confirmed in 1919 during a solar eclipse \u2014 starlight bent around the Sun, just as Einstein predicted.\n\n\u2705 **Black Holes**  \nIf mass is compressed into a small enough space, spacetime curvature becomes infinite \u2014 forming a black hole.\n\n> The boundary is called the **event horizon** \u2014 nothing, not even light, can escape from inside.\n\n\u2705 **Expanding Universe & Cosmology**  \nGeneral relativity forms the foundation of modern cosmology.\n\n> It predicted the universe could not be static \u2014 leading to the discovery of the Big Bang and cosmic expansion.\n\n\u2705 **Gravitational Waves**  \nRipples in spacetime caused by violent events (e.g., colliding black holes).\n\n> First directly detected in 2015 by LIGO \u2014 a century after Einstein predicted them.\n\n---\n\n### \ud83e\udde0 Summary: Big Ideas\n\n| Concept | Special Relativity | General Relativity |\n|--------|--------------------|--------------------|\n| Deals with | High-speed motion (no gravity) | Gravity and acceleration |\n| Key insight | Space and time are relative; light speed is absolute | Gravity = curvature of spacetime |\n| Effects | Time dilation, length contraction, $ E=mc^2 $ | Black holes, lensing, time dilation in gravity |\n| Real-world use | Particle accelerators, nuclear energy | GPS, cosmology, astrophysics |\n\n---\n\nWould you like to:\n- **Explore a simulation or analogy** (like the trampoline model of gravity)?\n- **Work through a calculation** (e.g., time dilation for a spaceship)?\n- Or **turn these core ideas into flashcards** so you can review them?\n\nLet me know your preference \u2014 I can help you learn this actively!",
+    "timestamp": "2025-09-09T12:15:54.881217"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "less detail please"
+      }
+    ],
+    "timestamp": "2025-09-09T12:16:11.869743"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "assistant",
+    "content": "Got it \u2014 let's simplify.\n\n### \ud83c\udf1f Relativity in Two Minutes\n\n**1. Special Relativity (fast motion):**  \n- Applies when things move very fast (close to light speed).  \n- Key ideas:  \n  - Time slows down when you move fast (**time dilation**).  \n  - Lengths shorten in the direction of motion.  \n  - $ E = mc^2 $: mass and energy are related.  \n- The speed of light is always the same for everyone.\n\n**2. General Relativity (gravity):**  \n- Einstein\u2019s theory of gravity.  \n- Gravity isn\u2019t a force \u2014 it\u2019s the **bending of space and time** by mass.  \n- Big masses (like stars) warp spacetime \u2014 objects (like planets) follow curved paths.  \n- Predicts black holes, bending of light, and GPS needs it to work!\n\n---\n\nThat\u2019s the core.\n\nWant to **test your understanding** with a quick quiz?  \nOr turn these points into **flashcards** for review?  \nLet me know!",
+    "timestamp": "2025-09-09T12:16:11.869743"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "ok thank you"
+      }
+    ],
+    "timestamp": "2025-09-09T12:20:18.906351"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "c22a0a85-cc11-47c1-a4f0-e5431821426e",
+    "role": "assistant",
+    "content": "You're very welcome! I'm glad you found it helpful.\n\nIf you ever want to dive deeper, practice with examples, or turn key ideas into flashcards for review \u2014 just say the word. Relativity is a fascinating journey, and I'm here to help you explore it at your pace.\n\nUntil next time \u2014 keep questioning, keep learning. \ud83c\udf1f\n\nHave a great day!",
+    "timestamp": "2025-09-09T12:20:18.906351"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "ff471278-099b-4b04-8b15-6b0b71819daa",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Explain the quadratic formula"
+      }
+    ],
+    "timestamp": "2025-09-09T12:25:51.381423"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "ff471278-099b-4b04-8b15-6b0b71819daa",
+    "role": "assistant",
+    "content": "Got it! Let\u2019s start by aligning this explanation with your needs.\n\nCould you let me know:\n- Your background (e.g., high school, college, self-studying),\n- Whether you\u2019re learning this for the first time, reviewing, or working on a specific problem,\n- And how you\u2019d like me to explain it (e.g., step-by-step derivation, intuitive analogy, visual explanation, or practice example)?\n\nThis helps me tailor the explanation so it sticks.",
+    "timestamp": "2025-09-09T12:25:51.381423"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "ff471278-099b-4b04-8b15-6b0b71819daa",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "hello"
+      }
+    ],
+    "timestamp": "2025-09-09T12:27:44.860382"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "ff471278-099b-4b04-8b15-6b0b71819daa",
+    "role": "assistant",
+    "content": "Hello! I'm SenpAI, your learning companion. To help you best, I'd like to quickly understand:\n\n1. What's your background or grade/level? (e.g., high school, undergrad, self-learner)\n2. What would you like to learn or work on today?\n3. Do you prefer explanations, step-by-step practice, analogies, or quizzes?\n\nJust a sentence or two will do \u2014 we\u2019ll go from there!",
+    "timestamp": "2025-09-09T12:27:44.860382"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "What causes gravity?"
+      }
+    ],
+    "timestamp": "2025-09-09T12:39:13.386207"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "assistant",
+    "content": "Great question! Let\u2019s start by checking your background so I can tailor this well.\n\nCould you briefly let me know:\n- Your current level (e.g., high school, undergrad, casual learner)?\n- Are you looking to understand gravity conceptually, mathematically, or for a specific application (like homework or curiosity)?\n- Preferred way of learning: simple explanation, analogy, step-by-step reasoning, or something else?\n\nThis will help me guide you effectively \u2014 either through first principles, a review of relevant concepts, or a deeper exploration.",
+    "timestamp": "2025-09-09T12:39:13.386207"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "hello"
+      }
+    ],
+    "timestamp": "2025-09-09T12:41:05.692762"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "assistant",
+    "content": "Hello! \ud83d\udc4b I'm SenpAI, your learning companion. To help me support you best:  \n- What\u2019s your current background (e.g., high school, undergrad, self-studying)?  \n- What would you like to learn or practice today?  \n- Any preferred way you\u2019d like to learn (e.g., step-by-step explanations, analogies, quizzes)?  \n\nJust a quick note\u2014feel free to ask anything, whether it\u2019s homework help, concept review, or building flashcards. Let\u2019s make learning stick!",
+    "timestamp": "2025-09-09T12:41:05.692762"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Explain to me the quadratic formula"
+      }
+    ],
+    "timestamp": "2025-09-09T12:43:27.434456"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "assistant",
+    "content": "Great! Let's work through the **quadratic formula** together.\n\nFirst, to tailor this to you:  \nAre you currently in high school, college, or studying on your own?  \nAnd would you prefer a step-by-step derivation, an intuitive explanation (with analogy), or practice using it?\n\nBut before we go forward \u2014 let me ask you a guiding question to start:\n\n\ud83d\udc49 **Do you remember the standard form of a quadratic equation?**  \nThat is, how do we usually write an equation like $ ax^2 + bx + c = 0 $?  \n\nJust confirm if that\u2019s familiar, and we\u2019ll build from there.",
+    "timestamp": "2025-09-09T12:43:27.434456"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Explain to me the relativity"
+      }
+    ],
+    "timestamp": "2025-09-09T12:44:34.041776"
+  },
+  {
+    "user_id": "72959e77-d522-4325-8d69-522496ef02dd",
+    "session_id": "e1105a78-e93c-4de7-9e63-de791dd8fc19",
+    "role": "assistant",
+    "content": "Got it! Let\u2019s start with a clear, step-by-step conceptual explanation of **relativity**, tailored for a curious learner like you. I\u2019ll keep it intuitive first, then we can go deeper if you'd like.\n\n---\n\n### \ud83c\udf1f Goal:  \nUnderstand the **core ideas of relativity** \u2014 what it is, why it matters, and how it changes our view of space, time, and gravity.\n\n---\n\n### \ud83d\udcda Two Parts of Relativity:\n1. **Special Relativity** (1905)  \n2. **General Relativity** (1915)  \n\nBoth were developed by Albert Einstein and revolutionized physics.\n\n---\n\n### 1. Special Relativity \u2013 \u201cRelativity of Space and Time\u201d\n\n**Core Idea:** The laws of physics are the same for all observers moving at *constant speed*, and the speed of light is constant for everyone \u2014 no matter how fast they\u2019re moving.\n\n#### Key Consequences:\n- **Time Dilation:** Time slows down for moving objects.  \n  \u2192 If you\u2019re on a super-fast spaceship, time passes slower for you than for someone on Earth.\n- **Length Contraction:** Objects shorten in the direction they\u2019re moving at high speeds.\n- **Mass-Energy Equivalence:** $ E = mc^2 $ \u2014 energy and mass are interchangeable.\n\n\ud83d\udca1 *Example:* GPS satellites must account for time dilation (from special relativity) to stay accurate!\n\n---\n\n### 2. General Relativity \u2013 \u201cGravity is Geometry\u201d\n\n**Core Idea:** Gravity is not a force (as Newton thought), but a result of **curved spacetime** caused by mass and energy.\n\n#### Key Concepts:\n- **Spacetime:** A 4D fabric combining space (3D) and time (1D).\n- **Mass curves spacetime:** Think of placing a heavy ball on a stretched rubber sheet. Planets and stars do the same to spacetime.\n- **Objects follow straight paths in curved spacetime:** What looks like \u201cgravity pulling\u201d is actually objects moving along the shortest path (a *geodesic*) in curved space.\n\n\ud83c\udf0d *Analogy:* Imagine rolling a marble near a dip in a trampoline \u2014 it curves around, not because of a \u201cforce,\u201d but because the surface is bent.\n\n---\n\n### So \u2014 What Causes Gravity?\n\ud83d\udc49 According to **General Relativity**:  \n**Mass (and energy) curve spacetime, and this curvature tells objects how to move.**  \nThat\u2019s what we experience as *gravity*.\n\nSo, Earth orbits the Sun not because the Sun \u201cpulls\u201d it, but because the Sun\u2019s mass bends spacetime, and Earth follows that curve.\n\n---\n\nWould you like to:\n- Dive deeper into the math (e.g., $ E = mc^2 $, spacetime interval)?\n- Explore a thought experiment (like the twin paradox)?\n- Or review this with flashcards for long-term retention?\n\nLet me know how you'd like to proceed!",
+    "timestamp": "2025-09-09T12:44:34.041776"
   }
 ]

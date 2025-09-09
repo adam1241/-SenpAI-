@@ -60,6 +60,44 @@ config = {
 memory = Memory.from_config(config)
 # --- END: Corrected Mem0 Initialization ---
 
+# --- START: Deck Cache ---
+DECK_CACHE = None
+DECKS_LAST_MODIFIED = 0
+
+def get_decks_from_cache():
+    """
+    Retrieves decks from a cache, updating it if the underlying file has changed.
+    """
+    global DECK_CACHE, DECKS_LAST_MODIFIED
+    
+    decks_file_path = os.path.join(os.path.dirname(__file__), '..', 'database', 'decks.json')
+    
+    try:
+        # Check if the file exists
+        if not os.path.exists(decks_file_path):
+            if DECK_CACHE is None: # If cache is also empty, return empty list
+                return []
+            return DECK_CACHE # Return old cache if file is deleted during runtime
+
+        # Get the last modification time of the file
+        last_modified_time = os.path.getmtime(decks_file_path)
+
+        # If the file has been modified since the last read, or if the cache is empty
+        if last_modified_time > DECKS_LAST_MODIFIED or DECK_CACHE is None:
+            print("--- [CACHE] Decks file has changed or cache is empty. Reloading cache. ---")
+            decks_data = Database.load_table("decks")
+            DECK_CACHE = decks_data
+            DECKS_LAST_MODIFIED = last_modified_time
+        
+        return DECK_CACHE
+    except Exception as e:
+        print(f"--- [CACHE ERROR] Failed to load or update deck cache: {e} ---")
+        # In case of an error, return the existing cache (if any) or an empty list
+        return DECK_CACHE if DECK_CACHE is not None else []
+
+# --- END: Deck Cache ---
+
+
 # --- Image Uploading ---
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -591,7 +629,7 @@ def chat():
         # memory_context = "\n".join(relevant_memories)
         # print(memory_context)
 
-        decks = Database.load_table("decks")
+        decks = get_decks_from_cache()
         decks_json_string = json.dumps(decks, indent=2)
         system_prompt_content = get_socratic_tutor_prompt(
             user_memory="", # Memory disabled for now

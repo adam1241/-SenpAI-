@@ -737,14 +737,51 @@ def chat():
         
         try:
             timestamp = datetime.utcnow().isoformat()
-            user_message_entry = { "user_id": user_id, "session_id": session_id, "role": "user", "content": latest_user_message, "timestamp": timestamp }
-            ai_message_entry = { "user_id": user_id, "session_id": session_id, "role": "assistant", "content": full_response_content, "timestamp": timestamp }
-            Database.add_to_table("chat_history", user_message_entry)
-            Database.add_to_table("chat_history", ai_message_entry)
+            # The frontend now handles saving the entire conversation history, including edits.
+            # We no longer add individual messages here.
+            # user_message_entry = { "user_id": user_id, "session_id": session_id, "role": "user", "content": latest_user_message, "timestamp": timestamp }
+            # ai_message_entry = { "user_id": user_id, "session_id": session_id, "role": "assistant", "content": full_response_content, "timestamp": timestamp }
+            # Database.add_to_table("chat_history", user_message_entry)
+            # Database.add_to_table("chat_history", ai_message_entry)
         except Exception as e:
             print(f"Saving chat history transcript failed: {e}")
 
     return Response(generate(), mimetype='text/plain')
+
+@app.route('/api/save_conversation', methods=['POST'])
+def save_conversation():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
+    messages = data.get('messages', [])
+
+    if not user_id or not session_id or not messages:
+        return jsonify({"error": "user_id, session_id, and messages are required"}), 400
+
+    try:
+        # Load all chat history
+        all_history = Database.load_table("chat_history")
+        
+        # Filter out existing messages for this session
+        # This ensures we only keep other sessions' history and then add the updated session's history.
+        filtered_history = [msg for msg in all_history if not (msg.get('user_id') == user_id and msg.get('session_id') == session_id)]
+
+        # Append the updated messages for the current session
+        # The messages received from the frontend are already in the correct order and state
+        for msg in messages:
+            # Ensure each message has the correct user_id and session_id for persistence
+            msg['user_id'] = user_id
+            msg['session_id'] = session_id
+            if 'timestamp' not in msg: # Add timestamp if missing
+              msg['timestamp'] = datetime.utcnow().isoformat()
+
+        updated_history = filtered_history + messages
+        
+        Database.save_table("chat_history", updated_history)
+        return jsonify({"message": "Conversation saved successfully"}), 200
+    except Exception as e:
+        print(f"Error saving conversation: {e}")
+        return jsonify({"error": "Failed to save conversation."}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

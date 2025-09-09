@@ -71,6 +71,47 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const currentAiMessageId = useRef<string | null>(null); // New ref for current AI message ID
+
+  // Load conversation history on component mount
+  useEffect(() => {
+    const loadConversation = async () => {
+      try {
+        const fetchedMessages = await ApiService.getConversations(userId, sessionId);
+        // Convert ApiChatMessage to Message interface, ensuring content is correctly typed
+        const formattedMessages: Message[] = fetchedMessages.map(apiMsg => ({
+          id: apiMsg.id || Date.now().toString(), // Assuming apiMsg also has an ID or generate one
+          content: apiMsg.content, 
+          isUser: apiMsg.role === 'user',
+          timestamp: new Date(), // Assuming timestamp is handled or can be omitted if not critical for display
+        }));
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error("Failed to load conversation history:", error);
+        // Optionally, display a toast error to the user
+        toast.error("Failed to load conversation history.");
+      }
+    };
+    loadConversation();
+  }, [userId, sessionId, setMessages]);
+
+  // Save conversation history whenever messages change
+  useEffect(() => {
+    if (messages.length === 0) return; // Don't save empty chat
+
+    const handler = setTimeout(() => {
+      ApiService.saveConversation(messages.map(msg => ({ // Convert to ApiChatMessage type for saving
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.content,
+        id: msg.id, // Ensure ID is passed for tracking
+        // Add other fields from ApiChatMessage if necessary for persistence
+      })) as ApiChatMessage[], userId, sessionId);
+    }, 1000); // Debounce saving to once per second
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [messages, userId, sessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -113,12 +154,9 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
     if (originalMessageId) {
       const originalMessageIndex = processedHistory.findIndex(msg => msg.id === originalMessageId);
       if (originalMessageIndex !== -1) {
-        // Filter out the AI response that immediately followed the original user message from the history for API processing.
-        // This ensures the API generates a new response based on the edited user message.
-        // We also filter out any subsequent AI messages that were linked to this original edited message.
-        processedHistory = processedHistory.filter((msg, index) =>
-          !(index > originalMessageIndex && !msg.isUser) // Remove all AI messages *after* the original user message
-        );
+        // When a message is edited, we should clear all subsequent messages and their responses
+        // from the `processedHistory` to ensure a clean slate for the regenerated conversation branch.
+        processedHistory = processedHistory.slice(0, originalMessageIndex + 1);
       }
     }
 
@@ -136,44 +174,43 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
         };
     });
 
-    // Create a new unique ID for the AI response that will be streamed.
-    const newAiMessageId = (Date.now() + 1).toString();
+    console.log("API History sent to backend:", apiHistory); // Debug log
+    console.log("Original message ID for API call:", originalMessageId); // Debug log
 
-    setMessages(prev => {
-      let newMessages = [...prev];
-      let targetAiMessageIndex: number = -1;
-      const originalUserMessageIndex = newMessages.findIndex(m => m.id === originalMessageId);
+    // Remove initial setMessages for adding blank AI message. This is now handled by caller.
+    // const newAiMessageId = (Date.now() + 1).toString();
 
-      if (originalMessageId && originalUserMessageIndex !== -1) {
-        // Remove all AI messages *after* the original user message, as they will be regenerated.
-        newMessages = newMessages.filter((msg, idx) =>
-          !(idx > originalUserMessageIndex && !msg.isUser)
-        );
+    // setMessages(prev => {
+    //   let newMessages = [...prev];
+    //   let targetAiMessageIndex: number = -1;
+    //   const originalUserMessageIndex = newMessages.findIndex(m => m.id === originalMessageId);
 
-        // Insert a new blank AI message immediately after the edited user message.
-        const newAiMessage: Message = {
-          id: newAiMessageId,
-          content: "",
-          isUser: false,
-          timestamp: new Date(),
-          responseType: 'explanation',
-        };
-        newMessages.splice(originalUserMessageIndex + 1, 0, newAiMessage);
-        targetAiMessageIndex = originalUserMessageIndex + 1;
-      } else {
-        // For a brand new message, append a new blank AI message.
-        const newAiMessage: Message = {
-          id: newAiMessageId,
-          content: "",
-          isUser: false,
-          timestamp: new Date(),
-          responseType: 'explanation',
-        };
-        newMessages.push(newAiMessage);
-        targetAiMessageIndex = newMessages.length - 1;
-      }
-      return newMessages;
-    });
+    //   if (originalMessageId && originalUserMessageIndex !== -1) {
+    //     newMessages = newMessages.slice(0, originalUserMessageIndex + 1);
+    //     const newAiMessage: Message = {
+    //       id: newAiMessageId,
+    //       content: "",
+    //       isUser: false,
+    //       timestamp: new Date(),
+    //       responseType: 'explanation',
+    //     };
+    //     newMessages.splice(originalUserMessageIndex + 1, 0, newAiMessage);
+    //     targetAiMessageIndex = originalUserMessageIndex + 1;
+    //   } else {
+    //     const newAiMessage: Message = {
+    //       id: newAiMessageId,
+    //       content: "",
+    //       isUser: false,
+    //       timestamp: new Date(),
+    //       responseType: 'explanation',
+    //     };
+    //     newMessages.push(newAiMessage);
+    //     targetAiMessageIndex = newMessages.length - 1;
+    //   }
+    //   currentAiMessageId.current = newAiMessageId; 
+    //   console.log("Messages after adding blank AI message:", newMessages); 
+    //   return newMessages;
+    // });
 
     try {
       const response = await ApiService.streamSocraticTutor(apiHistory, currentUserId, currentSessionId, originalMessageId);
@@ -188,31 +225,36 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
+        console.log("Streaming - Chunk received:", chunk); // Debug log
         if (chunk) {
           setMessages(prev => {
             const messagesCopy = [...prev];
-            // Find the message with the `newAiMessageId` to update it.
-            const messageToUpdate = messagesCopy.find(m => m.id === newAiMessageId);
+            const messageIndexToUpdate = messagesCopy.findIndex(m => m.id === currentAiMessageId.current);
 
-            if (messageToUpdate && !messageToUpdate.isUser) {
-              messageToUpdate.content += chunk;
+            if (messageIndexToUpdate !== -1 && !messagesCopy[messageIndexToUpdate].isUser) {
+              console.log("Streaming - Updating message ID:", currentAiMessageId.current, "at index:", messageIndexToUpdate); // Debug log
+              const messageToUpdate = { ...messagesCopy[messageIndexToUpdate] };
+              console.log("Streaming - Content before update:", messageToUpdate.content); // Debug log
+              messageToUpdate.content = (messageToUpdate.content as string) + chunk;
               messageToUpdate.responseType = getResponseType(messageToUpdate.content as string);
+              console.log("Streaming - Content after update:", messageToUpdate.content); // Debug log
+              messagesCopy[messageIndexToUpdate] = messageToUpdate;
             }
+            console.log("Messages during streaming update:", messagesCopy); // Debug log
             return messagesCopy;
           });
         }
       }
-      onActionProcessed();
+      console.log("AI response streaming finished."); // Debug log
     } catch (error) {
       console.error("Error fetching AI response:", error);
       setMessages(prev => {
         const messagesCopy = [...prev];
-        const messageToUpdate = messagesCopy.find(m => m.id === newAiMessageId);
+        const messageToUpdate = messagesCopy.find(m => m.id === currentAiMessageId.current);
         if (messageToUpdate && !messageToUpdate.isUser) {
           messageToUpdate.content = "Sorry, I'm having trouble connecting to the AI. Please try again later.";
           messageToUpdate.responseType = 'warning';
         } else {
-            // If somehow the AI message wasn't found or created, add a new error message.
             messagesCopy.push({
                 id: (Date.now() + 1).toString(),
                 content: "Sorry, I'm having trouble connecting to the AI. Please try again later.",
@@ -261,29 +303,42 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
       editedMessageId: originalMessageId,
     };
 
+    // Create a new unique ID for the AI response that will be streamed.
+    const newAiMessageId = (Date.now() + 1).toString();
+
     // Use functional update to ensure we have the latest `messages` state
     setMessages(prevMessages => {
       let newMessages = [...prevMessages];
       
-      if (originalMessageId && userMessage.isEdited) {
-        // Find and replace the original message with the edited version in the history for API call
-        const indexToReplace = newMessages.findIndex(msg => msg.id === originalMessageId);
-        if (indexToReplace !== -1) {
-          newMessages[indexToReplace] = {
-            ...newMessages[indexToReplace],
-            content: userMessage.content, // Update the content of the original message
-            isEdited: true,
-            originalContent: newMessages[indexToReplace].originalContent || newMessages[indexToReplace].content,
-          };
+      if (originalMessageId) {
+        // If we are editing an existing message, we need to find the user message
+        // and then remove all subsequent AI messages in the UI from that point forward.
+        const originalUserMessageIndex = newMessages.findIndex(msg => msg.id === originalMessageId);
+        if (originalUserMessageIndex !== -1) {
+          newMessages = newMessages.slice(0, originalUserMessageIndex + 1);
         }
-        // We no longer add a new message here, as the original is updated in place.
-      } else if (messageContentOverride === undefined) { 
-          // Only add to messages if it's a new message, not an edited one being resent
-          newMessages.push(userMessage);
       }
       
+      // For a new message, or after clearing subsequent messages for an edit, add the user message
+      // if it's not an edited message (as edited messages are updated in place by handleSendMessage).
+      if (!originalMessageId) {
+        newMessages.push(userMessage);
+      }
+
+      // Add a blank AI message for streaming after the user message (or edited user message)
+      const newAiMessage: Message = {
+        id: newAiMessageId,
+        content: "",
+        isUser: false,
+        timestamp: new Date(),
+        responseType: 'explanation',
+      };
+      newMessages.push(newAiMessage);
+      currentAiMessageId.current = newAiMessageId; // Set the current AI message ID
+      
+      // Now call _processAndSendToApi with the fully updated messages array
       _processAndSendToApi(newMessages, userId, sessionId, originalMessageId);
-      return newMessages;
+      return newMessages; // Return the updated messages for React to render
     });
 
     setInputMessage("");
@@ -311,6 +366,19 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
 
     setMessages(prev => {
       const newMessages = [...prev, userMessage];
+      
+      // Add a blank AI message for streaming after the user message
+      const newAiMessageIdForLifeline = (Date.now() + 1).toString();
+      const newAiMessage: Message = {
+        id: newAiMessageIdForLifeline,
+        content: "",
+        isUser: false,
+        timestamp: new Date(),
+        responseType: 'explanation',
+      };
+      newMessages.push(newAiMessage);
+      currentAiMessageId.current = newAiMessageIdForLifeline; // Set the current AI message ID for lifeline
+
       _processAndSendToApi(newMessages, userId, sessionId);
       return newMessages;
     });
@@ -392,10 +460,8 @@ export const ChatInterface = ({ onCreateFlashcard, messages, setMessages, userId
     setEditingMessageId(null);
     setEditingContent("");
 
-    // Call _processAndSendToApi with the updated messages array to regenerate AI response
-    _processAndSendToApi(messages.map(m => 
-      m.id === editingMessageId ? { ...m, content: editingContent, isEdited: true, originalContent: m.originalContent || m.content } : m
-    ), userId, sessionId, editingMessageId);
+    // Call handleSendMessage to update the UI state and trigger API call
+    handleSendMessage(editingContent, editingMessageId);
   };
 
   return (

@@ -79,6 +79,23 @@ export class ApiService {
     }
   }
 
+  static async saveConversation(
+    messages: ChatMessage[],
+    userId: string,
+    sessionId: string
+  ): Promise<void> {
+    try {
+      await axios.post(`${SOCRATIC_TUTOR_API_URL}/save_conversation`, {
+        messages,
+        user_id: userId,
+        session_id: sessionId,
+      });
+    } catch (error) {
+      console.error('Save Conversation API Error:', error);
+      throw new Error('Failed to save conversation');
+    }
+  }
+
   static async getConversations(userId: string, sessionId: string): Promise<ChatMessage[]> {
     try {
       const response = await axios.get(`${SOCRATIC_TUTOR_API_URL}/conversations`, {

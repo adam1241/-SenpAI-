@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BookOpen, History, PenTool, Brain, CreditCard, PlusCircle, MessageSquare, User, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, History, PenTool, Brain, CreditCard, PlusCircle, MessageSquare, User, Menu, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { UserProfile } from "./UserProfile";
 import { ApiService, HistoryItem } from "@/services/api";
 import senpaiLogo from "./logo/SenpAI2.png";
@@ -16,6 +16,7 @@ interface AppSidebarProps {
   userId: string;
   sessionId: string;
   onSelectSession: (sessionId: string) => void;
+  onDeleteConversation: (sessionId: string) => void; // New prop for deleting conversations
 }
 
 export const AppSidebar = ({
@@ -25,31 +26,37 @@ export const AppSidebar = ({
   onNewChat,
   userId,
   sessionId,
-  onSelectSession
+  onSelectSession,
+  onDeleteConversation // Destructure the new prop
 }: AppSidebarProps) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      if (!userId) return;
-      setIsLoadingHistory(true);
-      try {
-        const data = await ApiService.getHistory(userId);
-        // Ensure we have an array before filtering
-        const list = Array.isArray(data) ? data : [];
-        const conversations = list.filter(item => item.type === 'conversation').slice(0, 10);
-        setHistory(conversations);
-      } catch (error) {
-        console.error("Failed to fetch history:", error);
-      } finally {
-        setIsLoadingHistory(false);
-      }
-    };
+  const fetchHistory = useCallback(async () => {
+    if (!userId) {
+      console.log("AppSidebar: fetchHistory - No userId, skipping fetch."); // Debug log
+      return;
+    }
+    setIsLoadingHistory(true);
+    console.log("AppSidebar: fetchHistory - Fetching history for userId:", userId); // Debug log
+    try {
+      const data = await ApiService.getHistory(userId);
+      const list = Array.isArray(data) ? data : [];
+      const conversations = list.filter(item => item.type === 'conversation').slice(0, 10);
+      setHistory(conversations);
+      console.log("AppSidebar: fetchHistory - History fetched successfully:", conversations); // Debug log
+    } catch (error) {
+      console.error("AppSidebar: Failed to fetch history:", error); // Debug log
+    } finally {
+      setIsLoadingHistory(false);
+      console.log("AppSidebar: fetchHistory - Loading finished."); // Debug log
+    }
+  }, [userId]);
 
+  useEffect(() => {
     fetchHistory();
-  }, [userId, sessionId]);
+  }, [fetchHistory, sessionId, onDeleteConversation]); // Add fetchHistory and onDeleteConversation to dependencies
 
   const menuItems = [
     { id: "notebook", label: "Notebook", icon: PenTool, section: "notebook" as const },
@@ -63,11 +70,9 @@ export const AppSidebar = ({
   };
 
   const handleTutorChatClick = () => {
-    // If there's history, load the most recent session.
     if (history.length > 0) {
       onSelectSession(history[0].id);
     } else {
-      // Otherwise, just switch to the chat section (might be an empty state)
       onSectionChange("chat");
     }
   };
@@ -204,12 +209,10 @@ export const AppSidebar = ({
                   <div className="text-xs text-muted-foreground p-2">No conversations</div>
                 ) : (
                   history.map((item) => (
-                    <Button
+                    <div
                       key={item.id}
-                      variant="ghost"
-                      size="sm"
                       onClick={() => handleHistoryClick(item)}
-                      className="w-full justify-start text-left h-auto p-2"
+                      className="w-full justify-start text-left h-auto p-2 group cursor-pointer hover:bg-muted transition-colors rounded-md"
                     >
                       <div className="flex items-start gap-2 w-full">
                         <MessageSquare className="w-3 h-3 mt-0.5 flex-shrink-0 text-muted-foreground" />
@@ -221,8 +224,19 @@ export const AppSidebar = ({
                             {new Date(item.timestamp).toLocaleDateString()}
                           </div>
                         </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation(); 
+                            onDeleteConversation(item.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </Button>
+                    </div>
                   ))
                 )}
               </div>

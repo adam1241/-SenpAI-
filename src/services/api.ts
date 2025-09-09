@@ -96,6 +96,17 @@ export class ApiService {
     }
   }
 
+  static async deleteConversation(userId: string, sessionId: string): Promise<void> {
+    try {
+      await axios.delete(`${SOCRATIC_TUTOR_API_URL}/conversations/${sessionId}`, {
+        params: { user_id: userId }
+      });
+    } catch (error) {
+      console.error('Delete Conversation API Error:', error);
+      throw new Error('Failed to delete conversation');
+    }
+  }
+
   static async getConversations(userId: string, sessionId: string): Promise<ChatMessage[]> {
     try {
       const response = await axios.get(`${SOCRATIC_TUTOR_API_URL}/conversations`, {

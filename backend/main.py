@@ -602,6 +602,22 @@ def get_history():
     history_items.sort(key=lambda x: x['timestamp'], reverse=True)
     return jsonify(history_items)
 
+@app.route('/api/conversations/<string:session_id>', methods=['DELETE'])
+def delete_conversation(session_id):
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+
+    try:
+        all_history = Database.load_table("chat_history")
+        # Filter out messages belonging to the specified session and user
+        updated_history = [msg for msg in all_history if not (msg.get('user_id') == user_id and msg.get('session_id') == session_id)]
+        Database.save_table("chat_history", updated_history)
+        return jsonify({"message": f"Conversation {session_id} deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error deleting conversation: {e}")
+        return jsonify({"error": "Failed to delete conversation."}), 500
+
 # --- Chat API ---
 @app.route('/api/chat', methods=['POST'])
 def chat():
